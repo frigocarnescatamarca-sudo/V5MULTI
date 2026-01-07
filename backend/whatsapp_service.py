@@ -6,6 +6,13 @@ Handles message processing with ChatGPT integration
 import os
 import httpx
 from datetime import datetime, timezone
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables
+ROOT_DIR = Path(__file__).parent
+load_dotenv(ROOT_DIR / '.env')
+
 from motor.motor_asyncio import AsyncIOMotorClient
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 
