@@ -660,11 +660,11 @@ class TestRunner:
 
     def run_all_tests(self):
         """Run all backend tests"""
-        print("🚀 Starting Estonia Cobertura WhatsApp Bot Backend Tests")
+        print("🚀 Starting Estonia Cobertura WhatsApp Bot Backend Tests (V2 Features)")
         print(f"Backend URL: {BACKEND_URL}")
         print("=" * 60)
         
-        # Test sequence - WhatsApp Bot specific tests
+        # Test sequence - WhatsApp Bot specific tests + V2 features
         tests = [
             self.test_admin_login,
             self.test_whatsapp_status,
@@ -675,7 +675,12 @@ class TestRunner:
             self.test_verificar_seguro,
             self.test_download_pdf_comprobante,
             self.test_pause_chat,
-            self.test_resume_chat
+            self.test_resume_chat,
+            # V2 Features Tests
+            self.test_whatsapp_ventas_endpoint,
+            self.test_coberturas_dni_endpoint,
+            self.test_whatsapp_config_ventas_update,
+            self.test_whatsapp_ventas_after_config
         ]
         
         passed = 0
