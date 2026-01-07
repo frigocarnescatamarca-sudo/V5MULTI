@@ -24,6 +24,21 @@ export default function AdminPanel() {
   const [vencimientos, setVencimientos] = useState(null);
   const [loading, setLoading] = useState(false);
   const [nuevoPromo, setNuevoPromo] = useState({ codigo: '', descuento_porcentaje: 0, es_master: false });
+  const [nuevoAgente, setNuevoAgente] = useState({ 
+    nombre: '', 
+    email: '', 
+    telefono: '', 
+    username: '', 
+    password: '', 
+    comision_porcentaje: 10 
+  });
+  const [nuevoPremio, setNuevoPremio] = useState({ 
+    nombre: '', 
+    cantidad_seguros: 50, 
+    monto_premio: 10000 
+  });
+  const [modalAgenteOpen, setModalAgenteOpen] = useState(false);
+  const [agenteEditando, setAgenteEditando] = useState(null);
   const [modalSeguroOpen, setModalSeguroOpen] = useState(false);
   const [seguroEditando, setSeguroEditando] = useState(null);
   const [seguroVerDocs, setSeguroVerDocs] = useState(null);
