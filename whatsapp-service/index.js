@@ -122,27 +122,67 @@ async function handleIncomingMessage(message) {
     try {
         const remoteJid = message.key.remoteJid;
         
-        // Extract phone number - handle different formats
-        // @s.whatsapp.net = standard phone
-        // @lid = linked device ID
-        // @g.us = group
-        let phoneNumber = remoteJid;
-        
-        if (remoteJid.endsWith('@s.whatsapp.net')) {
-            phoneNumber = remoteJid.replace('@s.whatsapp.net', '');
-        } else if (remoteJid.endsWith('@g.us')) {
-            // Skip group messages
+        // Skip group messages
+        if (remoteJid.endsWith('@g.us')) {
             console.log('Skipping group message');
             return;
-        } else if (remoteJid.includes('@lid')) {
-            // LID format - keep the full JID for replies
-            phoneNumber = remoteJid.replace('@lid', '');
         }
         
-        // Store the original JID for replying
-        const replyJid = remoteJid;
+        // Get the REAL phone number
+        let phoneNumber = null;
+        let replyJid = remoteJid;
         
-        console.log(`Processing message from: ${phoneNumber} (reply to: ${replyJid})`);
+        if (remoteJid.endsWith('@s.whatsapp.net')) {
+            // Standard format - extract phone number directly
+            phoneNumber = remoteJid.replace('@s.whatsapp.net', '');
+        } else if (remoteJid.includes('@lid')) {
+            // LID format - try to get real number from notify or verifiedBizName
+            // Or try to lookup in our mapping
+            const lidId = remoteJid.replace('@lid', '');
+            
+            // Check if we already have this LID mapped
+            if (lidToPhone[lidId]) {
+                phoneNumber = lidToPhone[lidId];
+            } else {
+                // Try to get phone from message notify (sender's push name/number)
+                // The real phone might be in pushName if it's a phone number
+                const pushName = message.pushName || '';
+                
+                // If pushName looks like a phone number, use it
+                if (/^\+?\d{10,15}$/.test(pushName.replace(/[\s\-]/g, ''))) {
+                    phoneNumber = pushName.replace(/[\s\-\+]/g, '');
+                } else {
+                    // Try to get from verifiedBizName or use a workaround
+                    // For now, we'll try to fetch the contact info
+                    try {
+                        if (sock && sock.store && sock.store.contacts) {
+                            const contact = sock.store.contacts[remoteJid];
+                            if (contact && contact.notify) {
+                                phoneNumber = contact.notify.replace(/[\s\-\+]/g, '');
+                            }
+                        }
+                    } catch (e) {
+                        console.log('Could not get contact info:', e.message);
+                    }
+                    
+                    // Last resort: use the LID as identifier but mark it
+                    if (!phoneNumber) {
+                        phoneNumber = lidId;
+                        console.log(`Warning: Using LID ${lidId} as phone (real number unknown)`);
+                    }
+                }
+                
+                // Store the mapping for future use
+                if (phoneNumber && phoneNumber !== lidId) {
+                    lidToPhone[lidId] = phoneNumber;
+                }
+            }
+        }
+        
+        // Store JID mapping for replies
+        phoneToJid[phoneNumber] = replyJid;
+        
+        console.log(`Processing message from: ${phoneNumber} (JID: ${replyJid})`);
 
         // Extract message text
         let messageText = '';
