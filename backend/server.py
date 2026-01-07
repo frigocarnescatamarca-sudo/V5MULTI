@@ -918,6 +918,79 @@ async def obtener_vencimientos_agente(token: str):
         "vigentes": vigentes
     }
 
+@api_router.post("/agente/crear-seguro")
+async def crear_seguro_agente(data: dict):
+    """Crea un seguro asignado al agente"""
+    
+    token = data.get('token')
+    if not token:
+        raise HTTPException(status_code=401, detail="Token requerido")
+    
+    session = await db.agente_sessions.find_one({
+        "token": token,
+        "expires_at": {"$gt": datetime.now(timezone.utc)}
+    })
+    
+    if not session:
+        raise HTTPException(status_code=401, detail="Token inválido")
+    
+    agente_id = session["agente_id"]
+    
+    # Obtener datos del agente
+    agente = await db.agentes.find_one({"_id": agente_id})
+    if not agente:
+        raise HTTPException(status_code=404, detail="Agente no encontrado")
+    
+    # Validar campos requeridos
+    required_fields = ['dni', 'nombre', 'email', 'patente', 'marca', 'modelo']
+    for field in required_fields:
+        if not data.get(field):
+            raise HTTPException(status_code=400, detail=f"Campo {field} es requerido")
+    
+    # Generar número de recibo único
+    numero_recibo = f"EC-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
+    
+    # Calcular precio según tipo de cobertura
+    precios_cobertura = {
+        'rc': 15000,
+        'terceros': 25000,
+        'completo': 45000
+    }
+    cobertura = data.get('cobertura', 'rc')
+    precio = precios_cobertura.get(cobertura, 15000)
+    
+    # Crear el seguro
+    seguro_doc = {
+        "_id": str(uuid.uuid4()),
+        "numero_recibo": numero_recibo,
+        "dni": data['dni'],
+        "nombre": data['nombre'],
+        "email": data['email'],
+        "telefono": data.get('telefono', ''),
+        "patente": data['patente'].upper(),
+        "marca": data['marca'],
+        "modelo": data['modelo'],
+        "ano": data.get('ano', datetime.now().year),
+        "tipo_vehiculo": data.get('tipo_vehiculo', 'auto'),
+        "cobertura": cobertura,
+        "precio_original": precio,
+        "precio_final": precio,
+        "estado": "pendiente",
+        "vigencia_desde": datetime.now(timezone.utc).isoformat(),
+        "vigencia_hasta": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
+        "fotos": {},
+        "agente_id": agente_id,
+        "agente_nombre": agente['nombre'],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.seguros.insert_one(seguro_doc)
+    
+    seguro_doc['id'] = seguro_doc['_id']
+    del seguro_doc['_id']
+    
+    return {"success": True, "seguro": seguro_doc}
+
 @api_router.get("/admin/seguros")
 async def listar_seguros_admin(skip: int = 0, limit: int = 50, token: str = None):
     """Lista todos los seguros (admin)"""
