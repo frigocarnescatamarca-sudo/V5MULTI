@@ -458,28 +458,19 @@ export default function PanelAgente() {
                             </Button>
                             <Button
                               size="sm"
-                              variant="outline"
                               onClick={() => {
-                                const url = `${window.location.origin}/verificar/${seguro.numero_recibo}`;
-                                navigator.clipboard.writeText(url);
-                                toast.success('Link de verificación copiado');
-                              }}
-                              className="text-[#10B981]"
-                              title="Copiar link"
-                            >
-                              <Share2 className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => {
-                                const url = `${window.location.origin}/verificar/${seguro.numero_recibo}`;
+                                const urlVerificar = `${window.location.origin}/verificar/${seguro.numero_recibo}`;
+                                const urlPDF = segurosAPI.descargarPDF(seguro.id);
+                                const urlImagen = segurosAPI.descargarImagen(seguro.id);
                                 const mensaje = `🚗 *ESTONIA COBERTURA COLABORATIVA*\n\n` +
                                   `✅ Comprobante de cobertura para:\n` +
                                   `👤 *${seguro.nombre}*\n` +
                                   `🚘 Vehículo: ${seguro.marca} ${seguro.modelo}\n` +
                                   `🔢 Patente: *${seguro.patente}*\n` +
                                   `📅 Vencimiento: ${new Date(seguro.vigencia_hasta).toLocaleDateString('es-AR')}\n\n` +
-                                  `🔗 Verificar cobertura:\n${url}`;
+                                  `📄 *Descargar PDF:*\n${urlPDF}\n\n` +
+                                  `🖼️ *Descargar Imagen:*\n${urlImagen}\n\n` +
+                                  `🔍 *Verificar cobertura:*\n${urlVerificar}`;
                                 const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
                                 window.open(whatsappUrl, '_blank');
                               }}
