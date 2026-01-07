@@ -1850,6 +1850,28 @@ async def admin_get_chat_history(phone_number: str, limit: int = 50):
     messages = await get_chat_history(phone_number, limit)
     return {"messages": messages, "phone_number": phone_number}
 
+@api_router.post("/admin/whatsapp/simulate")
+async def admin_simulate_conversation(data: dict):
+    """
+    Simulate a complete WhatsApp conversation flow for testing.
+    Creates a coverage, simulates payment, and generates receipt.
+    """
+    phone_number = data.get("phone_number", "5491112345678")
+    client_data = {
+        "nombre": data.get("nombre", "Carlos García"),
+        "dni": data.get("dni", "30456789"),
+        "email": data.get("email", "carlos.garcia@email.com"),
+        "patente": data.get("patente", "AD456FG"),
+        "marca": data.get("marca", "Volkswagen"),
+        "modelo": data.get("modelo", "Golf"),
+        "ano": data.get("ano", 2021),
+        "tipo_vehiculo": data.get("tipo_vehiculo", "auto"),
+        "cobertura": data.get("cobertura", "rc")
+    }
+    
+    result = await simulate_conversation_flow(phone_number, client_data)
+    return result
+
 # Include router
 app.include_router(api_router)
 
