@@ -181,3 +181,46 @@ User requested simulation of complete WhatsApp flow with coverage creation and r
 - DNI query API endpoint working with frontend
 - Admin configuration properly saves and displays
 - Homepage buttons appear when WhatsApp number is configured
+
+---
+
+## V2 Final Update - All CTA Buttons to WhatsApp (January 7, 2026)
+
+### Changes Made:
+All homepage buttons now redirect to WhatsApp sales instead of showing internal form:
+
+1. ✅ "Obtener Cobertura Ahora" (hero principal) → WhatsApp
+2. ✅ "Contratar por WhatsApp" (segunda sección) → WhatsApp  
+3. ✅ "Comenzar Ahora" (CTA verde) → WhatsApp
+4. ✅ "Contratar" button in header → WhatsApp
+5. ✅ Floating WhatsApp button (bottom-right) → WhatsApp
+
+### Pre-filled Message:
+"Hola, quiero contratar una cobertura vehicular."
+
+### Removed:
+- FormularioSeguro modal no longer used
+- Internal form flow removed in favor of WhatsApp-only sales
+
+### V2 Features Complete Summary:
+| Feature | Status |
+|---------|--------|
+| Homepage WhatsApp Button | ✅ Working |
+| DNI Query via Bot | ✅ Working |
+| Web DNI Query Portal (/mis-coberturas) | ✅ Working |
+| All CTA → WhatsApp | ✅ Working |
+| Admin WhatsApp Config | ✅ Working |
+
+### Project Status: V2 COMPLETE ✅
+
+---
+
+## Prototype Notes (for future reference)
+This codebase can be adapted for other businesses that need:
+- WhatsApp-based sales bot with AI
+- Admin panel for configuration
+- Public query portal by ID/DNI
+- Coverage/service management
+- Agent/reseller system with commissions
+
+Example adaptation: Sandwichería with WhatsApp ordering bot
