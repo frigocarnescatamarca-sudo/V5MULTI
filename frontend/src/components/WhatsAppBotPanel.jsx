@@ -434,6 +434,24 @@ export default function WhatsAppBotPanel() {
                 />
               </div>
 
+              {/* Admin LID (identificador interno WhatsApp) */}
+              <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                <Label className="text-base font-semibold text-purple-800">🔑 Tu LID de WhatsApp (Identificador Interno)</Label>
+                <p className="text-sm text-purple-600 mb-2">
+                  Este número lo obtiene el bot automáticamente cuando te identifica. Si no te reconoce como admin, 
+                  copiá el número largo que aparece en los chats cuando escribís y pegalo acá.
+                </p>
+                <Input 
+                  value={config.admin_lid || ''}
+                  onChange={(e) => updateConfig('admin_lid', e.target.value.replace(/\D/g, ''))}
+                  placeholder="Ej: 122441598795892 (número largo interno)"
+                  className="font-mono bg-white"
+                />
+                <p className="text-xs text-purple-500 mt-1">
+                  💡 Tip: Mirá en la pestaña "Chats" tu conversación y copiá el número que aparece como remitente
+                </p>
+              </div>
+
               {/* Número de WhatsApp para Ventas (Homepage) */}
               <div className="p-4 bg-green-50 rounded-lg border border-green-200">
                 <Label className="text-base font-semibold text-green-800">📲 Número de WhatsApp para Ventas</Label>
