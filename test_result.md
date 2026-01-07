@@ -205,11 +205,14 @@ frontend:
     file: "/app/frontend/src/pages/AdminPanel.jsx"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: true
         - agent: "main"
         - comment: "Tab visible with create form. Need to test creation"
+        - working: true
+        - agent: "testing"
+        - comment: "✅ TESTED: Premios tab working correctly. Shows 'Premio 10 Ventas' with $5.000 monto (Spanish format). All premio functionality verified."
 
   - task: "Admin Panel - Vencimientos Tab"
     implemented: true
