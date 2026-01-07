@@ -64,8 +64,26 @@ export const pagosAPI = {
 };
 
 export const adminAPI = {
-  listarSeguros: async (skip = 0, limit = 50) => {
-    const response = await api.get(`/admin/seguros?skip=${skip}&limit=${limit}`);
+  login: async (username, password) => {
+    const response = await api.post('/admin/login', { username, password });
+    return response.data;
+  },
+  
+  logout: async (token) => {
+    const response = await api.post('/admin/logout', { token });
+    return response.data;
+  },
+  
+  verifyToken: async (token) => {
+    const response = await api.get(`/admin/verify?token=${token}`);
+    return response.data;
+  },
+  
+  listarSeguros: async (skip = 0, limit = 50, token = null) => {
+    const url = token 
+      ? `/admin/seguros?skip=${skip}&limit=${limit}&token=${token}`
+      : `/admin/seguros?skip=${skip}&limit=${limit}`;
+    const response = await api.get(url);
     return response.data;
   },
   
