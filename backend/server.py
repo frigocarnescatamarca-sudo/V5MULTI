@@ -112,6 +112,10 @@ class AgregarSaldoAgente(BaseModel):
     monto: float = Field(gt=0)
     observacion: str = ""
 
+class RegistrarCobroAgente(BaseModel):
+    monto: float = Field(gt=0)
+    observacion: str = ""
+
 class PremioCreate(BaseModel):
     nombre: str
     cantidad_seguros: int = Field(ge=1)
