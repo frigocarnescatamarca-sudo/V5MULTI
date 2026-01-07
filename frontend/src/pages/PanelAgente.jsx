@@ -338,13 +338,30 @@ export default function PanelAgente() {
 
           {/* Tab Seguros */}
           <TabsContent value="seguros" className="space-y-4">
-            <h2 className="text-2xl font-bold text-[#064E3B]">Mis Seguros Vendidos</h2>
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-[#064E3B]">Mis Coberturas Vendidas</h2>
+              <Button 
+                onClick={abrirModalCrear}
+                className="bg-[#10B981] hover:bg-[#10B981]/90"
+                data-testid="crear-cobertura-btn"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Nueva Cobertura
+              </Button>
+            </div>
             
             {seguros.length === 0 ? (
               <Card>
                 <CardContent className="p-12 text-center">
-                  <Shield className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                  <p className="text-[#64748B]">No tienes seguros asignados aún</p>
+                  <Car className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                  <p className="text-[#64748B] mb-4">No tienes coberturas asignadas aún</p>
+                  <Button 
+                    onClick={abrirModalCrear}
+                    className="bg-[#10B981] hover:bg-[#10B981]/90"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Crear tu primera cobertura
+                  </Button>
                 </CardContent>
               </Card>
             ) : (
