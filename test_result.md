@@ -190,11 +190,14 @@ frontend:
     file: "/app/frontend/src/pages/AdminPanel.jsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: true
         - agent: "main"
         - comment: "Tab visible and shows empty state correctly. Need to test create agent flow"
+        - working: true
+        - agent: "testing"
+        - comment: "✅ TESTED: Agentes tab working perfectly. Shows 'Agente Test' created during backend testing with correct statistics (0 vendidos, $0 comisiones). All functionality verified."
 
   - task: "Admin Panel - Premios Tab"
     implemented: true
