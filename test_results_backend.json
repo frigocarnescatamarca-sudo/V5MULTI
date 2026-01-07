@@ -4,62 +4,69 @@
     "success": true,
     "message": "Admin login successful",
     "details": null,
-    "timestamp": "2026-01-07T13:12:49.605658"
+    "timestamp": "2026-01-07T17:42:58.330183"
   },
   {
-    "test": "Create Agent",
+    "test": "WhatsApp Status",
     "success": true,
-    "message": "Agent created with ID: f8805156-4ebd-43cd-9c86-3369efa494d4",
+    "message": "Status: disconnected, Connected: False",
     "details": null,
-    "timestamp": "2026-01-07T13:12:49.707378"
+    "timestamp": "2026-01-07T17:42:58.390445"
   },
   {
-    "test": "List Agents",
+    "test": "WhatsApp Config Get",
     "success": true,
-    "message": "Found 1 agents, including created test agent",
+    "message": "Config loaded with 4 fields",
     "details": null,
-    "timestamp": "2026-01-07T13:12:49.747730"
+    "timestamp": "2026-01-07T17:42:58.427729"
   },
   {
-    "test": "Agent Login",
+    "test": "WhatsApp Config Update",
     "success": true,
-    "message": "Agent login successful for Agente Test",
+    "message": "Configuration updated successfully",
     "details": null,
-    "timestamp": "2026-01-07T13:12:49.796715"
+    "timestamp": "2026-01-07T17:42:58.475100"
   },
   {
-    "test": "Agent Dashboard",
+    "test": "WhatsApp Conversations",
     "success": true,
-    "message": "Dashboard loaded - Total seguros: 0, Pagados: 0",
+    "message": "Found 1 conversations including test conversation",
     "details": null,
-    "timestamp": "2026-01-07T13:12:49.830782"
+    "timestamp": "2026-01-07T17:42:58.535268"
   },
   {
-    "test": "Agent Vencimientos",
+    "test": "WhatsApp Chat History",
     "success": true,
-    "message": "Vencimientos loaded with 0 total items",
+    "message": "Retrieved 10 messages for 5491155667788",
     "details": null,
-    "timestamp": "2026-01-07T13:12:49.869764"
+    "timestamp": "2026-01-07T17:42:58.578730"
   },
   {
-    "test": "Create Premio",
+    "test": "Verificar Seguro",
     "success": true,
-    "message": "Premio created with ID: 425f0cee-2658-4d66-8f62-63ff4f317a04",
+    "message": "Receipt 41702927 verified successfully",
     "details": null,
-    "timestamp": "2026-01-07T13:12:49.918519"
+    "timestamp": "2026-01-07T17:42:58.616902"
   },
   {
-    "test": "List Premios",
+    "test": "Download PDF Comprobante",
     "success": true,
-    "message": "Found 1 premios, including created test premio",
+    "message": "PDF downloaded successfully (368344 bytes)",
     "details": null,
-    "timestamp": "2026-01-07T13:12:49.954828"
+    "timestamp": "2026-01-07T17:42:58.862297"
   },
   {
-    "test": "Admin Seguros List",
+    "test": "Pause Chat",
     "success": true,
-    "message": "Listed 1 seguros out of 1 total",
+    "message": "Chat paused for 5491155667788",
     "details": null,
-    "timestamp": "2026-01-07T13:12:49.988306"
+    "timestamp": "2026-01-07T17:42:58.970856"
+  },
+  {
+    "test": "Resume Chat",
+    "success": true,
+    "message": "Chat resumed for 5491155667788",
+    "details": null,
+    "timestamp": "2026-01-07T17:42:59.028461"
   }
 ]
