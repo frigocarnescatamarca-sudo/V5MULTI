@@ -170,12 +170,23 @@ async def save_message(phone_number: str, message: str, role: str, push_name: st
 
 async def process_message_with_ai(phone_number: str, message: str, push_name: str = ""):
     """Process incoming message with ChatGPT and return response"""
+    import re
     
     # Get bot config
     config = await get_bot_config()
     
     if not config.get("bot_activo", True):
         return None  # Bot is disabled globally
+    
+    # Check if this is the ADMIN confirming a payment
+    admin_number = config.get('numero_admin', '')
+    if admin_number and phone_number == admin_number:
+        # Check for CONFIRMAR command from admin
+        confirm_match = re.match(r'(?:CONFIRMAR|confirmar|Confirmar)\s+([A-Z0-9]+)', message.strip())
+        if confirm_match:
+            recibo = confirm_match.group(1).upper()
+            result = await admin_confirm_payment(recibo, phone_number)
+            return result
     
     # Save incoming message
     await save_message(phone_number, message, "user", push_name)
