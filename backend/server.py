@@ -1383,7 +1383,7 @@ async def crear_agente(agente: AgenteCreate):
 
 @api_router.get("/admin/agentes")
 async def listar_agentes():
-    """Lista todos los agentes"""
+    """Lista todos los agentes con estadísticas y deuda"""
     
     agentes = await db.agentes.find({}).to_list(1000)
     
@@ -1402,24 +1402,40 @@ async def listar_agentes():
             "estado": {"$in": ["pagado", "gratis"]}
         })
         
-        # Calcular comisiones
+        # Obtener seguros pagados para calcular
         seguros = await db.seguros.find({
             "agente_id": agente_id,
             "estado": {"$in": ["pagado", "gratis"]}
         }).to_list(1000)
         
+        # Calcular totales
+        total_ventas = sum([s.get('precio_final', 0) for s in seguros])
         total_comisiones = sum([
-            s.get('precio_final', 0) * (agente.get('comision_porcentaje', 10) / 100)
+            s.get('precio_final', 0) * (s.get('comision_porcentaje', agente.get('comision_porcentaje', 10)) / 100)
             for s in seguros
         ])
         
-        # Incluir saldo actual
+        # Deuda bruta = ventas - comisiones
+        deuda_bruta = total_ventas - total_comisiones
+        
+        # Obtener total de cobros realizados
+        cobros = await db.cobros_agentes.find({"agente_id": agente_id}).to_list(1000)
+        total_cobrado = sum([c.get('monto', 0) for c in cobros])
+        
+        # Deuda actual = deuda bruta - cobros realizados
+        deuda_actual = deuda_bruta - total_cobrado
+        
+        # Saldo actual (dinero que admin le debe al agente, si es positivo)
         saldo_actual = agente.get('saldo', 0)
         
         agente['estadisticas'] = {
             "total_seguros": total_seguros,
             "seguros_pagados": seguros_pagados,
+            "total_ventas": total_ventas,
             "total_comisiones": total_comisiones,
+            "deuda_bruta": deuda_bruta,
+            "total_cobrado": total_cobrado,
+            "deuda_actual": deuda_actual,
             "saldo_actual": saldo_actual
         }
     
