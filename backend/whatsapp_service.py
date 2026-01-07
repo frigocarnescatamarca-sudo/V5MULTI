@@ -310,7 +310,7 @@ Una vez que pagues, enviame el comprobante y activo tu cobertura al instante. �
             ai_response = re.sub(r'\[CREAR_COBERTURA\].*?\[/CREAR_COBERTURA\]', '', ai_response, flags=re.DOTALL)
             ai_response = ai_response.replace('Procesando tu cobertura... ⏳', '❌ Hubo un error al crear la cobertura. Por favor, verificá los datos e intentá de nuevo.')
     
-    # Check for CONFIRMAR_PAGO command
+    # Check for CONFIRMAR_PAGO command - Now notifies admin instead of auto-confirming
     pago_match = re.search(r'\[CONFIRMAR_PAGO\](.*?)\[/CONFIRMAR_PAGO\]', ai_response, re.DOTALL)
     if pago_match:
         try:
@@ -319,19 +319,54 @@ Una vez que pagues, enviame el comprobante y activo tu cobertura al instante. �
             
             if pending and pending.get('coverage_id'):
                 coverage_id = pending['coverage_id']
-                
-                # Mark as paid
-                await mark_coverage_paid(coverage_id)
-                
-                # Get updated coverage
                 coverage = await get_coverage_by_id(coverage_id)
                 
                 if coverage:
-                    actions_taken.append('payment_confirmed')
+                    # Get admin number from config
+                    config = await get_bot_config()
+                    admin_number = config.get('numero_admin', '')
                     
-                    backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://estonia-covers.preview.emergentagent.com')
-                    
-                    success_msg = f"""✅ *¡PAGO CONFIRMADO!*
+                    if admin_number:
+                        # Send notification to admin
+                        admin_msg = f"""🔔 *NUEVO PAGO PENDIENTE*
+
+📋 *Recibo:* {coverage['numero_recibo']}
+👤 *Cliente:* {coverage['nombre']}
+📱 *Teléfono:* {phone_number}
+🚗 *Vehículo:* {coverage['marca']} {coverage['modelo']} ({coverage.get('ano', 'N/A')})
+🔢 *Patente:* {coverage['patente']}
+💰 *Monto:* ${coverage['precio_final']:,}
+
+El cliente dice que ya pagó.
+Para confirmar, respondé: *CONFIRMAR {coverage['numero_recibo']}*"""
+                        
+                        await send_whatsapp_message(admin_number, admin_msg)
+                        actions_taken.append('admin_notified')
+                        
+                        # Store pending approval
+                        await db.whatsapp_pending.update_one(
+                            {"phone_number": phone_number},
+                            {"$set": {
+                                "awaiting_admin_approval": True,
+                                "client_phone": phone_number
+                            }}
+                        )
+                        
+                        # Tell client we're verifying
+                        client_msg = """⏳ *Verificando tu pago...*
+
+Estamos confirmando la recepción del pago. Te avisamos en unos minutos.
+
+Si tenés alguna duda, podés escribirnos."""
+                        
+                        ai_response = re.sub(r'\[CONFIRMAR_PAGO\].*?\[/CONFIRMAR_PAGO\]', '', ai_response, flags=re.DOTALL)
+                        ai_response = ai_response.replace('Verificando pago... ⏳', client_msg)
+                    else:
+                        # No admin number configured - auto confirm (fallback)
+                        await mark_coverage_paid(coverage_id)
+                        backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://estonia-covers.preview.emergentagent.com')
+                        
+                        success_msg = f"""✅ *¡PAGO CONFIRMADO!*
 
 🎉 Tu cobertura está *ACTIVA*
 
@@ -345,22 +380,21 @@ Una vez que pagues, enviame el comprobante y activo tu cobertura al instante. �
 🔍 *Verificar cobertura:*
 {backend_url}/verificar/{coverage['numero_recibo']}
 
-¡Gracias por confiar en Estonia Cobertura! 🙏
-Cualquier duda, estoy para ayudarte."""
-                    
-                    ai_response = re.sub(r'\[CONFIRMAR_PAGO\].*?\[/CONFIRMAR_PAGO\]', '', ai_response, flags=re.DOTALL)
-                    ai_response = ai_response.replace('Verificando pago... ⏳', success_msg)
-                    
-                    # Clear pending
-                    await db.whatsapp_pending.delete_one({"phone_number": phone_number})
+¡Gracias por confiar en Estonia Cobertura! 🙏"""
+                        
+                        ai_response = re.sub(r'\[CONFIRMAR_PAGO\].*?\[/CONFIRMAR_PAGO\]', '', ai_response, flags=re.DOTALL)
+                        ai_response = ai_response.replace('Verificando pago... ⏳', success_msg)
+                        await db.whatsapp_pending.delete_one({"phone_number": phone_number})
             else:
                 ai_response = re.sub(r'\[CONFIRMAR_PAGO\].*?\[/CONFIRMAR_PAGO\]', '', ai_response, flags=re.DOTALL)
                 ai_response = ai_response.replace('Verificando pago... ⏳', '⚠️ No encontré una cobertura pendiente de pago. ¿Querés crear una nueva cobertura?')
                 
         except Exception as e:
-            print(f"[WhatsApp Bot] Error confirming payment: {e}")
+            print(f"[WhatsApp Bot] Error in payment flow: {e}")
+            import traceback
+            traceback.print_exc()
             ai_response = re.sub(r'\[CONFIRMAR_PAGO\].*?\[/CONFIRMAR_PAGO\]', '', ai_response, flags=re.DOTALL)
-            ai_response = ai_response.replace('Verificando pago... ⏳', '❌ Hubo un error al confirmar el pago. Un agente revisará tu caso.')
+            ai_response = ai_response.replace('Verificando pago... ⏳', '❌ Hubo un error. Un agente revisará tu caso.')
     
     # Clean up any remaining command tags
     ai_response = re.sub(r'\[/?CREAR_COBERTURA\]', '', ai_response)
