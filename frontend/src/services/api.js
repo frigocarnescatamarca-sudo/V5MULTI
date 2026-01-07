@@ -92,6 +92,21 @@ export const adminAPI = {
     return response.data;
   },
   
+  crearSeguroManual: async (data) => {
+    const response = await api.post('/admin/seguros/crear-manual', data);
+    return response.data;
+  },
+  
+  actualizarSeguro: async (seguroId, data) => {
+    const response = await api.put(`/admin/seguros/${seguroId}`, data);
+    return response.data;
+  },
+  
+  eliminarSeguro: async (seguroId) => {
+    const response = await api.delete(`/admin/seguros/${seguroId}`);
+    return response.data;
+  },
+  
   crearPromoCode: async (data) => {
     const response = await api.post('/admin/promo-codes', data);
     return response.data;
