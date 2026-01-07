@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { MessageCircle, QrCode, Settings, Users, Send, Pause, Play, RefreshCw, Power, PowerOff, Bot, Save, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { MessageCircle, QrCode, Settings, Send, Pause, Play, RefreshCw, Power, PowerOff, Bot, Save, Loader2, Phone, User, Check, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,14 +36,30 @@ export default function WhatsAppBotPanel() {
   const [selectedChat, setSelectedChat] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  
+  const messagesEndRef = useRef(null);
+
+  // Auto-scroll to bottom of messages
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatMessages]);
 
   // Load initial data
   useEffect(() => {
     loadStatus();
     loadConfig();
-    const interval = setInterval(loadStatus, 5000);
+    const interval = setInterval(() => {
+      loadStatus();
+      if (selectedChat) {
+        loadChatHistory(selectedChat);
+      }
+    }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedChat]);
 
   // Poll for QR when awaiting
   useEffect(() => {
@@ -62,8 +78,6 @@ export default function WhatsAppBotPanel() {
       setConnectionStatus(data.status || 'disconnected');
       setConnectedUser(data.user);
       setPausedChats(data.paused_chats || []);
-      
-      // Always load conversations (from MongoDB even if WhatsApp not connected)
       loadConversations();
     } catch (error) {
       console.error('Error loading status:', error);
@@ -138,6 +152,8 @@ export default function WhatsAppBotPanel() {
       await whatsappAPI.updateConfig(config);
       toast.success('Configuración guardada');
       setConfigDirty(false);
+      // Reload to confirm
+      await loadConfig();
     } catch (error) {
       toast.error('Error al guardar configuración');
     }
@@ -147,7 +163,7 @@ export default function WhatsAppBotPanel() {
   const handlePauseChat = async (phoneNumber) => {
     try {
       await whatsappAPI.pauseChat(phoneNumber);
-      toast.success(`Bot pausado para ${phoneNumber}`);
+      toast.success(`Bot pausado para este chat`);
       loadStatus();
     } catch (error) {
       toast.error('Error al pausar chat');
@@ -157,7 +173,7 @@ export default function WhatsAppBotPanel() {
   const handleResumeChat = async (phoneNumber) => {
     try {
       await whatsappAPI.resumeChat(phoneNumber);
-      toast.success(`Bot reactivado para ${phoneNumber}`);
+      toast.success(`Bot reactivado`);
       loadStatus();
     } catch (error) {
       toast.error('Error al reactivar chat');
@@ -170,7 +186,7 @@ export default function WhatsAppBotPanel() {
       setChatMessages(data.messages || []);
       setSelectedChat(phoneNumber);
     } catch (error) {
-      toast.error('Error al cargar historial');
+      console.error('Error loading chat:', error);
     }
   };
 
@@ -194,6 +210,37 @@ export default function WhatsAppBotPanel() {
     setConfigDirty(true);
   };
 
+  // Format phone number for display
+  const formatPhone = (phone) => {
+    if (!phone) return 'Desconocido';
+    // Remove @lid suffix
+    const cleanPhone = phone.replace('@lid', '').replace('@s.whatsapp.net', '');
+    // If it's a long number, format it
+    if (cleanPhone.length > 10) {
+      return `+${cleanPhone.slice(0, 2)} ${cleanPhone.slice(2, 5)} ${cleanPhone.slice(5, 8)}-${cleanPhone.slice(8)}`;
+    }
+    return cleanPhone;
+  };
+
+  // Format timestamp
+  const formatTime = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatDate = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (date.toDateString() === today.toDateString()) return 'Hoy';
+    if (date.toDateString() === yesterday.toDateString()) return 'Ayer';
+    return date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -205,7 +252,7 @@ export default function WhatsAppBotPanel() {
         </div>
         
         {/* Status Badge */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm">
           <div className={`w-3 h-3 rounded-full ${
             connectionStatus === 'connected' ? 'bg-green-500' : 
             connectionStatus === 'awaiting_qr' ? 'bg-yellow-500 animate-pulse' : 
@@ -218,7 +265,7 @@ export default function WhatsAppBotPanel() {
           </span>
           {connectedUser && (
             <span className="text-xs text-gray-500">
-              ({connectedUser.name || connectedUser.id})
+              ({connectedUser.name || connectedUser.id?.split(':')[0]})
             </span>
           )}
         </div>
@@ -236,7 +283,7 @@ export default function WhatsAppBotPanel() {
           </TabsTrigger>
           <TabsTrigger value="conversaciones" className="flex items-center gap-2">
             <MessageCircle className="w-4 h-4" />
-            Conversaciones
+            Chats
           </TabsTrigger>
         </TabsList>
 
@@ -281,15 +328,7 @@ export default function WhatsAppBotPanel() {
                     <p className="text-gray-500 mt-4 text-sm">
                       Escanea este código con WhatsApp
                     </p>
-                    <p className="text-xs text-gray-400 mt-2">
-                      WhatsApp → Menú → Dispositivos vinculados → Vincular dispositivo
-                    </p>
-                    <Button 
-                      onClick={loadQR} 
-                      variant="ghost" 
-                      size="sm" 
-                      className="mt-2"
-                    >
+                    <Button onClick={loadQR} variant="ghost" size="sm" className="mt-2">
                       <RefreshCw className="w-4 h-4 mr-2" />
                       Refrescar QR
                     </Button>
@@ -300,16 +339,8 @@ export default function WhatsAppBotPanel() {
                       <QrCode className="w-12 h-12 text-gray-400" />
                     </div>
                     <p className="text-gray-500 mb-4">No hay conexión activa</p>
-                    <Button 
-                      onClick={handleConnect} 
-                      className="bg-[#25D366] hover:bg-[#128C7E]"
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Power className="w-4 h-4 mr-2" />
-                      )}
+                    <Button onClick={handleConnect} className="bg-[#25D366] hover:bg-[#128C7E]" disabled={loading}>
+                      {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Power className="w-4 h-4 mr-2" />}
                       Conectar WhatsApp
                     </Button>
                   </div>
@@ -324,37 +355,36 @@ export default function WhatsAppBotPanel() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-[#25D366] text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                  <div className="w-6 h-6 bg-[#25D366] text-white rounded-full flex items-center justify-center text-sm font-bold shrink-0">1</div>
                   <div>
                     <p className="font-medium">Abre WhatsApp en tu teléfono</p>
                     <p className="text-sm text-gray-500">La aplicación oficial de WhatsApp</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-[#25D366] text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                  <div className="w-6 h-6 bg-[#25D366] text-white rounded-full flex items-center justify-center text-sm font-bold shrink-0">2</div>
                   <div>
                     <p className="font-medium">Ve a Configuración</p>
-                    <p className="text-sm text-gray-500">Toca los tres puntos → Dispositivos vinculados</p>
+                    <p className="text-sm text-gray-500">Menú ⋮ → Dispositivos vinculados</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-[#25D366] text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                  <div className="w-6 h-6 bg-[#25D366] text-white rounded-full flex items-center justify-center text-sm font-bold shrink-0">3</div>
                   <div>
-                    <p className="font-medium">Vincular un dispositivo</p>
+                    <p className="font-medium">Vincular dispositivo</p>
                     <p className="text-sm text-gray-500">Toca "Vincular un dispositivo"</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 bg-[#25D366] text-white rounded-full flex items-center justify-center text-sm font-bold">4</div>
+                  <div className="w-6 h-6 bg-[#25D366] text-white rounded-full flex items-center justify-center text-sm font-bold shrink-0">4</div>
                   <div>
                     <p className="font-medium">Escanea el código QR</p>
-                    <p className="text-sm text-gray-500">Apunta la cámara al código QR de arriba</p>
+                    <p className="text-sm text-gray-500">Apunta la cámara al código</p>
                   </div>
                 </div>
-                
-                <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
                   <p className="text-sm text-yellow-800">
-                    <strong>⚠️ Importante:</strong> El teléfono debe permanecer conectado a internet para que el bot funcione.
+                    ⚠️ El teléfono debe permanecer conectado a internet
                   </p>
                 </div>
               </CardContent>
@@ -380,17 +410,9 @@ export default function WhatsAppBotPanel() {
                       onCheckedChange={(checked) => updateConfig('bot_activo', checked)}
                     />
                   </div>
-                  <Button 
-                    onClick={handleSaveConfig} 
-                    disabled={!configDirty || loading}
-                    className="bg-[#064E3B] hover:bg-[#064E3B]/90"
-                  >
-                    {loading ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4 mr-2" />
-                    )}
-                    Guardar Cambios
+                  <Button onClick={handleSaveConfig} disabled={!configDirty || loading} className="bg-[#064E3B] hover:bg-[#064E3B]/90">
+                    {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                    Guardar
                   </Button>
                 </div>
               </CardTitle>
@@ -398,59 +420,59 @@ export default function WhatsAppBotPanel() {
             <CardContent className="space-y-6">
               {/* Número del Admin */}
               <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <Label className="text-base font-semibold text-blue-800">📱 Número del Admin (para confirmar pagos)</Label>
+                <Label className="text-base font-semibold text-blue-800">📱 Tu número para confirmar pagos</Label>
                 <p className="text-sm text-blue-600 mb-2">
-                  Cuando un cliente diga que pagó, recibirás un WhatsApp para confirmar. Ingresá tu número con código de país (ej: 5491112345678)
+                  Cuando un cliente diga que pagó, recibirás un WhatsApp para confirmar.
                 </p>
                 <Input 
                   value={config.numero_admin || ''}
                   onChange={(e) => updateConfig('numero_admin', e.target.value.replace(/\D/g, ''))}
-                  placeholder="5491112345678"
-                  className="font-mono"
-                />
-              </div>
-
-              {/* Mensaje de Bienvenida */}
-              <div>
-                <Label className="text-base font-semibold">Mensaje de Bienvenida</Label>
-                <p className="text-sm text-gray-500 mb-2">
-                  Este mensaje se envía al inicio de una nueva conversación
-                </p>
-                <Textarea 
-                  value={config.mensaje_bienvenida}
-                  onChange={(e) => updateConfig('mensaje_bienvenida', e.target.value)}
-                  rows={6}
-                  placeholder="¡Hola! Soy el asistente virtual..."
-                  className="font-mono text-sm"
+                  placeholder="Ej: 5491112345678 (con código de país)"
+                  className="font-mono bg-white"
                 />
               </div>
 
               {/* Datos Bancarios */}
               <div>
-                <Label className="text-base font-semibold">Datos Bancarios para Transferencias</Label>
+                <Label className="text-base font-semibold">💳 Datos Bancarios para Transferencias</Label>
                 <p className="text-sm text-gray-500 mb-2">
-                  El bot usará estos datos cuando un cliente pregunte cómo pagar
+                  El bot usará estos datos cuando un cliente quiera pagar
                 </p>
                 <Textarea 
                   value={config.datos_bancarios}
                   onChange={(e) => updateConfig('datos_bancarios', e.target.value)}
                   rows={4}
-                  placeholder="CBU: 0000000000000000000000&#10;Alias: mi-alias&#10;Titular: Nombre Apellido&#10;CUIT/CUIL: 00-00000000-0"
+                  placeholder="CBU: 0000000000000000000000&#10;Alias: mi-alias&#10;Titular: Nombre Apellido"
+                  className="font-mono text-sm"
+                />
+              </div>
+
+              {/* Mensaje de Bienvenida */}
+              <div>
+                <Label className="text-base font-semibold">👋 Mensaje de Bienvenida</Label>
+                <p className="text-sm text-gray-500 mb-2">
+                  Primer mensaje que ve el cliente
+                </p>
+                <Textarea 
+                  value={config.mensaje_bienvenida}
+                  onChange={(e) => updateConfig('mensaje_bienvenida', e.target.value)}
+                  rows={5}
+                  placeholder="¡Hola! Soy el asistente virtual..."
                   className="font-mono text-sm"
                 />
               </div>
 
               {/* Instrucciones del Bot */}
               <div>
-                <Label className="text-base font-semibold">Instrucciones del Bot (Prompt de Sistema)</Label>
+                <Label className="text-base font-semibold">🤖 Instrucciones del Bot</Label>
                 <p className="text-sm text-gray-500 mb-2">
-                  Instrucciones detalladas sobre cómo debe comportarse el bot. Usa {"{datos_bancarios}"} para insertar los datos bancarios.
+                  Cómo debe comportarse el bot (prompt del sistema)
                 </p>
                 <Textarea 
                   value={config.instrucciones_bot}
                   onChange={(e) => updateConfig('instrucciones_bot', e.target.value)}
-                  rows={15}
-                  placeholder="Eres el asistente virtual de Estonia Cobertura..."
+                  rows={12}
+                  placeholder="Sos el vendedor de..."
                   className="font-mono text-sm"
                 />
               </div>
@@ -458,180 +480,172 @@ export default function WhatsAppBotPanel() {
           </Card>
         </TabsContent>
 
-        {/* Tab Conversaciones */}
-        <TabsContent value="conversaciones" className="space-y-6">
-          <div className="grid md:grid-cols-3 gap-6 h-[600px]">
-            {/* Lista de Conversaciones */}
-            <Card className="md:col-span-1 overflow-hidden flex flex-col">
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center justify-between text-lg">
-                  <span className="flex items-center gap-2">
-                    <Users className="w-5 h-5" />
-                    Chats
-                  </span>
-                  <Button variant="ghost" size="sm" onClick={loadConversations}>
-                    <RefreshCw className="w-4 h-4" />
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 overflow-y-auto p-2">
+        {/* Tab Conversaciones - DISEÑO WHATSAPP */}
+        <TabsContent value="conversaciones">
+          <div className="flex h-[600px] bg-white rounded-xl shadow-lg overflow-hidden border">
+            {/* Lista de Chats - Sidebar */}
+            <div className="w-[350px] border-r flex flex-col bg-white">
+              {/* Header */}
+              <div className="p-4 bg-[#f0f2f5] border-b flex items-center justify-between">
+                <h3 className="font-semibold text-[#111b21]">Chats</h3>
+                <Button variant="ghost" size="sm" onClick={loadConversations}>
+                  <RefreshCw className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              {/* Chat List */}
+              <div className="flex-1 overflow-y-auto">
                 {conversations.length === 0 ? (
-                  <div className="text-center text-gray-500 py-8">
-                    <MessageCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No hay conversaciones</p>
+                  <div className="flex flex-col items-center justify-center h-full text-gray-400 p-4">
+                    <MessageCircle className="w-16 h-16 mb-4 opacity-30" />
+                    <p className="text-center">No hay conversaciones aún</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {conversations.map((conv) => (
-                      <div 
-                        key={conv.phone_number}
-                        onClick={() => loadChatHistory(conv.phone_number)}
-                        className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                          selectedChat === conv.phone_number 
-                            ? 'bg-[#064E3B] text-white' 
-                            : 'bg-gray-50 hover:bg-gray-100'
-                        }`}
-                      >
+                  conversations.map((conv) => (
+                    <div 
+                      key={conv.phone_number}
+                      onClick={() => loadChatHistory(conv.phone_number)}
+                      className={`flex items-center gap-3 p-3 cursor-pointer border-b hover:bg-[#f5f6f6] transition-colors ${
+                        selectedChat === conv.phone_number ? 'bg-[#f0f2f5]' : ''
+                      }`}
+                    >
+                      {/* Avatar */}
+                      <div className="w-12 h-12 rounded-full bg-[#dfe5e7] flex items-center justify-center shrink-0">
+                        <User className="w-6 h-6 text-[#8696a0]" />
+                      </div>
+                      
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">
-                              {conv.push_name || conv.phone_number}
-                            </p>
-                            <p className={`text-xs truncate ${
-                              selectedChat === conv.phone_number ? 'text-white/70' : 'text-gray-500'
-                            }`}>
-                              +{conv.phone_number}
-                            </p>
-                          </div>
-                          {conv.bot_paused || pausedChats.includes(conv.phone_number) ? (
-                            <span className="text-xs bg-yellow-500 text-white px-2 py-0.5 rounded">
-                              Pausado
+                          <span className="font-medium text-[#111b21] truncate">
+                            {conv.push_name || formatPhone(conv.phone_number)}
+                          </span>
+                          <span className="text-xs text-[#667781]">
+                            {formatDate(conv.last_message_time)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-sm text-[#667781] truncate pr-2">
+                            {conv.last_message?.substring(0, 40) || 'Sin mensajes'}
+                          </p>
+                          {conv.message_count > 0 && (
+                            <span className="bg-[#25D366] text-white text-xs px-2 py-0.5 rounded-full">
+                              {conv.message_count}
                             </span>
-                          ) : null}
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Chat Area */}
+            <div className="flex-1 flex flex-col">
+              {selectedChat ? (
+                <>
+                  {/* Chat Header */}
+                  <div className="p-3 bg-[#f0f2f5] border-b flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#dfe5e7] flex items-center justify-center">
+                        <User className="w-5 h-5 text-[#8696a0]" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-[#111b21]">
+                          {conversations.find(c => c.phone_number === selectedChat)?.push_name || formatPhone(selectedChat)}
+                        </p>
+                        <p className="text-xs text-[#667781]">
+                          {formatPhone(selectedChat)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {pausedChats.includes(selectedChat) ? (
+                        <Button onClick={() => handleResumeChat(selectedChat)} size="sm" className="bg-[#25D366] hover:bg-[#128C7E]">
+                          <Play className="w-4 h-4 mr-1" /> Activar Bot
+                        </Button>
+                      ) : (
+                        <Button onClick={() => handlePauseChat(selectedChat)} size="sm" variant="outline" className="text-orange-500 border-orange-500">
+                          <Pause className="w-4 h-4 mr-1" /> Pausar Bot
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Messages */}
+                  <div 
+                    className="flex-1 overflow-y-auto p-4 space-y-2"
+                    style={{ 
+                      backgroundImage: 'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4QoaDCsoCtO+BAAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAANklEQVR42u3BAQEAAACCIP+vbkhAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHcGCWAAAT6PJhEAAAAASUVORK5CYII=")',
+                      backgroundColor: '#efeae2'
+                    }}
+                  >
+                    {chatMessages.map((msg, idx) => (
+                      <div 
+                        key={idx}
+                        className={`flex ${msg.role === 'assistant' ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className={`max-w-[70%] rounded-lg px-3 py-2 shadow-sm ${
+                          msg.role === 'assistant' 
+                            ? 'bg-[#d9fdd3] rounded-tr-none' 
+                            : 'bg-white rounded-tl-none'
+                        }`}>
+                          <p className="text-[#111b21] text-sm whitespace-pre-wrap break-words">
+                            {msg.message}
+                          </p>
+                          <div className="flex items-center justify-end gap-1 mt-1">
+                            <span className="text-[10px] text-[#667781]">
+                              {formatTime(msg.timestamp)}
+                            </span>
+                            {msg.role === 'assistant' && (
+                              <CheckCheck className="w-4 h-4 text-[#53bdeb]" />
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
+                    <div ref={messagesEndRef} />
                   </div>
-                )}
-              </CardContent>
-            </Card>
 
-            {/* Chat View */}
-            <Card className="md:col-span-2 overflow-hidden flex flex-col">
-              <CardHeader className="pb-2 border-b">
-                {selectedChat ? (
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <MessageCircle className="w-5 h-5 text-[#25D366]" />
-                      +{selectedChat}
-                    </CardTitle>
-                    <div className="flex items-center gap-2">
-                      {pausedChats.includes(selectedChat) ? (
+                  {/* Input Area */}
+                  <div className="p-3 bg-[#f0f2f5] border-t">
+                    {pausedChats.includes(selectedChat) ? (
+                      <div className="flex gap-2">
+                        <Input 
+                          value={newMessage}
+                          onChange={(e) => setNewMessage(e.target.value)}
+                          placeholder="Escribe un mensaje..."
+                          onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+                          className="flex-1 rounded-full bg-white border-0"
+                        />
                         <Button 
-                          onClick={() => handleResumeChat(selectedChat)} 
-                          size="sm"
-                          className="bg-green-500 hover:bg-green-600"
+                          onClick={handleSendMessage}
+                          disabled={!newMessage.trim() || loading}
+                          className="rounded-full w-10 h-10 p-0 bg-[#25D366] hover:bg-[#128C7E]"
                         >
-                          <Play className="w-4 h-4 mr-1" />
-                          Reactivar Bot
+                          <Send className="w-5 h-5" />
                         </Button>
-                      ) : (
-                        <Button 
-                          onClick={() => handlePauseChat(selectedChat)} 
-                          size="sm"
-                          variant="outline"
-                          className="text-yellow-600 border-yellow-600"
-                        >
-                          <Pause className="w-4 h-4 mr-1" />
-                          Pausar Bot
-                        </Button>
-                      )}
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-2 text-sm text-[#667781]">
+                        🤖 El bot está respondiendo automáticamente · <button onClick={() => handlePauseChat(selectedChat)} className="text-[#25D366] hover:underline">Pausar para escribir</button>
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <CardTitle className="text-lg text-gray-400">
-                    Selecciona una conversación
-                  </CardTitle>
-                )}
-              </CardHeader>
-              
-              <CardContent className="flex-1 overflow-y-auto p-4 bg-[#f0f2f5]">
-                {selectedChat ? (
-                  chatMessages.length === 0 ? (
-                    <div className="text-center text-gray-500 py-8">
-                      <p className="text-sm">No hay mensajes</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {chatMessages.map((msg, idx) => (
-                        <div 
-                          key={idx}
-                          className={`flex ${msg.role === 'assistant' ? 'justify-end' : 'justify-start'}`}
-                        >
-                          <div className={`max-w-[80%] rounded-lg p-3 ${
-                            msg.role === 'assistant' 
-                              ? 'bg-[#dcf8c6] text-black' 
-                              : 'bg-white text-black'
-                          }`}>
-                            <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
-                            <p className="text-xs text-gray-500 mt-1 text-right">
-                              {new Date(msg.timestamp).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )
-                ) : (
-                  <div className="flex items-center justify-center h-full text-gray-400">
-                    <div className="text-center">
-                      <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                      <p>Selecciona un chat para ver los mensajes</p>
-                    </div>
+                </>
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center bg-[#f0f2f5] text-[#667781]">
+                  <div className="w-64 h-64 mb-6">
+                    <svg viewBox="0 0 303 172" className="opacity-30">
+                      <path fill="currentColor" d="M229.565 160.229c-1.156.622-2.391 1.067-3.662 1.33v6.048c0 2.46-1.99 4.45-4.449 4.45H81.546c-2.46 0-4.449-1.99-4.449-4.45v-6.048a15.27 15.27 0 0 1-3.663-1.33C35.126 139.988 22.554 94.547 52.376 59.07c29.822-35.478 85.063-35.478 114.885 0 29.822 35.477 17.25 80.918-20.058 101.159h-.002c-1.156.622-2.391 1.067-3.662 1.33v6.048c0 2.46-1.99 4.45-4.449 4.45H62.626c-2.46 0-4.449-1.99-4.449-4.45v-6.048c-1.27-.263-2.506-.708-3.662-1.33-37.308-20.241-49.88-65.682-20.058-101.159 29.822-35.478 85.063-35.478 114.885 0 29.822 35.477 17.25 80.918-20.058 101.159z"/>
+                    </svg>
                   </div>
-                )}
-              </CardContent>
-
-              {/* Message Input */}
-              {selectedChat && pausedChats.includes(selectedChat) && (
-                <div className="border-t p-4 bg-white">
-                  <div className="flex gap-2">
-                    <Input 
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Escribe un mensaje manual..."
-                      onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
-                      className="flex-1"
-                    />
-                    <Button 
-                      onClick={handleSendMessage}
-                      disabled={!newMessage.trim() || loading}
-                      className="bg-[#25D366] hover:bg-[#128C7E]"
-                    >
-                      {loading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Send className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </div>
-                  <p className="text-xs text-yellow-600 mt-2">
-                    ⚠️ Bot pausado - Puedes enviar mensajes manualmente
-                  </p>
+                  <h3 className="text-2xl font-light text-[#41525d] mb-2">WhatsApp para Estonia Cobertura</h3>
+                  <p className="text-sm">Selecciona un chat para ver la conversación</p>
                 </div>
               )}
-              
-              {selectedChat && !pausedChats.includes(selectedChat) && (
-                <div className="border-t p-4 bg-gray-50 text-center">
-                  <p className="text-sm text-gray-500">
-                    🤖 El bot está respondiendo automáticamente
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Pausa el bot para enviar mensajes manualmente
-                  </p>
-                </div>
-              )}
-            </Card>
+            </div>
           </div>
         </TabsContent>
       </Tabs>
