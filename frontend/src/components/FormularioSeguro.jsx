@@ -24,7 +24,14 @@ export default function FormularioSeguro({ onClose }) {
     cobertura: 'rc',
     codigo_promocional: ''
   });
-  const [fotos, setFotos] = useState({ frente: null, lado_izq: null, lado_der: null, trasera: null });
+  const [fotos, setFotos] = useState({ 
+    frente: null, 
+    lado_izq: null, 
+    lado_der: null, 
+    trasera: null,
+    cedula_vehiculo: null,
+    carnet_conductor: null
+  });
   const [cotizacion, setCotizacion] = useState(null);
   const [loading, setLoading] = useState(false);
   const { setSeguroActual } = useSeguroStore();
@@ -57,8 +64,11 @@ export default function FormularioSeguro({ onClose }) {
       return;
     }
 
-    if (!fotos.frente || !fotos.lado_izq || !fotos.lado_der || !fotos.trasera) {
-      toast.error('Por favor suba las 4 fotos del vehículo');
+    const fotosRequeridas = ['frente', 'lado_izq', 'lado_der', 'trasera', 'cedula_vehiculo', 'carnet_conductor'];
+    const faltanFotos = fotosRequeridas.some(tipo => !fotos[tipo]);
+    
+    if (faltanFotos) {
+      toast.error('Por favor suba todas las fotos y documentos requeridos');
       return;
     }
 
