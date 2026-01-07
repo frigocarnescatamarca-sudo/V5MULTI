@@ -783,7 +783,7 @@ export default function AdminPanel() {
               {agentes.map((agente) => (
                 <Card key={agente.id} className={!agente.activo ? 'opacity-50' : ''}>
                   <CardContent className="p-6">
-                    <div className="grid md:grid-cols-5 gap-4 items-center">
+                    <div className="grid md:grid-cols-6 gap-4 items-center">
                       <div>
                         <p className="text-sm text-[#64748B]">Agente</p>
                         <p className="font-bold text-[#064E3B]">{agente.nombre}</p>
@@ -806,6 +806,22 @@ export default function AdminPanel() {
                         <p className="text-xs text-[#10B981]">
                           ${(agente.estadisticas?.total_comisiones || 0).toLocaleString('es-AR')} comisiones
                         </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-[#64748B]">Saldo Actual</p>
+                        <p className="text-2xl font-bold text-[#F59E0B]" style={{ fontFamily: 'Space Grotesk, monospace' }}>
+                          ${(agente.estadisticas?.saldo_actual || agente.saldo || 0).toLocaleString('es-AR')}
+                        </p>
+                        <Button
+                          onClick={() => abrirModalSaldo(agente)}
+                          size="sm"
+                          variant="outline"
+                          className="mt-1 text-[#F59E0B] border-[#F59E0B] hover:bg-[#F59E0B]/10"
+                          data-testid="agregar-saldo-btn"
+                        >
+                          <DollarSign className="w-3 h-3 mr-1" />
+                          Agregar
+                        </Button>
                       </div>
                       <div className="flex gap-2 justify-end">
                         <Button
