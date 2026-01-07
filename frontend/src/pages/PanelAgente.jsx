@@ -388,7 +388,7 @@ export default function PanelAgente() {
                         <div>
                           <p className="text-sm text-[#64748B]">Tu Comisión</p>
                           <p className="text-xl font-bold text-[#10B981]" style={{ fontFamily: 'Space Grotesk, monospace' }}>
-                            ${(seguro.precio_final * (seguro.comision_aplicada || agente?.comision_porcentaje || 10) / 100).toLocaleString('es-AR')}
+                            ${(seguro.precio_final * (seguro.comision_porcentaje || agente?.comision_porcentaje || 10) / 100).toLocaleString('es-AR')}
                           </p>
                         </div>
                         <div>
@@ -397,9 +397,45 @@ export default function PanelAgente() {
                               ? 'bg-[#10B981] text-white'
                               : 'bg-yellow-500 text-white'
                           }`}>
-                            {seguro.estado}
+                            {seguro.estado === 'pagado' ? 'Aprobado' : seguro.estado}
                           </span>
                         </div>
+                        {/* Botones de descarga - solo para aprobados */}
+                        {(seguro.estado === 'pagado' || seguro.estado === 'gratis') && (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => window.open(segurosAPI.descargarPDF(seguro.id), '_blank')}
+                              className="text-[#064E3B]"
+                              title="Descargar PDF"
+                            >
+                              <FileText className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => window.open(segurosAPI.descargarImagen(seguro.id), '_blank')}
+                              className="text-[#064E3B]"
+                              title="Descargar Imagen"
+                            >
+                              <Image className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const url = `${window.location.origin}/verificar/${seguro.numero_recibo}`;
+                                navigator.clipboard.writeText(url);
+                                toast.success('Link de verificación copiado');
+                              }}
+                              className="text-[#10B981]"
+                              title="Copiar link de verificación"
+                            >
+                              <Share2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
