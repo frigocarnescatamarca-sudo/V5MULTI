@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, Check, Plus, Trash2, Tag, Download, LogOut, Edit, X } from 'lucide-react';
+import { Shield, Check, Plus, Trash2, Tag, Download, LogOut, Edit, X, Image as ImageIcon, Users, Award, Calendar, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { adminAPI, segurosAPI } from '@/services/api';
 import { toast } from 'sonner';
+import VisorDocumentos from '@/components/VisorDocumentos';
 
 export default function AdminPanel() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -18,10 +19,14 @@ export default function AdminPanel() {
   const [adminUsername, setAdminUsername] = useState('');
   const [seguros, setSeguros] = useState([]);
   const [promoCodes, setPromoCodes] = useState([]);
+  const [agentes, setAgentes] = useState([]);
+  const [premios, setPremios] = useState([]);
+  const [vencimientos, setVencimientos] = useState(null);
   const [loading, setLoading] = useState(false);
   const [nuevoPromo, setNuevoPromo] = useState({ codigo: '', descuento_porcentaje: 0, es_master: false });
   const [modalSeguroOpen, setModalSeguroOpen] = useState(false);
   const [seguroEditando, setSeguroEditando] = useState(null);
+  const [seguroVerDocs, setSeguroVerDocs] = useState(null);
   const [formSeguro, setFormSeguro] = useState({
     dni: '',
     nombre: '',
@@ -108,12 +113,18 @@ export default function AdminPanel() {
   const cargarDatos = async () => {
     setLoading(true);
     try {
-      const [segurosData, codigosData] = await Promise.all([
+      const [segurosData, codigosData, agentesData, premiosData, vencimientosData] = await Promise.all([
         adminAPI.listarSeguros(0, 100, token),
-        adminAPI.listarPromoCodes()
+        adminAPI.listarPromoCodes(),
+        adminAPI.listarAgentes(),
+        adminAPI.listarPremios(),
+        adminAPI.obtenerVencimientos()
       ]);
       setSeguros(segurosData.seguros || []);
       setPromoCodes(codigosData.codigos || []);
+      setAgentes(agentesData.agentes || []);
+      setPremios(premiosData.premios || []);
+      setVencimientos(vencimientosData);
     } catch (error) {
       toast.error('Error al cargar datos');
     } finally {
