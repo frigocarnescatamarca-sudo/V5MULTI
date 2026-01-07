@@ -581,13 +581,22 @@ export default function AdminPanel() {
       {/* Content */}
       <div className="container mx-auto px-6 py-12">
         <Tabs defaultValue="seguros" className="space-y-6">
-          <TabsList className="grid w-full max-w-4xl grid-cols-5">
+          <TabsList className="grid w-full max-w-5xl grid-cols-6">
             <TabsTrigger value="seguros">Seguros</TabsTrigger>
             <TabsTrigger value="agentes">Agentes</TabsTrigger>
             <TabsTrigger value="premios">Premios</TabsTrigger>
             <TabsTrigger value="vencimientos">Vencimientos</TabsTrigger>
             <TabsTrigger value="promos">Códigos</TabsTrigger>
+            <TabsTrigger value="whatsapp" className="flex items-center gap-1">
+              <Bot className="w-4 h-4" />
+              WhatsApp Bot
+            </TabsTrigger>
           </TabsList>
+
+          {/* Tab WhatsApp Bot */}
+          <TabsContent value="whatsapp" data-testid="tab-whatsapp">
+            <WhatsAppBotPanel />
+          </TabsContent>
 
           {/* Tab Seguros */}
           <TabsContent value="seguros" className="space-y-6" data-testid="tab-seguros">
