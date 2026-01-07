@@ -1,0 +1,153 @@
+{
+  "typography": {
+    "headings": {
+      "font_family": "Manrope, sans-serif",
+      "weights": ["600", "800"],
+      "usage": "Main headings, section titles, hero text"
+    },
+    "body": {
+      "font_family": "Inter, sans-serif",
+      "weights": ["400", "500"],
+      "usage": "Paragraphs, form labels, UI text"
+    },
+    "accents": {
+      "font_family": "Space Grotesk, monospace",
+      "weights": ["700"],
+      "usage": "Prices, percentages, countdowns, data metrics"
+    }
+  },
+  "colors": {
+    "primary": {
+      "name": "Estonia Deep Green",
+      "hex": "#064E3B",
+      "usage": "Brand headers, primary text, footer background"
+    },
+    "secondary": {
+      "name": "Signal Emerald",
+      "hex": "#10B981",
+      "usage": "Success states, active indicators, icons"
+    },
+    "accent": {
+      "name": "Express Lime",
+      "hex": "#D9F99D",
+      "usage": "High-impact CTAs, hover states, 'Express' highlights"
+    },
+    "neutral": {
+      "background": "#F8FAFC",
+      "surface": "#FFFFFF",
+      "border": "#E2E8F0",
+      "text_primary": "#0F172A",
+      "text_secondary": "#64748B"
+    },
+    "feedback": {
+      "error": "#EF4444",
+      "warning": "#F59E0B",
+      "success": "#10B981"
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": {
+      "usage": "Sticky headers, floating action bars, modal overlays",
+      "classes": "bg-white/80 backdrop-blur-xl border-b border-white/20 shadow-sm"
+    },
+    "tracing_beam": {
+      "usage": "Pricing cards, selected plan highlight",
+      "description": "A glowing gradient border that animates on hover or selection"
+    },
+    "gradients": {
+      "hero_overlay": "linear-gradient(180deg, rgba(6, 78, 59, 0.9) 0%, rgba(6, 78, 59, 0.4) 100%)",
+      "subtle_mesh": "radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.1) 0%, transparent 50%)"
+    },
+    "shadows": {
+      "card": "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
+      "floating": "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+    }
+  },
+  "grids": {
+    "marketing": {
+      "name": "Tetris Grid",
+      "classes": "grid grid-cols-1 md:grid-cols-12 gap-8",
+      "description": "Asymmetrical layout for features. Use col-span-8 for hero images, col-span-4 for supporting text."
+    },
+    "dashboard": {
+      "name": "Control Room Grid",
+      "classes": "grid grid-cols-1 md:grid-cols-4 gap-6",
+      "description": "Dense data layout. Widgets span 1-2 columns. Full height children."
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#064E3B] text-white hover:bg-[#064E3B]/90 rounded-full px-8 py-6 text-lg font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1",
+      "secondary": "bg-white text-[#064E3B] border-2 border-[#064E3B] hover:bg-[#F0FDF4] rounded-full px-6 py-4 font-semibold",
+      "accent": "bg-[#D9F99D] text-[#064E3B] hover:bg-[#BEF264] rounded-full px-8 py-6 text-lg font-bold shadow-[0_0_20px_rgba(217,249,157,0.6)]"
+    },
+    "cards": {
+      "feature": "bg-white rounded-2xl p-8 border border-slate-100 shadow-card hover:shadow-floating transition-all duration-300",
+      "pricing": "relative overflow-hidden bg-white rounded-3xl p-10 border-2 border-transparent hover:border-[#10B981] transition-all"
+    },
+    "inputs": {
+      "default": "h-14 px-4 rounded-xl border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-[#10B981] focus:border-transparent transition-all text-lg"
+    }
+  },
+  "image_urls": {
+    "logo": {
+      "url": "https://images.unsplash.com/photo-1580815318630-f9519fe34899?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDN8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBlbGVjdHJpYyUyMGdyZWVuJTIwbGlnaHRob3VzZSUyMGxvZ28lMjBtaW5pbWFsaXN0fGVufDB8fHx8MTc2Nzc0ODYyNnww&ixlib=rb-4.1.0&q=85",
+      "description": "Abstract minimalist lighthouse structure (The Steel Daisy), use as brand icon/logo mark",
+      "category": "branding"
+    },
+    "hero_bg": {
+      "url": "https://images.unsplash.com/photo-1765301657633-b00e77256475?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzl8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBjYXIlMjBvbiUyMGhpZ2h3YXklMjBtb3Rpb24lMjBibHVyfGVufDB8fHx8MTc2Nzc0ODYyOXww&ixlib=rb-4.1.0&q=85",
+      "description": "Cars on highway with motion blur, representing speed and 'Express' service",
+      "category": "hero"
+    },
+    "trust_proof": {
+      "url": "https://images.unsplash.com/photo-1617254839541-e7e58319e781?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzd8MHwxfHNlYXJjaHwzfHx0cmFmZmljJTIwcG9saWNlJTIwY2hlY2tpbmclMjBjYXIlMjBkb2N1bWVudHMlMjBmcmllbmRseXxlbnwwfHx8fDE3Njc3NDg2MzB8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Official checking documents, reinforcing the 'valid for checkpoints' value prop",
+      "category": "features"
+    },
+    "happy_customer": {
+      "url": "https://images.unsplash.com/photo-1758521961483-30f5908b9c93?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwxfHxoYXBweSUyMGRyaXZlciUyMGluJTIwY2FyJTIwaG9sZGluZyUyMHNtYXJ0cGhvbmV8ZW58MHx8fHwxNzY3NzQ4NjI3fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Happy driver with smartphone, showing ease of use and mobile-first nature",
+      "category": "testimonials"
+    }
+  },
+  "motion": {
+    "transitions": "transition-all duration-300 ease-out",
+    "hover_lift": "hover:-translate-y-1 hover:shadow-lg",
+    "page_enter": "animate-in fade-in slide-in-from-bottom-4 duration-700"
+  },
+  "accessibility": {
+    "contrast_check": "Ensure all text on Green backgrounds is White. Text on Lime backgrounds must be Deep Green.",
+    "focus_states": "focus:ring-2 focus:ring-offset-2 focus:ring-[#10B981]",
+    "reduced_motion": "Respect prefers-reduced-motion media query"
+  },
+  "instructions_to_main_agent": [
+    "Use the 'Tetris Grid' for the landing page features section to avoid boring 3-column layouts.",
+    "Implement the 'Tracing Beam' effect on the Pricing Plan selection cards.",
+    "The 'Express Lime' (#D9F99D) color is ONLY for the primary 'Generate Insurance' button and price highlights.",
+    "Use 'Space Grotesk' font specifically for the Price numbers and the Countdown timer if used.",
+    "Ensure the mobile view is prioritized (Mobile-First) as users will likely be in their cars.",
+    "For the 'Upload Photos' section, use a large, dashed-border dropzone with clear icons for 'Front', 'Side', 'Back'.",
+    "The 'Verification Page' (QR scan target) must be extremely simple: Green Checkmark, Large 'VIGENTE' text, and Vehicle Plate number."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy",
+    "Use glass-morphism effects with backdrop filters (12-24px blur)",
+    "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms. Always add transitions for specific interactive elements like button, input excluding transforms",
+    "You MUST NOT center align the app container, ie do not add .App { text-align: center; } in the css file. This disrupts the human natural reading flow of text",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style",
+    "NEVER: use AI assistant Emoji characters like 🤖🧠💭💡🔮🎯📚🎭🎬🎪🎉🎊🎁🎀🎂🍰🎈🎨🎰💰💵💳🏦💎🪙💸🤑📊📈📉💹🔢🏆🥇 etc for icons.",
+    "Every interaction needs micro-animations - hover states, transitions, parallax effects, and entrance animations. Static = dead.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations: separates good from extraordinary.",
+    "Main agent relies on these image URLs. Missing categories (especially sponsor logos) = main agent will use placeholder text which is FORBIDDEN",
+    "Prioritize using pre-existing components from src/components/ui when applicable",
+    "Create new components that match the style and conventions of existing components when needed",
+    "Examine existing components to understand the project's component patterns before creating new ones",
+    "Components MUST use named exports (export const ComponentName = ...)",
+    "Pages MUST use default exports (export default function PageName() {...})",
+    "Use sonner for toasts. Sonner component are located in /app/src/components/ui/sonner.tsx"
+  ]
+}
