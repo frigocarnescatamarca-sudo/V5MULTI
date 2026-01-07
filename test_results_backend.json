@@ -4,69 +4,97 @@
     "success": true,
     "message": "Admin login successful",
     "details": null,
-    "timestamp": "2026-01-07T17:42:58.330183"
+    "timestamp": "2026-01-07T19:29:21.648034"
   },
   {
     "test": "WhatsApp Status",
     "success": true,
     "message": "Status: disconnected, Connected: False",
     "details": null,
-    "timestamp": "2026-01-07T17:42:58.390445"
+    "timestamp": "2026-01-07T19:29:21.717118"
   },
   {
     "test": "WhatsApp Config Get",
     "success": true,
-    "message": "Config loaded with 4 fields",
+    "message": "Config loaded with 7 fields",
     "details": null,
-    "timestamp": "2026-01-07T17:42:58.427729"
+    "timestamp": "2026-01-07T19:29:21.762362"
   },
   {
     "test": "WhatsApp Config Update",
     "success": true,
     "message": "Configuration updated successfully",
     "details": null,
-    "timestamp": "2026-01-07T17:42:58.475100"
+    "timestamp": "2026-01-07T19:29:21.809027"
   },
   {
     "test": "WhatsApp Conversations",
-    "success": true,
-    "message": "Found 1 conversations including test conversation",
+    "success": false,
+    "message": "Test conversation (5491155667788) not found in 8 conversations",
     "details": null,
-    "timestamp": "2026-01-07T17:42:58.535268"
+    "timestamp": "2026-01-07T19:29:21.871206"
   },
   {
     "test": "WhatsApp Chat History",
-    "success": true,
-    "message": "Retrieved 10 messages for 5491155667788",
+    "success": false,
+    "message": "Expected at least 10 messages, got 0",
     "details": null,
-    "timestamp": "2026-01-07T17:42:58.578730"
+    "timestamp": "2026-01-07T19:29:21.909697"
   },
   {
     "test": "Verificar Seguro",
     "success": true,
     "message": "Receipt 41702927 verified successfully",
     "details": null,
-    "timestamp": "2026-01-07T17:42:58.616902"
+    "timestamp": "2026-01-07T19:29:21.949433"
   },
   {
     "test": "Download PDF Comprobante",
     "success": true,
-    "message": "PDF downloaded successfully (368344 bytes)",
+    "message": "PDF downloaded successfully (368490 bytes)",
     "details": null,
-    "timestamp": "2026-01-07T17:42:58.862297"
+    "timestamp": "2026-01-07T19:29:22.224543"
   },
   {
     "test": "Pause Chat",
     "success": true,
     "message": "Chat paused for 5491155667788",
     "details": null,
-    "timestamp": "2026-01-07T17:42:58.970856"
+    "timestamp": "2026-01-07T19:29:22.309751"
   },
   {
     "test": "Resume Chat",
     "success": true,
     "message": "Chat resumed for 5491155667788",
     "details": null,
-    "timestamp": "2026-01-07T17:42:59.028461"
+    "timestamp": "2026-01-07T19:29:22.364328"
+  },
+  {
+    "test": "WhatsApp Ventas Endpoint",
+    "success": true,
+    "message": "WhatsApp ventas: '', Tiene WhatsApp: False",
+    "details": null,
+    "timestamp": "2026-01-07T19:29:22.447781"
+  },
+  {
+    "test": "Coberturas DNI Endpoint",
+    "success": true,
+    "message": "DNI 30456789: 2 coberturas found with status fields",
+    "details": null,
+    "timestamp": "2026-01-07T19:29:22.482821"
+  },
+  {
+    "test": "WhatsApp Config Ventas Update",
+    "success": true,
+    "message": "WhatsApp ventas number updated to: 5491123456789",
+    "details": null,
+    "timestamp": "2026-01-07T19:29:22.520912"
+  },
+  {
+    "test": "WhatsApp Ventas After Config",
+    "success": true,
+    "message": "WhatsApp ventas correctly updated: '5491123456789', Tiene WhatsApp: True",
+    "details": null,
+    "timestamp": "2026-01-07T19:29:22.560398"
   }
 ]
