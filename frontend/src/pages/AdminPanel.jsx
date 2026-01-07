@@ -481,7 +481,7 @@ export default function AdminPanel() {
               {seguros.map((seguro) => (
                 <Card key={seguro.numero_recibo} data-testid="seguro-admin-card">
                   <CardContent className="p-6">
-                    <div className="grid md:grid-cols-5 gap-4 items-center">
+                    <div className="grid md:grid-cols-6 gap-4 items-center">
                       <div>
                         <p className="text-sm text-[#64748B]">Recibo</p>
                         <p className="font-mono font-bold text-[#064E3B]">{seguro.numero_recibo}</p>
@@ -495,6 +495,14 @@ export default function AdminPanel() {
                         <p className="text-sm text-[#64748B]">Vehículo</p>
                         <p className="font-semibold text-[#064E3B]">{seguro.patente}</p>
                         <p className="text-xs text-[#64748B]">{seguro.marca} {seguro.modelo}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-[#64748B]">Agente</p>
+                        {seguro.agente_nombre ? (
+                          <p className="font-semibold text-[#10B981]">{seguro.agente_nombre}</p>
+                        ) : (
+                          <p className="text-xs text-[#64748B] italic">Sin agente</p>
+                        )}
                       </div>
                       <div>
                         <p className="text-sm text-[#64748B]">Estado</p>
