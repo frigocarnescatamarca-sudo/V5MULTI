@@ -330,6 +330,15 @@ Ejemplo: CONFIRMAR ABC123"""
     # Save incoming message
     await save_message(phone_number, message, "user", push_name)
     
+    # Check if message is a DNI query (only digits, 7-8 characters)
+    clean_message = message.strip().replace('.', '').replace(' ', '')
+    if clean_message.isdigit() and 7 <= len(clean_message) <= 8:
+        # This looks like a DNI - check for coverages
+        dni_response = await check_coverages_by_dni(clean_message)
+        if dni_response:
+            await save_message(phone_number, dni_response, "assistant")
+            return dni_response
+    
     # Get conversation history
     history = await get_conversation_history(phone_number, limit=10)
     
