@@ -729,6 +729,186 @@ async def verify_admin_token(token: str):
     
     return {"valid": False}
 
+# ============ AGENTES ROUTES ============
+
+@api_router.post("/agente/login")
+async def agente_login(data: dict):
+    """Login de agente"""
+    username = data.get("username")
+    password = data.get("password")
+    
+    # Buscar agente en base de datos
+    agente = await db.agentes.find_one({"username": username, "activo": True})
+    
+    if not agente:
+        raise HTTPException(status_code=401, detail="Credenciales inválidas")
+    
+    # Verificar password (en producción usar hash)
+    if agente.get("password") != password:
+        raise HTTPException(status_code=401, detail="Credenciales inválidas")
+    
+    # Generar token
+    import secrets
+    token = secrets.token_urlsafe(32)
+    
+    # Guardar sesión
+    await db.agente_sessions.insert_one({
+        "token": token,
+        "agente_id": agente["_id"],
+        "username": username,
+        "created_at": datetime.now(timezone.utc),
+        "expires_at": datetime.now(timezone.utc) + timedelta(hours=24)
+    })
+    
+    return {
+        "success": True,
+        "token": token,
+        "agente": {
+            "id": agente["_id"],
+            "nombre": agente["nombre"],
+            "email": agente["email"],
+            "comision_porcentaje": agente.get("comision_porcentaje", 10)
+        }
+    }
+
+@api_router.post("/agente/logout")
+async def agente_logout(data: dict):
+    """Logout de agente"""
+    token = data.get("token")
+    if token:
+        await db.agente_sessions.delete_one({"token": token})
+    return {"success": True}
+
+@api_router.get("/agente/verify")
+async def verify_agente_token(token: str):
+    """Verifica si un token de agente es válido"""
+    session = await db.agente_sessions.find_one({
+        "token": token,
+        "expires_at": {"$gt": datetime.now(timezone.utc)}
+    })
+    
+    if session:
+        agente = await db.agentes.find_one({"_id": session["agente_id"]})
+        if agente:
+            return {
+                "valid": True,
+                "agente": {
+                    "id": agente["_id"],
+                    "nombre": agente["nombre"],
+                    "username": session["username"]
+                }
+            }
+    
+    return {"valid": False}
+
+@api_router.get("/agente/mis-seguros")
+async def obtener_seguros_agente(token: str):
+    """Obtiene los seguros del agente autenticado"""
+    session = await db.agente_sessions.find_one({
+        "token": token,
+        "expires_at": {"$gt": datetime.now(timezone.utc)}
+    })
+    
+    if not session:
+        raise HTTPException(status_code=401, detail="Token inválido")
+    
+    agente_id = session["agente_id"]
+    
+    # Obtener seguros asignados al agente
+    seguros = await db.seguros.find(
+        {"agente_id": agente_id}
+    ).sort("created_at", -1).to_list(1000)
+    
+    # Convertir _id a id
+    for seguro in seguros:
+        if '_id' in seguro:
+            seguro['id'] = seguro['_id']
+            del seguro['_id']
+    
+    # Calcular estadísticas
+    total_seguros = len(seguros)
+    seguros_pagados = len([s for s in seguros if s.get('estado') in ['pagado', 'gratis']])
+    total_comisiones = sum([
+        s.get('precio_final', 0) * (session.get('comision_porcentaje', 10) / 100)
+        for s in seguros if s.get('estado') in ['pagado', 'gratis']
+    ])
+    
+    # Verificar premios ganados
+    premios_activos = await db.premios.find({"activo": True}).to_list(100)
+    premios_ganados = []
+    
+    for premio in premios_activos:
+        if seguros_pagados >= premio.get('cantidad_seguros', 0):
+            premios_ganados.append({
+                "nombre": premio.get('nombre'),
+                "monto": premio.get('monto_premio'),
+                "cantidad_requerida": premio.get('cantidad_seguros')
+            })
+    
+    return {
+        "seguros": seguros,
+        "estadisticas": {
+            "total_seguros": total_seguros,
+            "seguros_pagados": seguros_pagados,
+            "seguros_pendientes": total_seguros - seguros_pagados,
+            "total_comisiones": total_comisiones,
+            "premios_ganados": premios_ganados
+        }
+    }
+
+@api_router.get("/agente/vencimientos")
+async def obtener_vencimientos_agente(token: str):
+    """Obtiene próximos vencimientos del agente"""
+    session = await db.agente_sessions.find_one({
+        "token": token,
+        "expires_at": {"$gt": datetime.now(timezone.utc)}
+    })
+    
+    if not session:
+        raise HTTPException(status_code=401, detail="Token inválido")
+    
+    agente_id = session["agente_id"]
+    ahora = datetime.now(timezone.utc)
+    
+    # Seguros del agente
+    seguros = await db.seguros.find(
+        {"agente_id": agente_id, "estado": {"$in": ["pagado", "gratis"]}}
+    ).to_list(1000)
+    
+    # Clasificar por vencimiento
+    vencidos = []
+    proximos_7_dias = []
+    proximos_15_dias = []
+    proximos_30_dias = []
+    vigentes = []
+    
+    for seguro in seguros:
+        vigencia_hasta = datetime.fromisoformat(seguro['vigencia_hasta'])
+        dias_restantes = (vigencia_hasta - ahora).days
+        
+        seguro['id'] = seguro['_id']
+        del seguro['_id']
+        seguro['dias_restantes'] = dias_restantes
+        
+        if dias_restantes < 0:
+            vencidos.append(seguro)
+        elif dias_restantes <= 7:
+            proximos_7_dias.append(seguro)
+        elif dias_restantes <= 15:
+            proximos_15_dias.append(seguro)
+        elif dias_restantes <= 30:
+            proximos_30_dias.append(seguro)
+        else:
+            vigentes.append(seguro)
+    
+    return {
+        "vencidos": vencidos,
+        "proximos_7_dias": proximos_7_dias,
+        "proximos_15_dias": proximos_15_dias,
+        "proximos_30_dias": proximos_30_dias,
+        "vigentes": vigentes
+    }
+
 @api_router.get("/admin/seguros")
 async def listar_seguros_admin(skip: int = 0, limit: int = 50, token: str = None):
     """Lista todos los seguros (admin)"""
