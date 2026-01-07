@@ -1218,6 +1218,57 @@ async def eliminar_agente(agente_id: str):
     
     return {"success": True}
 
+@api_router.post("/admin/agentes/{agente_id}/agregar-saldo")
+async def agregar_saldo_agente(agente_id: str, data: AgregarSaldoAgente):
+    """Agrega saldo a un agente con observación"""
+    
+    # Verificar que el agente existe
+    agente = await db.agentes.find_one({"_id": agente_id})
+    if not agente:
+        raise HTTPException(status_code=404, detail="Agente no encontrado")
+    
+    # Crear registro de movimiento
+    movimiento = {
+        "_id": str(uuid.uuid4()),
+        "agente_id": agente_id,
+        "tipo": "ingreso",
+        "monto": data.monto,
+        "observacion": data.observacion,
+        "fecha": datetime.now(timezone.utc).isoformat(),
+        "saldo_anterior": agente.get("saldo", 0),
+        "saldo_nuevo": agente.get("saldo", 0) + data.monto
+    }
+    
+    await db.movimientos_agentes.insert_one(movimiento)
+    
+    # Actualizar saldo del agente
+    nuevo_saldo = agente.get("saldo", 0) + data.monto
+    await db.agentes.update_one(
+        {"_id": agente_id},
+        {"$set": {"saldo": nuevo_saldo}}
+    )
+    
+    return {
+        "success": True,
+        "saldo_anterior": movimiento["saldo_anterior"],
+        "saldo_nuevo": nuevo_saldo,
+        "movimiento_id": movimiento["_id"]
+    }
+
+@api_router.get("/admin/agentes/{agente_id}/movimientos")
+async def obtener_movimientos_agente(agente_id: str):
+    """Obtiene el historial de movimientos de un agente"""
+    
+    movimientos = await db.movimientos_agentes.find(
+        {"agente_id": agente_id}
+    ).sort("fecha", -1).to_list(100)
+    
+    for mov in movimientos:
+        mov["id"] = mov["_id"]
+        del mov["_id"]
+    
+    return {"movimientos": movimientos}
+
 @api_router.post("/admin/seguros/{seguro_id}/asignar-agente")
 async def asignar_agente_a_seguro(seguro_id: str, data: dict):
     """Asigna un agente a un seguro"""
