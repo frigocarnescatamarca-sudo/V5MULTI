@@ -559,7 +559,7 @@ async def descargar_comprobante_pdf(seguro_id: str):
 
 @api_router.get("/seguros/{seguro_id}/comprobante/imagen")
 async def descargar_comprobante_imagen(seguro_id: str):
-    """Genera y descarga el comprobante como imagen"""
+    """Genera y descarga el comprobante como imagen - Diseño profesional"""
     from PIL import Image, ImageDraw, ImageFont
     
     seguro = await db.seguros.find_one({"_id": seguro_id})
@@ -569,94 +569,135 @@ async def descargar_comprobante_imagen(seguro_id: str):
     if seguro["estado"] not in ["pagado", "gratis"]:
         raise HTTPException(status_code=400, detail="El seguro debe estar pagado")
     
-    # Crear imagen con información del comprobante
-    img = Image.new('RGB', (800, 1100), color='white')
+    # Crear imagen
+    img = Image.new('RGB', (800, 1000), color='white')
     draw = ImageDraw.Draw(img)
     
     # Colores
     verde_oscuro = (6, 78, 59)
-    verde_lima = (217, 249, 157)
+    amarillo_resaltado = (254, 240, 138)
     negro = (0, 0, 0)
-    rojo = (255, 0, 0)
     gris = (100, 116, 139)
+    verde_aprobado = (16, 185, 129)
+    blanco = (255, 255, 255)
     
-    # Fuentes por defecto (sin archivo de fuente)
+    # Fuentes
     try:
-        from PIL import ImageFont
-        # Intentar cargar fuentes del sistema
-        font_title = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 32)
-        font_large = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 24)
-        font_normal = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 18)
-        font_small = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 14)
+        font_title = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 24)
+        font_large = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 18)
+        font_medium = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 14)
+        font_normal = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 14)
+        font_small = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 11)
+        font_patente = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 22)
     except:
-        font_title = ImageFont.load_default()
-        font_large = ImageFont.load_default()
-        font_normal = ImageFont.load_default()
-        font_small = ImageFont.load_default()
+        font_title = font_large = font_medium = font_normal = font_small = font_patente = ImageFont.load_default()
     
-    # Logo/Header - Cuadrado verde con ES
-    draw.rectangle([20, 20, 100, 100], fill=verde_oscuro)
-    draw.text((60, 60), "ES", fill=verde_lima, font=font_large, anchor="mm")
+    # === HEADER CON LOGO ===
+    try:
+        logo_path = os.path.join(os.path.dirname(__file__), "logo_estonia.png")
+        if os.path.exists(logo_path):
+            logo = Image.open(logo_path)
+            logo = logo.resize((90, 90), Image.Resampling.LANCZOS)
+            # Si tiene transparencia, crear fondo blanco
+            if logo.mode == 'RGBA':
+                bg = Image.new('RGB', logo.size, 'white')
+                bg.paste(logo, mask=logo.split()[3])
+                logo = bg
+            img.paste(logo, (30, 20))
+    except Exception as e:
+        # Fallback: cuadrado con iniciales
+        draw.rectangle([30, 20, 110, 100], fill=verde_oscuro)
+        draw.text((70, 60), "EC", fill=(217, 249, 157), font=font_large, anchor="mm")
     
-    # Texto ESTONIA SEGUROS
-    draw.text((120, 40), "ESTONIA", fill=verde_oscuro, font=font_title)
-    draw.text((120, 75), "SEGUROS", fill=verde_oscuro, font=font_large)
+    # Título
+    draw.text((140, 35), "ESTONIA", fill=verde_oscuro, font=font_title)
+    draw.text((140, 65), "COBERTURA COLABORATIVA", fill=verde_oscuro, font=font_medium)
     
-    # Teléfonos
-    draw.text((580, 30), "ATENCION AL CLIENTE", fill=gris, font=font_small)
-    draw.text((580, 50), "0800 555 3543", fill=negro, font=font_normal)
-    draw.text((580, 70), "0810 362 0700", fill=negro, font=font_normal)
+    # Contacto
+    draw.text((620, 25), "ATENCIÓN AL CLIENTE", fill=gris, font=font_small)
+    draw.text((620, 42), "0800 555 3543", fill=negro, font=font_normal)
+    draw.text((620, 60), "0810 362 0700", fill=negro, font=font_normal)
     
-    # Sello PAGADO
-    draw.rectangle([650, 110, 770, 160], outline=rojo, width=4)
-    draw.text((710, 135), "PAGADO", fill=rojo, font=font_large, anchor="mm")
+    # Línea separadora
+    draw.line([(30, 120), (770, 120)], fill=verde_oscuro, width=2)
     
-    # Información principal
-    y_pos = 180
-    draw.text((20, y_pos), f"Pagado el: {seguro['vigencia_desde'][:10]}", fill=negro, font=font_normal)
-    draw.text((500, y_pos), f"Recibo Nro: {seguro['numero_recibo']}", fill=negro, font=font_normal)
+    # === NÚMERO DE RECIBO Y SELLO ===
+    y_pos = 145
+    draw.text((30, y_pos), "COMPROBANTE DE COBERTURA", fill=verde_oscuro, font=font_medium)
+    draw.text((450, y_pos), f"Nº {seguro['numero_recibo']}", fill=verde_oscuro, font=font_medium)
     
-    y_pos += 50
-    draw.text((20, y_pos), f"DNI: {seguro['dni']}", fill=negro, font=font_normal)
+    # Sello APROBADO
+    draw.rounded_rectangle([660, y_pos - 5, 770, y_pos + 30], radius=5, fill=verde_aprobado)
+    draw.text((715, y_pos + 12), "APROBADO", fill=blanco, font=font_medium, anchor="mm")
     
-    y_pos += 40
-    draw.text((20, y_pos), f"Asegurado: {seguro['nombre']}", fill=negro, font=font_normal)
-    draw.text((500, y_pos), "Cuota: 1", fill=negro, font=font_normal)
+    # === DATOS DEL TITULAR ===
+    y_pos = 200
+    draw.text((30, y_pos), "DATOS DEL TITULAR", fill=verde_oscuro, font=font_medium)
+    draw.line([(30, y_pos + 20), (300, y_pos + 20)], fill=gris, width=1)
     
-    y_pos += 40
-    draw.text((20, y_pos), f"Marca/Modelo: {seguro['marca']} {seguro['modelo']}", fill=negro, font=font_normal)
-    draw.text((500, y_pos), "Tipo de Pago:", fill=negro, font=font_normal)
+    y_pos += 35
+    draw.text((30, y_pos), "Nombre completo", fill=gris, font=font_small)
+    draw.text((30, y_pos + 18), seguro['nombre'].upper(), fill=negro, font=font_large)
     
-    y_pos += 40
-    draw.text((20, y_pos), f"Año: {seguro['ano']}", fill=negro, font=font_normal)
-    draw.text((500, y_pos), "DEB. AUTOMATICO", fill=negro, font=font_normal)
+    y_pos += 55
+    draw.text((30, y_pos), "DNI", fill=gris, font=font_small)
+    draw.text((180, y_pos), "Email", fill=gris, font=font_small)
+    draw.text((30, y_pos + 18), seguro['dni'], fill=negro, font=font_normal)
+    draw.text((180, y_pos + 18), seguro.get('email', '-'), fill=negro, font=font_normal)
     
-    y_pos += 50
-    draw.text((20, y_pos), f"Dominio: {seguro['patente']}", fill=negro, font=font_large)
-    draw.text((500, y_pos), f"Próx Vto: {seguro['vigencia_hasta'][:10]}", fill=negro, font=font_normal)
-    
+    # === DATOS DEL VEHÍCULO ===
     y_pos += 60
-    draw.text((500, y_pos), f"Importe: ${seguro['precio_final']:,.0f}", fill=negro, font=font_large)
+    draw.text((30, y_pos), "DATOS DEL VEHÍCULO", fill=verde_oscuro, font=font_medium)
+    draw.line([(30, y_pos + 20), (300, y_pos + 20)], fill=gris, width=1)
     
-    # QR Code
-    qr_buffer = generar_qr_code(f"{os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:3000')}/verificar/{seguro['numero_recibo']}")
+    y_pos += 35
+    draw.text((30, y_pos), "Dominio (Patente)", fill=gris, font=font_small)
+    draw.text((30, y_pos + 18), seguro['patente'], fill=negro, font=font_patente)
+    
+    y_pos += 55
+    draw.text((30, y_pos), "Marca / Modelo", fill=gris, font=font_small)
+    draw.text((280, y_pos), "Año", fill=gris, font=font_small)
+    draw.text((30, y_pos + 18), f"{seguro['marca']} {seguro['modelo']}", fill=negro, font=font_normal)
+    draw.text((280, y_pos + 18), str(seguro.get('ano', '-')), fill=negro, font=font_normal)
+    
+    # === VIGENCIA CON RESALTADO AMARILLO ===
+    y_pos += 60
+    draw.text((30, y_pos), "VIGENCIA DE LA COBERTURA", fill=verde_oscuro, font=font_medium)
+    draw.line([(30, y_pos + 20), (400, y_pos + 20)], fill=gris, width=1)
+    
+    y_pos += 35
+    draw.text((30, y_pos), "Desde", fill=gris, font=font_small)
+    draw.text((200, y_pos), "Hasta (VENCIMIENTO)", fill=gris, font=font_small)
+    
+    y_pos += 18
+    draw.text((30, y_pos), seguro['vigencia_desde'][:10], fill=negro, font=font_normal)
+    
+    # RESALTADO AMARILLO PARA VENCIMIENTO
+    draw.rounded_rectangle([195, y_pos - 5, 340, y_pos + 22], radius=5, fill=amarillo_resaltado)
+    draw.text((200, y_pos), seguro['vigencia_hasta'][:10], fill=negro, font=font_large)
+    
+    # === IMPORTE ===
+    y_pos += 50
+    draw.text((30, y_pos), "IMPORTE ABONADO", fill=verde_oscuro, font=font_medium)
+    draw.text((30, y_pos + 25), f"$ {seguro['precio_final']:,.0f}", fill=verde_oscuro, font=font_title)
+    
+    # === QR CODE ===
+    qr_url = f"{os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:3000')}/verificar/{seguro['numero_recibo']}"
+    qr_buffer = generar_qr_code(qr_url)
     qr_img = Image.open(qr_buffer)
-    qr_img = qr_img.resize((180, 180))
-    img.paste(qr_img, (20, 550))
+    qr_img = qr_img.resize((150, 150))
+    img.paste(qr_img, (600, 700))
     
-    # Texto junto al QR
-    draw.text((220, 570), "Escanea el código QR", fill=gris, font=font_normal)
-    draw.text((220, 595), "para verificar la", fill=gris, font=font_normal)
-    draw.text((220, 620), "cobertura", fill=gris, font=font_normal)
+    draw.text((675, 860), "Escanea para verificar", fill=gris, font=font_small, anchor="mm")
+    draw.text((675, 878), "la cobertura", fill=gris, font=font_small, anchor="mm")
     
-    # Footer
-    draw.text((20, 950), "RECIBO VALIDO PARA PRESENTAR DE MANERA", fill=gris, font=font_normal)
-    draw.text((20, 975), "DIGITAL O IMPRESO.", fill=gris, font=font_normal)
-    draw.text((20, 1005), "POR DUDAS O CONSULTAS LLAME A LOS NUMEROS", fill=gris, font=font_small)
-    draw.text((20, 1025), "DE ATENCION AL CLIENTE", fill=gris, font=font_small)
+    # === FOOTER ===
+    draw.text((30, 920), "RECIBO VÁLIDO PARA PRESENTAR DE MANERA DIGITAL O IMPRESO.", fill=gris, font=font_small)
+    draw.text((30, 940), "POR DUDAS O CONSULTAS LLAME A LOS NÚMEROS DE ATENCIÓN AL CLIENTE.", fill=gris, font=font_small)
+    draw.text((30, 960), f"Generado el: {datetime.now().strftime('%d/%m/%Y %H:%M')}", fill=gris, font=font_small)
     
     buffer = BytesIO()
-    img.save(buffer, format='PNG')
+    img.save(buffer, format='PNG', quality=95)
     buffer.seek(0)
     
     return Response(
