@@ -229,7 +229,10 @@ async def process_message_with_ai(phone_number: str, message: str, push_name: st
         # Send the user message and get response
         ai_response = await llm.send_message(UserMessage(text=message))
         
-        # Save AI response
+        # Process special commands in the response
+        ai_response, actions_taken = await process_bot_commands(phone_number, ai_response)
+        
+        # Save AI response (cleaned)
         await save_message(phone_number, ai_response, "assistant")
         
         return ai_response
@@ -244,7 +247,193 @@ async def process_message_with_ai(phone_number: str, message: str, push_name: st
         return fallback
 
 
-async def send_whatsapp_message(phone_number: str, message: str):
+async def process_bot_commands(phone_number: str, ai_response: str):
+    """Process special commands in bot response and execute actions"""
+    import re
+    actions_taken = []
+    
+    # Check for CREAR_COBERTURA command
+    crear_match = re.search(r'\[CREAR_COBERTURA\](.*?)\[/CREAR_COBERTURA\]', ai_response, re.DOTALL)
+    if crear_match:
+        try:
+            data_text = crear_match.group(1)
+            # Parse the data
+            data = {}
+            for line in data_text.strip().split('\n'):
+                if ':' in line:
+                    key, value = line.split(':', 1)
+                    data[key.strip().lower()] = value.strip()
+            
+            print(f"[WhatsApp Bot] Creating coverage with data: {data}")
+            
+            # Create the coverage
+            coverage = await create_coverage_from_whatsapp(phone_number, data)
+            
+            if coverage:
+                actions_taken.append('coverage_created')
+                
+                # Get backend URL for links
+                backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://estonia-covers.preview.emergentagent.com')
+                
+                # Replace the command with success message
+                success_msg = f"""✅ *¡COBERTURA CREADA!*
+
+📋 *Número de Recibo:* {coverage['numero_recibo']}
+👤 *Titular:* {coverage['nombre']}
+🚗 *Vehículo:* {coverage['marca']} {coverage['modelo']} ({coverage['ano']})
+🔢 *Patente:* {coverage['patente']}
+📧 *Email:* {coverage['email']}
+📋 *Cobertura:* {'Terceros Completo' if coverage['cobertura'] == 'completo' else 'Responsabilidad Civil'}
+💰 *Precio:* ${coverage['precio_final']:,}
+⏰ *Vigencia:* 30 días desde el pago
+
+Para activar tu cobertura, realizá el pago de *${coverage['precio_final']:,}*:
+
+💳 *Por transferencia:*
+{os.environ.get('DATOS_BANCARIOS', 'CBU/Alias: A configurar')}
+
+Una vez que pagues, enviame el comprobante y activo tu cobertura al instante. 📸"""
+                
+                ai_response = re.sub(r'\[CREAR_COBERTURA\].*?\[/CREAR_COBERTURA\]', '', ai_response, flags=re.DOTALL)
+                ai_response = ai_response.replace('Procesando tu cobertura... ⏳', success_msg)
+                
+                # Store coverage ID for this phone
+                await db.whatsapp_pending.update_one(
+                    {"phone_number": phone_number},
+                    {"$set": {"coverage_id": coverage['_id'], "numero_recibo": coverage['numero_recibo']}},
+                    upsert=True
+                )
+        except Exception as e:
+            print(f"[WhatsApp Bot] Error creating coverage: {e}")
+            import traceback
+            traceback.print_exc()
+            ai_response = re.sub(r'\[CREAR_COBERTURA\].*?\[/CREAR_COBERTURA\]', '', ai_response, flags=re.DOTALL)
+            ai_response = ai_response.replace('Procesando tu cobertura... ⏳', '❌ Hubo un error al crear la cobertura. Por favor, verificá los datos e intentá de nuevo.')
+    
+    # Check for CONFIRMAR_PAGO command
+    pago_match = re.search(r'\[CONFIRMAR_PAGO\](.*?)\[/CONFIRMAR_PAGO\]', ai_response, re.DOTALL)
+    if pago_match:
+        try:
+            # Get pending coverage for this phone
+            pending = await db.whatsapp_pending.find_one({"phone_number": phone_number})
+            
+            if pending and pending.get('coverage_id'):
+                coverage_id = pending['coverage_id']
+                
+                # Mark as paid
+                await mark_coverage_paid(coverage_id)
+                
+                # Get updated coverage
+                coverage = await get_coverage_by_id(coverage_id)
+                
+                if coverage:
+                    actions_taken.append('payment_confirmed')
+                    
+                    backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://estonia-covers.preview.emergentagent.com')
+                    
+                    success_msg = f"""✅ *¡PAGO CONFIRMADO!*
+
+🎉 Tu cobertura está *ACTIVA*
+
+📋 *Recibo:* {coverage['numero_recibo']}
+📅 *Vigencia:* {coverage['vigencia_desde'][:10]} al {coverage['vigencia_hasta'][:10]}
+
+📥 *Descargá tus comprobantes:*
+• PDF: {backend_url}/api/seguros/{coverage_id}/comprobante/pdf
+• Imagen: {backend_url}/api/seguros/{coverage_id}/comprobante/imagen
+
+🔍 *Verificar cobertura:*
+{backend_url}/verificar/{coverage['numero_recibo']}
+
+¡Gracias por confiar en Estonia Cobertura! 🙏
+Cualquier duda, estoy para ayudarte."""
+                    
+                    ai_response = re.sub(r'\[CONFIRMAR_PAGO\].*?\[/CONFIRMAR_PAGO\]', '', ai_response, flags=re.DOTALL)
+                    ai_response = ai_response.replace('Verificando pago... ⏳', success_msg)
+                    
+                    # Clear pending
+                    await db.whatsapp_pending.delete_one({"phone_number": phone_number})
+            else:
+                ai_response = re.sub(r'\[CONFIRMAR_PAGO\].*?\[/CONFIRMAR_PAGO\]', '', ai_response, flags=re.DOTALL)
+                ai_response = ai_response.replace('Verificando pago... ⏳', '⚠️ No encontré una cobertura pendiente de pago. ¿Querés crear una nueva cobertura?')
+                
+        except Exception as e:
+            print(f"[WhatsApp Bot] Error confirming payment: {e}")
+            ai_response = re.sub(r'\[CONFIRMAR_PAGO\].*?\[/CONFIRMAR_PAGO\]', '', ai_response, flags=re.DOTALL)
+            ai_response = ai_response.replace('Verificando pago... ⏳', '❌ Hubo un error al confirmar el pago. Un agente revisará tu caso.')
+    
+    # Clean up any remaining command tags
+    ai_response = re.sub(r'\[/?CREAR_COBERTURA\]', '', ai_response)
+    ai_response = re.sub(r'\[/?CONFIRMAR_PAGO\]', '', ai_response)
+    ai_response = ai_response.strip()
+    
+    return ai_response, actions_taken
+
+
+async def create_coverage_from_whatsapp(phone_number: str, data: dict):
+    """Create a coverage from WhatsApp conversation data"""
+    from uuid import uuid4
+    
+    coverage_id = str(uuid4())
+    numero_recibo = str(uuid4())[:8].upper()
+    fecha_inicio = datetime.now(timezone.utc)
+    fecha_fin = fecha_inicio + timedelta(days=30)
+    
+    # Parse and validate data
+    tipo_vehiculo = data.get('tipo_vehiculo', 'auto').lower()
+    tipo_cobertura = data.get('cobertura', 'rc').lower()
+    
+    # Calculate price
+    PRICING = {
+        "auto": {"rc": 6000, "completo": 9000},
+        "moto": {"rc": 5000, "completo": 7500},
+        "taxi": {"rc": 10000, "completo": 18000},
+        "app": {"rc": 6000, "completo": 9000}
+    }
+    
+    precio = PRICING.get(tipo_vehiculo, {}).get(tipo_cobertura, 6000)
+    
+    # Try to parse price from data if provided
+    try:
+        if 'precio' in data:
+            parsed_price = int(data['precio'].replace('.', '').replace(',', ''))
+            if parsed_price in [5000, 6000, 7500, 9000, 10000, 18000]:
+                precio = parsed_price
+    except:
+        pass
+    
+    # Parse year
+    try:
+        ano = int(data.get('ano', datetime.now().year))
+    except:
+        ano = datetime.now().year
+    
+    coverage_doc = {
+        "_id": coverage_id,
+        "numero_recibo": numero_recibo,
+        "dni": data.get('dni', '').replace('.', ''),
+        "nombre": data.get('nombre', ''),
+        "email": data.get('email', ''),
+        "telefono": phone_number,
+        "patente": data.get('patente', '').upper(),
+        "marca": data.get('marca', ''),
+        "modelo": data.get('modelo', ''),
+        "ano": ano,
+        "tipo_vehiculo": tipo_vehiculo,
+        "cobertura": tipo_cobertura,
+        "precio_original": precio,
+        "precio_final": precio,
+        "estado": "pendiente_pago",
+        "vigencia_desde": fecha_inicio.isoformat(),
+        "vigencia_hasta": fecha_fin.isoformat(),
+        "origen": "whatsapp",
+        "whatsapp_phone": phone_number,
+        "created_at": fecha_inicio.isoformat()
+    }
+    
+    await db.seguros.insert_one(coverage_doc)
+    print(f"[WhatsApp Bot] Coverage created: {numero_recibo}")
+    return coverage_doc
     """Send a message via WhatsApp service"""
     try:
         async with httpx.AsyncClient() as client:
