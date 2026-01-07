@@ -117,6 +117,7 @@ Una vez que pagues, enviame el comprobante y activo tu cobertura al instante."
 {datos_bancarios}""",
 
     "datos_bancarios": "CBU/Alias: A configurar por el administrador",
+    "whatsapp_ventas": "",
     "bot_activo": True
 }
 
