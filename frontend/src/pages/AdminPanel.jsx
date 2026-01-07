@@ -1140,6 +1140,137 @@ export default function AdminPanel() {
           onClose={() => setSeguroVerDocs(null)} 
         />
       )}
+
+      {/* Modal Crear/Editar Agente */}
+      <Dialog open={modalAgenteOpen} onOpenChange={setModalAgenteOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-[#064E3B]">
+              {agenteEditando ? 'Editar Agente' : 'Crear Nuevo Agente'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label>Nombre Completo *</Label>
+                <Input
+                  value={nuevoAgente.nombre}
+                  onChange={(e) => setNuevoAgente({...nuevoAgente, nombre: e.target.value})}
+                  placeholder="Juan Pérez"
+                  data-testid="agente-nombre-input"
+                />
+              </div>
+              <div>
+                <Label>Email *</Label>
+                <Input
+                  type="email"
+                  value={nuevoAgente.email}
+                  onChange={(e) => setNuevoAgente({...nuevoAgente, email: e.target.value})}
+                  placeholder="juan@email.com"
+                  data-testid="agente-email-input"
+                />
+              </div>
+              <div>
+                <Label>Teléfono *</Label>
+                <Input
+                  value={nuevoAgente.telefono}
+                  onChange={(e) => setNuevoAgente({...nuevoAgente, telefono: e.target.value})}
+                  placeholder="+54 9 11 1234-5678"
+                  data-testid="agente-telefono-input"
+                />
+              </div>
+              <div>
+                <Label>Comisión (%)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={nuevoAgente.comision_porcentaje}
+                  onChange={(e) => setNuevoAgente({...nuevoAgente, comision_porcentaje: parseInt(e.target.value)})}
+                  data-testid="agente-comision-input"
+                />
+              </div>
+            </div>
+            <div className="border-t pt-4">
+              <h4 className="font-bold text-[#064E3B] mb-4">Credenciales de Acceso</h4>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Usuario *</Label>
+                  <Input
+                    value={nuevoAgente.username}
+                    onChange={(e) => setNuevoAgente({...nuevoAgente, username: e.target.value})}
+                    placeholder="juanperez"
+                    disabled={!!agenteEditando}
+                    data-testid="agente-username-input"
+                  />
+                  {agenteEditando && (
+                    <p className="text-xs text-[#64748B] mt-1">El usuario no se puede cambiar</p>
+                  )}
+                </div>
+                <div>
+                  <Label>Contraseña {!agenteEditando && '*'}</Label>
+                  <Input
+                    type="password"
+                    value={nuevoAgente.password}
+                    onChange={(e) => setNuevoAgente({...nuevoAgente, password: e.target.value})}
+                    placeholder={agenteEditando ? "Dejar vacío para no cambiar" : "Contraseña"}
+                    data-testid="agente-password-input"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <Button
+                onClick={() => setModalAgenteOpen(false)}
+                variant="outline"
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={guardarAgente}
+                disabled={loading}
+                className="flex-1 bg-[#10B981] hover:bg-[#10B981]/90"
+                data-testid="guardar-agente-btn"
+              >
+                {loading ? 'Guardando...' : (agenteEditando ? 'Actualizar' : 'Crear Agente')}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+function VencimientoCard({ seguro, color }) {
+  const colorClasses = {
+    red: 'border-red-500 bg-red-50',
+    yellow: 'border-yellow-500 bg-yellow-50',
+    orange: 'border-orange-500 bg-orange-50'
+  };
+
+  return (
+    <Card className={`border-2 ${colorClasses[color]}`}>
+      <CardContent className="p-4">
+        <div className="flex justify-between items-start mb-2">
+          <div>
+            <p className="font-bold text-[#064E3B]">{seguro.patente}</p>
+            <p className="text-sm text-[#64748B]">{seguro.nombre}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-[#64748B]">
+              {seguro.dias_restantes < 0 ? 'Vencido' : `${seguro.dias_restantes} días`}
+            </p>
+            <p className="text-xs text-[#64748B]">
+              {new Date(seguro.vigencia_hasta).toLocaleDateString('es-AR')}
+            </p>
+          </div>
+        </div>
+        {seguro.agente_nombre && (
+          <p className="text-xs text-[#10B981]">Agente: {seguro.agente_nombre}</p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
