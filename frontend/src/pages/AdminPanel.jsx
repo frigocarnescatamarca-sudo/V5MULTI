@@ -751,6 +751,14 @@ export default function AdminPanel() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Ver Documentos */}
+      {seguroVerDocs && (
+        <VisorDocumentos 
+          seguro={seguroVerDocs} 
+          onClose={() => setSeguroVerDocs(null)} 
+        />
+      )}
     </div>
   );
 }
