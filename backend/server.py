@@ -838,7 +838,7 @@ async def obtener_seguros_agente(token: str):
     total_seguros = len(seguros)
     seguros_pagados = len([s for s in seguros if s.get('estado') in ['pagado', 'gratis']])
     total_comisiones = sum([
-        s.get('precio_final', 0) * (session.get('comision_porcentaje', 10) / 100)
+        s.get('precio_final', 0) * (s.get('comision_porcentaje', 10) / 100)
         for s in seguros if s.get('estado') in ['pagado', 'gratis']
     ])
     
