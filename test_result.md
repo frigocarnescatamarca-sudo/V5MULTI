@@ -5,12 +5,16 @@ Test the WhatsApp Bot feature including conversation simulation and coverage cre
 
 ## Completed Tests
 
-### Backend API Tests ✅
-1. GET /api/admin/whatsapp/status - Returns connection status
-2. GET /api/admin/whatsapp/config - Returns bot configuration
-3. POST /api/admin/whatsapp/simulate - Simulates complete conversation flow
-4. GET /api/admin/whatsapp/conversations - Returns conversations from MongoDB
-5. GET /api/admin/whatsapp/chat/{phone} - Returns chat history
+### Backend API Tests ✅ (Testing Agent Verified)
+1. GET /api/admin/whatsapp/status - Returns connection status ✅
+2. GET /api/admin/whatsapp/config - Returns bot configuration ✅
+3. PUT /api/admin/whatsapp/config - Updates bot configuration ✅
+4. GET /api/admin/whatsapp/conversations - Returns conversations from MongoDB ✅
+5. GET /api/admin/whatsapp/chat/5491155667788 - Returns chat history (10 messages) ✅
+6. GET /api/verificar/41702927 - Returns coverage verification (COBERTURA VIGENTE) ✅
+7. GET /api/seguros/cbf07021-fae6-4070-8b69-546300118b9e/comprobante/pdf - PDF download (368KB) ✅
+8. POST /api/admin/whatsapp/pause-chat - Pauses bot for specific chat ✅
+9. POST /api/admin/whatsapp/resume-chat - Resumes bot for specific chat ✅
 
 ### Simulation Test Results ✅
 - Phone: 5491155667788
