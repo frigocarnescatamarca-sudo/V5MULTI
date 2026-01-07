@@ -162,6 +162,7 @@ async function handleIncomingMessage(message) {
             id: message.key.id,
             phone_number: phoneNumber,
             remote_jid: remoteJid,
+            reply_jid: replyJid,  // Store original JID for replying
             message: messageText,
             timestamp: message.messageTimestamp,
             push_name: message.pushName || '',
@@ -169,6 +170,9 @@ async function handleIncomingMessage(message) {
             bot_paused: pausedChats.has(phoneNumber)
         };
         pendingMessages.push(msgData);
+
+        // Store JID mapping for replies
+        jidMapping[phoneNumber] = replyJid;
 
         // Only 100 messages in memory
         if (pendingMessages.length > 100) {
@@ -188,12 +192,13 @@ async function handleIncomingMessage(message) {
                 message: messageText,
                 message_id: message.key.id,
                 timestamp: message.messageTimestamp,
-                push_name: message.pushName || ''
+                push_name: message.pushName || '',
+                reply_jid: replyJid  // Pass the JID for replying
             }, { timeout: 30000 });
 
-            // Send AI response back to WhatsApp
+            // Send AI response back to WhatsApp using ORIGINAL JID
             if (response.data.reply) {
-                await sendMessage(phoneNumber, response.data.reply);
+                await sendMessageToJid(replyJid, response.data.reply);
             }
 
         } catch (apiError) {
@@ -205,15 +210,41 @@ async function handleIncomingMessage(message) {
     }
 }
 
+// Store mapping of phone numbers to JIDs
+let jidMapping = {};
+
+async function sendMessageToJid(jid, text) {
+    try {
+        if (!sock || connectionStatus !== 'connected') {
+            throw new Error('WhatsApp not connected');
+        }
+
+        await sock.sendMessage(jid, { text });
+        console.log(`Message sent to JID: ${jid}`);
+        return { success: true };
+
+    } catch (error) {
+        console.error('Error sending message to JID:', error);
+        return { success: false, error: error.message };
+    }
+}
+
 async function sendMessage(phoneNumber, text) {
     try {
         if (!sock || connectionStatus !== 'connected') {
             throw new Error('WhatsApp not connected');
         }
 
-        const jid = phoneNumber.includes('@') ? phoneNumber : `${phoneNumber}@s.whatsapp.net`;
+        // Check if we have a JID mapping for this phone
+        let jid = jidMapping[phoneNumber];
+        
+        if (!jid) {
+            // Fallback: construct JID
+            jid = phoneNumber.includes('@') ? phoneNumber : `${phoneNumber}@s.whatsapp.net`;
+        }
+        
         await sock.sendMessage(jid, { text });
-        console.log(`Message sent to ${phoneNumber}`);
+        console.log(`Message sent to ${phoneNumber} (JID: ${jid})`);
         return { success: true };
 
     } catch (error) {
