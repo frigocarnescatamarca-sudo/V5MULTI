@@ -253,10 +253,14 @@ async def admin_confirm_payment(recibo: str, admin_phone: str):
         pending = await db.whatsapp_pending.find_one({"coverage_id": coverage['_id']})
         client_phone = pending.get('client_phone') if pending else coverage.get('whatsapp_phone')
         
+        # Also try telefono field
         if not client_phone:
-            return f"❌ No encontré el teléfono del cliente para {recibo}"
+            client_phone = coverage.get('telefono')
         
-        # Mark as paid
+        # Also try whatsapp_jid directly
+        client_jid = coverage.get('whatsapp_jid')
+        
+        # Mark as paid regardless of phone availability
         await db.seguros.update_one(
             {"_id": coverage['_id']},
             {"$set": {
