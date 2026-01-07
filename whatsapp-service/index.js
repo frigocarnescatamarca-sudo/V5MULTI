@@ -206,7 +206,6 @@ async function handleIncomingMessage(message) {
             id: message.key.id,
             phone_number: phoneNumber,
             remote_jid: remoteJid,
-            reply_jid: replyJid,  // Store original JID for replying
             message: messageText,
             timestamp: message.messageTimestamp,
             push_name: message.pushName || '',
@@ -214,9 +213,6 @@ async function handleIncomingMessage(message) {
             bot_paused: pausedChats.has(phoneNumber)
         };
         pendingMessages.push(msgData);
-
-        // Store JID mapping for replies
-        jidMapping[phoneNumber] = replyJid;
 
         // Only 100 messages in memory
         if (pendingMessages.length > 100) {
@@ -236,8 +232,7 @@ async function handleIncomingMessage(message) {
                 message: messageText,
                 message_id: message.key.id,
                 timestamp: message.messageTimestamp,
-                push_name: message.pushName || '',
-                reply_jid: replyJid  // Pass the JID for replying
+                push_name: message.pushName || ''
             }, { timeout: 30000 });
 
             // Send AI response back to WhatsApp using ORIGINAL JID
@@ -253,9 +248,6 @@ async function handleIncomingMessage(message) {
         console.error('Error handling incoming message:', error);
     }
 }
-
-// Store mapping of phone numbers to JIDs
-let jidMapping = {};
 
 async function sendMessageToJid(jid, text) {
     try {
