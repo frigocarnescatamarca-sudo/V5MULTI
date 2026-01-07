@@ -182,6 +182,15 @@ def generar_pdf_comprobante(seguro: dict) -> BytesIO:
     negro = HexColor(0x000000)
     rojo = HexColor(0xDC2626)
     verde_aprobado = HexColor(0x10B981)
+    azul_cobertura = HexColor(0x3B82F6)
+    
+    # Mapeo de tipos de cobertura
+    tipos_cobertura = {
+        'rc': 'RESPONSABILIDAD CIVIL',
+        'terceros': 'TERCEROS COMPLETO',
+        'completo': 'TODO RIESGO'
+    }
+    tipo_cobertura_texto = tipos_cobertura.get(seguro.get('cobertura', 'rc'), 'RESPONSABILIDAD CIVIL')
     
     # === HEADER CON LOGO ===
     try:
@@ -228,15 +237,23 @@ def generar_pdf_comprobante(seguro: dict) -> BytesIO:
     c.setFont("Helvetica-Bold", 12)
     c.drawRightString(width - 40, y_pos, f"Nº {seguro['numero_recibo']}")
     
+    # Tipo de Cobertura (badge azul)
+    y_pos -= 35
+    c.setFillColor(azul_cobertura)
+    c.roundRect(40, y_pos - 5, 200, 28, 5, fill=1)
+    c.setFillColor(HexColor(0xFFFFFF))
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(50, y_pos + 3, tipo_cobertura_texto)
+    
     # Sello APROBADO
     c.setFillColor(verde_aprobado)
-    c.roundRect(width - 140, y_pos - 50, 100, 35, 5, fill=1)
+    c.roundRect(width - 140, y_pos - 5, 100, 28, 5, fill=1)
     c.setFillColor(HexColor(0xFFFFFF))
     c.setFont("Helvetica-Bold", 14)
-    c.drawCentredString(width - 90, y_pos - 38, "APROBADO")
+    c.drawCentredString(width - 90, y_pos + 3, "APROBADO")
     
     # === DATOS DEL ASEGURADO ===
-    y_pos -= 80
+    y_pos -= 50
     c.setFillColor(verde_oscuro)
     c.setFont("Helvetica-Bold", 11)
     c.drawString(40, y_pos, "DATOS DEL TITULAR")
