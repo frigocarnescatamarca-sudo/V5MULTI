@@ -356,6 +356,18 @@ app.post('/send', async (req, res) => {
     res.json(result);
 });
 
+app.post('/send-jid', async (req, res) => {
+    const { jid, message } = req.body;
+    
+    if (!jid || !message) {
+        return res.status(400).json({ success: false, error: 'jid and message required' });
+    }
+    
+    console.log(`Sending message to JID: ${jid}`);
+    const result = await sendMessageToJid(jid, message);
+    res.json(result);
+});
+
 app.get('/messages', (req, res) => {
     // Return recent messages
     res.json({
