@@ -117,14 +117,32 @@ async function initWhatsApp() {
 async function handleIncomingMessage(message) {
     try {
         const remoteJid = message.key.remoteJid;
-        const phoneNumber = remoteJid.replace('@s.whatsapp.net', '').replace('@g.us', '');
-        const isGroup = remoteJid.endsWith('@g.us');
         
-        // Skip group messages for now
-        if (isGroup) {
+        // Extract phone number - handle different formats
+        // @s.whatsapp.net = standard phone
+        // @lid = linked device ID
+        // @g.us = group
+        let phoneNumber = remoteJid;
+        
+        if (remoteJid.endsWith('@s.whatsapp.net')) {
+            phoneNumber = remoteJid.replace('@s.whatsapp.net', '');
+        } else if (remoteJid.endsWith('@g.us')) {
+            // Skip group messages
             console.log('Skipping group message');
             return;
+        } else if (remoteJid.includes('@lid')) {
+            // LID format - try to get participant info or use the LID
+            phoneNumber = remoteJid.replace('@lid', '');
+            // Try to get the actual phone from participant
+            if (message.key.participant) {
+                phoneNumber = message.key.participant.replace('@s.whatsapp.net', '').replace('@lid', '');
+            }
         }
+        
+        // Clean up any remaining @ symbols
+        phoneNumber = phoneNumber.split('@')[0];
+        
+        console.log(`Processing message from: ${phoneNumber} (original: ${remoteJid})`);
 
         // Extract message text
         let messageText = '';
