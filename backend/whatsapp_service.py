@@ -152,31 +152,34 @@ async def process_message_with_ai(phone_number: str, message: str, push_name: st
         if not llm_key:
             raise ValueError("EMERGENT_LLM_KEY not configured")
         
-        # Call ChatGPT via emergentintegrations LlmChat
-        llm = LlmChat(api_key=llm_key, model="gpt-4o-mini")
-        
-        # Add system message
-        llm.add_message("system", system_prompt)
+        # Build initial messages for context
+        initial_messages = []
         
         # Add welcome message for new conversations
         if is_new_conversation:
             welcome_msg = config.get("mensaje_bienvenida", DEFAULT_BOT_CONFIG["mensaje_bienvenida"])
-            llm.add_message("assistant", welcome_msg)
+            initial_messages.append({"role": "assistant", "content": welcome_msg})
         
         # Add conversation history
         for msg in history:
             role = msg.get("role", "user")
             content = msg.get("message", "")
             if content:
-                llm.add_message(role, content)
+                initial_messages.append({"role": role, "content": content})
         
-        # Add current message if not already in history
-        if not history or history[-1].get("message") != message:
-            llm.add_message("user", message)
+        # Create LlmChat with correct parameters
+        llm = LlmChat(
+            api_key=llm_key,
+            session_id=f"whatsapp-{phone_number}",
+            system_message=system_prompt,
+            initial_messages=initial_messages if initial_messages else None
+        )
         
-        # Get response
-        response = await llm.chat_async()
-        ai_response = response.message if hasattr(response, 'message') else str(response)
+        # Set model to GPT-4o-mini
+        llm = llm.with_model('openai', 'gpt-4o-mini')
+        
+        # Send the user message and get response
+        ai_response = await llm.send_message(UserMessage(text=message))
         
         # Save AI response
         await save_message(phone_number, ai_response, "assistant")
@@ -185,6 +188,8 @@ async def process_message_with_ai(phone_number: str, message: str, push_name: st
         
     except Exception as e:
         print(f"Error processing message with AI: {e}")
+        import traceback
+        traceback.print_exc()
         # Return a fallback message
         fallback = "Disculpa, estoy teniendo dificultades técnicas. Un agente se comunicará contigo pronto. 🙏"
         await save_message(phone_number, fallback, "assistant")
