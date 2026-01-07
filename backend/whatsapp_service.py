@@ -194,6 +194,9 @@ async def process_message_with_ai(phone_number: str, message: str, push_name: st
     try:
         # Get Emergent LLM Key
         llm_key = os.environ.get('EMERGENT_LLM_KEY')
+        print(f"[WhatsApp Bot] LLM Key found: {bool(llm_key)}")
+        print(f"[WhatsApp Bot] System prompt length: {len(system_prompt)}")
+        
         if not llm_key:
             raise ValueError("EMERGENT_LLM_KEY not configured")
         
