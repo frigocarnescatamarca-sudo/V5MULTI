@@ -369,10 +369,10 @@ export default function PanelAgente() {
                 {seguros.map((seguro) => (
                   <Card key={seguro.id}>
                     <CardContent className="p-6">
-                      <div className="grid md:grid-cols-5 gap-4 items-center">
+                      <div className="grid md:grid-cols-6 gap-4 items-center">
                         <div>
                           <p className="text-sm text-[#64748B]">Recibo</p>
-                          <p className="font-mono font-bold text-[#064E3B]">{seguro.numero_recibo}</p>
+                          <p className="font-mono font-bold text-[#064E3B] text-sm">{seguro.numero_recibo}</p>
                         </div>
                         <div>
                           <p className="text-sm text-[#64748B]">Cliente</p>
