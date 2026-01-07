@@ -277,7 +277,8 @@ async def process_message_with_ai(phone_number: str, message: str, push_name: st
     )
     
     if is_admin:
-        print(f"[WhatsApp Bot] Admin detected! Checking for CONFIRMAR command...")
+        print(f"[WhatsApp Bot] Admin detected! Message: {message[:50]}")
+        
         # Check for CONFIRMAR command from admin
         confirm_match = re.match(r'(?:CONFIRMAR|confirmar|Confirmar)\s+([A-Za-z0-9]+)', message.strip())
         if confirm_match:
@@ -285,8 +286,35 @@ async def process_message_with_ai(phone_number: str, message: str, push_name: st
             print(f"[WhatsApp Bot] Admin confirming payment for recibo: {recibo}")
             result = await admin_confirm_payment(recibo, phone_number)
             return result
-        else:
-            print(f"[WhatsApp Bot] Admin message but not CONFIRMAR command: {message[:50]}")
+        
+        # Check for other admin commands or just greeting
+        message_lower = message.lower().strip()
+        
+        # If admin says hi or asks something general, respond as admin
+        if message_lower in ['hola', 'hi', 'hey', 'buenas', 'buen dia', 'buenos dias', 'buenas tardes', 'buenas noches']:
+            return """👋 *¡Hola Admin!*
+
+Te reconozco como administrador. Estos son los comandos disponibles:
+
+📋 *CONFIRMAR [RECIBO]* - Confirma un pago y envía comprobantes al cliente
+📊 *ESTADO* - Ver resumen de coberturas pendientes
+
+Ejemplo: CONFIRMAR ABC123"""
+        
+        if message_lower == 'estado':
+            # Show pending coverages
+            pending = await db.seguros.find({"estado": "pendiente_pago"}).to_list(10)
+            if pending:
+                msg = "📊 *Coberturas pendientes de pago:*\n\n"
+                for p in pending:
+                    msg += f"• {p['numero_recibo']} - {p['nombre']} - ${p['precio_final']:,}\n"
+                return msg
+            else:
+                return "✅ No hay coberturas pendientes de pago"
+        
+        # If admin writes something else, don't treat as client - just acknowledge
+        if not confirm_match:
+            return f"👋 Hola Admin. Si querés confirmar un pago, escribí: *CONFIRMAR [NÚMERO DE RECIBO]*"
     
     # Save incoming message
     await save_message(phone_number, message, "user", push_name)
