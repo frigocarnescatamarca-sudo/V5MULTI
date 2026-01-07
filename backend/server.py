@@ -1756,7 +1756,10 @@ from whatsapp_service import (
     pause_chat,
     resume_chat,
     send_whatsapp_message,
-    get_chat_history
+    get_chat_history,
+    simulate_conversation_flow,
+    get_coverage_by_id,
+    mark_coverage_paid
 )
 
 class WhatsAppConfigUpdate(BaseModel):
