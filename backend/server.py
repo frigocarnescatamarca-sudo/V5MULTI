@@ -1533,6 +1533,70 @@ async def obtener_movimientos_agente(agente_id: str):
     
     return {"movimientos": movimientos}
 
+@api_router.post("/admin/agentes/{agente_id}/registrar-cobro")
+async def registrar_cobro_agente(agente_id: str, data: RegistrarCobroAgente):
+    """Registra un cobro realizado al agente (el agente pagó al admin)"""
+    
+    # Verificar que el agente existe
+    agente = await db.agentes.find_one({"_id": agente_id})
+    if not agente:
+        raise HTTPException(status_code=404, detail="Agente no encontrado")
+    
+    # Calcular deuda actual para validar
+    seguros = await db.seguros.find({
+        "agente_id": agente_id,
+        "estado": {"$in": ["pagado", "gratis"]}
+    }).to_list(1000)
+    
+    total_ventas = sum([s.get('precio_final', 0) for s in seguros])
+    total_comisiones = sum([
+        s.get('precio_final', 0) * (s.get('comision_porcentaje', agente.get('comision_porcentaje', 10)) / 100)
+        for s in seguros
+    ])
+    deuda_bruta = total_ventas - total_comisiones
+    
+    cobros_previos = await db.cobros_agentes.find({"agente_id": agente_id}).to_list(1000)
+    total_cobrado_previo = sum([c.get('monto', 0) for c in cobros_previos])
+    deuda_actual = deuda_bruta - total_cobrado_previo
+    
+    # Crear registro de cobro
+    cobro = {
+        "_id": str(uuid.uuid4()),
+        "agente_id": agente_id,
+        "agente_nombre": agente['nombre'],
+        "monto": data.monto,
+        "observacion": data.observacion,
+        "fecha": datetime.now(timezone.utc).isoformat(),
+        "deuda_antes": deuda_actual,
+        "deuda_despues": deuda_actual - data.monto
+    }
+    
+    await db.cobros_agentes.insert_one(cobro)
+    
+    cobro['id'] = cobro['_id']
+    del cobro['_id']
+    
+    return {
+        "success": True,
+        "cobro": cobro,
+        "deuda_anterior": deuda_actual,
+        "deuda_nueva": deuda_actual - data.monto
+    }
+
+@api_router.get("/admin/agentes/{agente_id}/cobros")
+async def obtener_cobros_agente(agente_id: str):
+    """Obtiene el historial de cobros de un agente"""
+    
+    cobros = await db.cobros_agentes.find(
+        {"agente_id": agente_id}
+    ).sort("fecha", -1).to_list(100)
+    
+    for cobro in cobros:
+        cobro["id"] = cobro["_id"]
+        del cobro["_id"]
+    
+    return {"cobros": cobros}
+
 @api_router.post("/admin/seguros/{seguro_id}/asignar-agente")
 async def asignar_agente_a_seguro(seguro_id: str, data: dict):
     """Asigna un agente a un seguro"""
