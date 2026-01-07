@@ -131,18 +131,14 @@ async function handleIncomingMessage(message) {
             console.log('Skipping group message');
             return;
         } else if (remoteJid.includes('@lid')) {
-            // LID format - try to get participant info or use the LID
+            // LID format - keep the full JID for replies
             phoneNumber = remoteJid.replace('@lid', '');
-            // Try to get the actual phone from participant
-            if (message.key.participant) {
-                phoneNumber = message.key.participant.replace('@s.whatsapp.net', '').replace('@lid', '');
-            }
         }
         
-        // Clean up any remaining @ symbols
-        phoneNumber = phoneNumber.split('@')[0];
+        // Store the original JID for replying
+        const replyJid = remoteJid;
         
-        console.log(`Processing message from: ${phoneNumber} (original: ${remoteJid})`);
+        console.log(`Processing message from: ${phoneNumber} (reply to: ${replyJid})`);
 
         // Extract message text
         let messageText = '';
