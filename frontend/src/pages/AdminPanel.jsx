@@ -427,6 +427,60 @@ export default function AdminPanel() {
     }
   };
 
+  // Funciones de Cobros a Agentes
+  const abrirModalCobros = async (agente) => {
+    setAgenteParaCobro(agente);
+    setNuevoCobro({ monto: '', observacion: '' });
+    setModalCobrosOpen(true);
+    
+    // Cargar historial de cobros
+    try {
+      const data = await adminAPI.obtenerCobrosAgente(agente.id);
+      setCobrosAgente(data.cobros || []);
+    } catch (error) {
+      setCobrosAgente([]);
+    }
+  };
+
+  const registrarCobro = async () => {
+    if (!nuevoCobro.monto || parseFloat(nuevoCobro.monto) <= 0) {
+      toast.error('Ingrese un monto válido mayor a 0');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await adminAPI.registrarCobroAgente(
+        agenteParaCobro.id, 
+        parseFloat(nuevoCobro.monto), 
+        nuevoCobro.observacion
+      );
+      toast.success(`Cobro de $${parseFloat(nuevoCobro.monto).toLocaleString('es-AR')} registrado para ${agenteParaCobro.nombre}`);
+      setNuevoCobro({ monto: '', observacion: '' });
+      
+      // Recargar cobros
+      const data = await adminAPI.obtenerCobrosAgente(agenteParaCobro.id);
+      setCobrosAgente(data.cobros || []);
+      
+      // Actualizar datos del agente en el modal
+      setAgenteParaCobro({
+        ...agenteParaCobro,
+        estadisticas: {
+          ...agenteParaCobro.estadisticas,
+          deuda_actual: result.deuda_nueva,
+          total_cobrado: (agenteParaCobro.estadisticas?.total_cobrado || 0) + parseFloat(nuevoCobro.monto)
+        }
+      });
+      
+      // Recargar agentes
+      cargarDatos();
+    } catch (error) {
+      toast.error('Error al registrar cobro: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Pantalla de Login
   if (!authenticated) {
     return (
