@@ -478,6 +478,159 @@ export default function PanelAgente() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Modal Crear Cobertura */}
+      <Dialog open={modalCrearOpen} onOpenChange={setModalCrearOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-[#064E3B] flex items-center gap-2">
+              <Car className="w-6 h-6" />
+              Nueva Cobertura
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Datos del Cliente */}
+            <div>
+              <h4 className="font-bold text-[#064E3B] mb-4">Datos del Cliente</h4>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label>DNI *</Label>
+                  <Input
+                    value={formSeguro.dni}
+                    onChange={(e) => setFormSeguro({...formSeguro, dni: e.target.value})}
+                    placeholder="12345678"
+                    data-testid="seguro-dni-input"
+                  />
+                </div>
+                <div>
+                  <Label>Nombre Completo *</Label>
+                  <Input
+                    value={formSeguro.nombre}
+                    onChange={(e) => setFormSeguro({...formSeguro, nombre: e.target.value})}
+                    placeholder="Juan Pérez"
+                    data-testid="seguro-nombre-input"
+                  />
+                </div>
+                <div>
+                  <Label>Email *</Label>
+                  <Input
+                    type="email"
+                    value={formSeguro.email}
+                    onChange={(e) => setFormSeguro({...formSeguro, email: e.target.value})}
+                    placeholder="juan@email.com"
+                    data-testid="seguro-email-input"
+                  />
+                </div>
+                <div>
+                  <Label>Teléfono</Label>
+                  <Input
+                    value={formSeguro.telefono}
+                    onChange={(e) => setFormSeguro({...formSeguro, telefono: e.target.value})}
+                    placeholder="1122334455"
+                    data-testid="seguro-telefono-input"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Datos del Vehículo */}
+            <div className="border-t pt-4">
+              <h4 className="font-bold text-[#064E3B] mb-4">Datos del Vehículo</h4>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Patente *</Label>
+                  <Input
+                    value={formSeguro.patente}
+                    onChange={(e) => setFormSeguro({...formSeguro, patente: e.target.value.toUpperCase()})}
+                    placeholder="AA123BB"
+                    data-testid="seguro-patente-input"
+                  />
+                </div>
+                <div>
+                  <Label>Marca *</Label>
+                  <Input
+                    value={formSeguro.marca}
+                    onChange={(e) => setFormSeguro({...formSeguro, marca: e.target.value})}
+                    placeholder="Toyota"
+                    data-testid="seguro-marca-input"
+                  />
+                </div>
+                <div>
+                  <Label>Modelo *</Label>
+                  <Input
+                    value={formSeguro.modelo}
+                    onChange={(e) => setFormSeguro({...formSeguro, modelo: e.target.value})}
+                    placeholder="Corolla"
+                    data-testid="seguro-modelo-input"
+                  />
+                </div>
+                <div>
+                  <Label>Año</Label>
+                  <Input
+                    type="number"
+                    value={formSeguro.ano}
+                    onChange={(e) => setFormSeguro({...formSeguro, ano: parseInt(e.target.value)})}
+                    data-testid="seguro-ano-input"
+                  />
+                </div>
+                <div>
+                  <Label>Tipo de Vehículo</Label>
+                  <Select 
+                    value={formSeguro.tipo_vehiculo}
+                    onValueChange={(v) => setFormSeguro({...formSeguro, tipo_vehiculo: v})}
+                  >
+                    <SelectTrigger data-testid="seguro-tipo-input">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="auto">Auto</SelectItem>
+                      <SelectItem value="moto">Moto</SelectItem>
+                      <SelectItem value="camioneta">Camioneta</SelectItem>
+                      <SelectItem value="camion">Camión</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Tipo de Cobertura</Label>
+                  <Select 
+                    value={formSeguro.cobertura}
+                    onValueChange={(v) => setFormSeguro({...formSeguro, cobertura: v})}
+                  >
+                    <SelectTrigger data-testid="seguro-cobertura-input">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="rc">Responsabilidad Civil ($15.000)</SelectItem>
+                      <SelectItem value="terceros">Terceros Completo ($25.000)</SelectItem>
+                      <SelectItem value="completo">Todo Riesgo ($45.000)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Botones */}
+            <div className="flex gap-4 pt-4 border-t">
+              <Button
+                onClick={() => setModalCrearOpen(false)}
+                variant="outline"
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={crearSeguro}
+                disabled={loading}
+                className="flex-1 bg-[#10B981] hover:bg-[#10B981]/90"
+                data-testid="guardar-cobertura-btn"
+              >
+                {loading ? 'Creando...' : 'Crear Cobertura'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
