@@ -170,84 +170,176 @@ def generar_qr_code(data: str) -> BytesIO:
     return buffer
 
 def generar_pdf_comprobante(seguro: dict) -> BytesIO:
-    """Genera el PDF del comprobante de seguro"""
+    """Genera el PDF del comprobante de cobertura - Diseño profesional"""
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
     
-    # Colores Estonia
-    verde_estonia = HexColor(0x064E3B)
-    verde_lima = HexColor(0xD9F99D)
+    # Colores
+    verde_oscuro = HexColor(0x064E3B)
+    amarillo_resaltado = HexColor(0xFEF08A)
+    gris = HexColor(0x64748B)
+    negro = HexColor(0x000000)
+    rojo = HexColor(0xDC2626)
+    verde_aprobado = HexColor(0x10B981)
     
-    # Logo (Escudo simple con iniciales ES)
-    c.setFillColor(verde_estonia)
-    c.rect(50, height - 100, 60, 60, fill=1)
-    c.setFillColor(verde_lima)
-    c.setFont("Helvetica-Bold", 28)
-    c.drawCentredString(80, height - 80, "ES")
+    # === HEADER CON LOGO ===
+    try:
+        logo_path = os.path.join(os.path.dirname(__file__), "logo_estonia.png")
+        if os.path.exists(logo_path):
+            logo = ImageReader(logo_path)
+            c.drawImage(logo, 40, height - 120, width=100, height=100, mask='auto', preserveAspectRatio=True)
+    except Exception as e:
+        # Fallback: cuadrado con iniciales
+        c.setFillColor(verde_oscuro)
+        c.rect(40, height - 110, 80, 80, fill=1)
+        c.setFillColor(HexColor(0xD9F99D))
+        c.setFont("Helvetica-Bold", 28)
+        c.drawCentredString(80, height - 80, "EC")
     
-    # Header
-    c.setFillColor(verde_estonia)
-    c.setFont("Helvetica-Bold", 24)
-    c.drawString(120, height - 70, "ESTONIA")
-    c.setFont("Helvetica-Bold", 20)
-    c.drawString(120, height - 90, "SEGUROS")
+    # Título
+    c.setFillColor(verde_oscuro)
+    c.setFont("Helvetica-Bold", 22)
+    c.drawString(160, height - 55, "ESTONIA")
+    c.setFont("Helvetica-Bold", 18)
+    c.drawString(160, height - 78, "COBERTURA COLABORATIVA")
     
-    # Teléfonos
-    c.setFont("Helvetica", 10)
-    c.setFillColor(HexColor(0x000000))
-    c.drawString(400, height - 60, "ATENCION AL CLIENTE")
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(400, height - 75, "0800 555 3543")
-    c.drawString(400, height - 90, "0810 362 0700")
+    # Contacto
+    c.setFillColor(gris)
+    c.setFont("Helvetica", 9)
+    c.drawRightString(width - 40, height - 50, "ATENCIÓN AL CLIENTE")
+    c.setFillColor(negro)
+    c.setFont("Helvetica-Bold", 11)
+    c.drawRightString(width - 40, height - 65, "0800 555 3543")
+    c.drawRightString(width - 40, height - 80, "0810 362 0700")
     
-    # Sello PAGADO
-    c.setStrokeColor(HexColor(0xFF0000))
-    c.setLineWidth(3)
-    c.rect(450, height - 150, 100, 40, fill=0)
-    c.setFillColor(HexColor(0xFF0000))
-    c.setFont("Helvetica-Bold", 20)
-    c.drawCentredString(500, height - 140, "PAGADO")
+    # Línea separadora
+    c.setStrokeColor(verde_oscuro)
+    c.setLineWidth(2)
+    c.line(40, height - 130, width - 40, height - 130)
     
-    # Información principal
-    c.setFillColor(HexColor(0x000000))
-    c.setFont("Helvetica", 11)
-    y_pos = height - 180
+    # === SECCIÓN DATOS PRINCIPALES ===
+    y_pos = height - 165
     
-    c.drawString(50, y_pos, f"Pagado el: {seguro['vigencia_desde'][:10]}")
-    c.drawString(350, y_pos, f"Recibo Nro: {seguro['numero_recibo']}")
-    
-    y_pos -= 40
-    c.drawString(50, y_pos, f"DNI: {seguro['dni']}")
-    
-    y_pos -= 30
-    c.drawString(50, y_pos, f"Asegurado: {seguro['nombre']}")
-    c.drawString(350, y_pos, "Cuota: 1")
-    
-    y_pos -= 30
-    c.drawString(50, y_pos, f"Marca/Modelo: {seguro['marca']} {seguro['modelo']}")
-    c.drawString(350, y_pos, "Tipo de Pago: DEB. AUTOMATICO")
-    
-    y_pos -= 30
-    c.drawString(50, y_pos, f"Año: {seguro['ano']}")
-    
-    y_pos -= 40
-    c.drawString(50, y_pos, f"Dominio: {seguro['patente']}")
-    c.drawString(350, y_pos, f"Próx Vto: {seguro['vigencia_hasta'][:10]}")
-    
-    y_pos -= 40
+    # Número de recibo grande
+    c.setFillColor(verde_oscuro)
     c.setFont("Helvetica-Bold", 14)
-    c.drawString(350, y_pos, f"Importe: ${seguro['precio_final']:,.0f}")
+    c.drawString(40, y_pos, "COMPROBANTE DE COBERTURA")
+    c.setFont("Helvetica-Bold", 12)
+    c.drawRightString(width - 40, y_pos, f"Nº {seguro['numero_recibo']}")
     
-    # QR Code
-    qr_buffer = generar_qr_code(f"{os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:3000')}/verificar/{seguro['numero_recibo']}")
+    # Sello APROBADO
+    c.setFillColor(verde_aprobado)
+    c.roundRect(width - 140, y_pos - 50, 100, 35, 5, fill=1)
+    c.setFillColor(HexColor(0xFFFFFF))
+    c.setFont("Helvetica-Bold", 14)
+    c.drawCentredString(width - 90, y_pos - 38, "APROBADO")
+    
+    # === DATOS DEL ASEGURADO ===
+    y_pos -= 80
+    c.setFillColor(verde_oscuro)
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(40, y_pos, "DATOS DEL TITULAR")
+    c.setStrokeColor(gris)
+    c.setLineWidth(0.5)
+    c.line(40, y_pos - 5, 280, y_pos - 5)
+    
+    y_pos -= 25
+    c.setFillColor(gris)
+    c.setFont("Helvetica", 9)
+    c.drawString(40, y_pos, "Nombre completo")
+    c.setFillColor(negro)
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(40, y_pos - 15, seguro['nombre'].upper())
+    
+    y_pos -= 40
+    c.setFillColor(gris)
+    c.setFont("Helvetica", 9)
+    c.drawString(40, y_pos, "DNI")
+    c.drawString(150, y_pos, "Email")
+    c.setFillColor(negro)
+    c.setFont("Helvetica", 11)
+    c.drawString(40, y_pos - 15, seguro['dni'])
+    c.drawString(150, y_pos - 15, seguro.get('email', '-'))
+    
+    # === DATOS DEL VEHÍCULO ===
+    y_pos -= 55
+    c.setFillColor(verde_oscuro)
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(40, y_pos, "DATOS DEL VEHÍCULO")
+    c.setStrokeColor(gris)
+    c.line(40, y_pos - 5, 280, y_pos - 5)
+    
+    y_pos -= 25
+    c.setFillColor(gris)
+    c.setFont("Helvetica", 9)
+    c.drawString(40, y_pos, "Dominio (Patente)")
+    c.setFillColor(negro)
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(40, y_pos - 18, seguro['patente'])
+    
+    y_pos -= 45
+    c.setFillColor(gris)
+    c.setFont("Helvetica", 9)
+    c.drawString(40, y_pos, "Marca / Modelo")
+    c.drawString(200, y_pos, "Año")
+    c.setFillColor(negro)
+    c.setFont("Helvetica", 11)
+    c.drawString(40, y_pos - 15, f"{seguro['marca']} {seguro['modelo']}")
+    c.drawString(200, y_pos - 15, str(seguro.get('ano', '-')))
+    
+    # === VIGENCIA CON RESALTADO AMARILLO ===
+    y_pos -= 55
+    c.setFillColor(verde_oscuro)
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(40, y_pos, "VIGENCIA DE LA COBERTURA")
+    c.setStrokeColor(gris)
+    c.line(40, y_pos - 5, 350, y_pos - 5)
+    
+    y_pos -= 30
+    c.setFillColor(gris)
+    c.setFont("Helvetica", 9)
+    c.drawString(40, y_pos, "Desde")
+    c.drawString(180, y_pos, "Hasta (VENCIMIENTO)")
+    
+    y_pos -= 18
+    c.setFillColor(negro)
+    c.setFont("Helvetica", 11)
+    c.drawString(40, y_pos, seguro['vigencia_desde'][:10])
+    
+    # RESALTADO AMARILLO PARA VENCIMIENTO
+    c.setFillColor(amarillo_resaltado)
+    c.roundRect(175, y_pos - 5, 130, 22, 3, fill=1, stroke=0)
+    c.setFillColor(negro)
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(180, y_pos, seguro['vigencia_hasta'][:10])
+    
+    # === IMPORTE ===
+    y_pos -= 50
+    c.setFillColor(verde_oscuro)
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(40, y_pos, "IMPORTE ABONADO")
+    y_pos -= 20
+    c.setFont("Helvetica-Bold", 18)
+    c.drawString(40, y_pos, f"$ {seguro['precio_final']:,.0f}")
+    
+    # === QR CODE ===
+    qr_url = f"{os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:3000')}/verificar/{seguro['numero_recibo']}"
+    qr_buffer = generar_qr_code(qr_url)
     qr_image = ImageReader(qr_buffer)
-    c.drawImage(qr_image, 50, 100, width=120, height=120, mask='auto')
+    c.drawImage(qr_image, width - 180, 120, width=140, height=140, mask='auto')
     
-    # Footer
+    c.setFillColor(gris)
+    c.setFont("Helvetica", 9)
+    c.drawCentredString(width - 110, 105, "Escanea para verificar")
+    c.drawCentredString(width - 110, 92, "la cobertura")
+    
+    # === FOOTER ===
+    c.setFillColor(gris)
     c.setFont("Helvetica", 8)
-    c.drawString(50, 50, "RECIBO VALIDO PARA PRESENTAR DE MANERA DIGITAL O IMPRESO.")
-    c.drawString(50, 35, "POR DUDAS O CONSULTAS LLAME A LOS NUMEROS DE ATENCION AL CLIENTE")
+    c.drawString(40, 60, "RECIBO VÁLIDO PARA PRESENTAR DE MANERA DIGITAL O IMPRESO.")
+    c.drawString(40, 47, "POR DUDAS O CONSULTAS LLAME A LOS NÚMEROS DE ATENCIÓN AL CLIENTE.")
+    c.drawString(40, 34, f"Generado el: {datetime.now().strftime('%d/%m/%Y %H:%M')}")
     
     c.save()
     buffer.seek(0)
