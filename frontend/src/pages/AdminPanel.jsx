@@ -230,12 +230,13 @@ export default function AdminPanel() {
               Cerrar Sesión
             </Button>
             <Button 
-            variant="ghost" 
-            onClick={() => window.location.href = '/'}
-            className="text-[#064E3B]"
-          >
-            Volver al Inicio
-          </Button>
+              variant="ghost" 
+              onClick={() => window.location.href = '/'}
+              className="text-[#064E3B]"
+            >
+              Volver al Inicio
+            </Button>
+          </div>
         </div>
       </header>
 
