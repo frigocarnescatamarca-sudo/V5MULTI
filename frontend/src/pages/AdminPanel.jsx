@@ -568,6 +568,165 @@ export default function AdminPanel() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Modal Crear/Editar Seguro */}
+      <Dialog open={modalSeguroOpen} onOpenChange={setModalSeguroOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-[#064E3B]">
+              {seguroEditando ? 'Editar Seguro' : 'Crear Nuevo Seguro'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="admin-dni">DNI *</Label>
+                <Input
+                  id="admin-dni"
+                  value={formSeguro.dni}
+                  onChange={(e) => setFormSeguro({...formSeguro, dni: e.target.value})}
+                  placeholder="12345678"
+                  data-testid="admin-seguro-dni"
+                />
+              </div>
+              <div>
+                <Label htmlFor="admin-nombre">Nombre Completo *</Label>
+                <Input
+                  id="admin-nombre"
+                  value={formSeguro.nombre}
+                  onChange={(e) => setFormSeguro({...formSeguro, nombre: e.target.value})}
+                  placeholder="Juan Pérez"
+                  data-testid="admin-seguro-nombre"
+                />
+              </div>
+              <div>
+                <Label htmlFor="admin-email">Email *</Label>
+                <Input
+                  id="admin-email"
+                  type="email"
+                  value={formSeguro.email}
+                  onChange={(e) => setFormSeguro({...formSeguro, email: e.target.value})}
+                  placeholder="juan@email.com"
+                  data-testid="admin-seguro-email"
+                />
+              </div>
+              <div>
+                <Label htmlFor="admin-telefono">Teléfono *</Label>
+                <Input
+                  id="admin-telefono"
+                  value={formSeguro.telefono}
+                  onChange={(e) => setFormSeguro({...formSeguro, telefono: e.target.value})}
+                  placeholder="+54 9 11 1234-5678"
+                  data-testid="admin-seguro-telefono"
+                />
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <h4 className="font-bold text-[#064E3B] mb-4">Datos del Vehículo</h4>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="admin-patente">Patente *</Label>
+                  <Input
+                    id="admin-patente"
+                    value={formSeguro.patente}
+                    onChange={(e) => setFormSeguro({...formSeguro, patente: e.target.value.toUpperCase()})}
+                    placeholder="ABC123"
+                    data-testid="admin-seguro-patente"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="admin-marca">Marca *</Label>
+                  <Input
+                    id="admin-marca"
+                    value={formSeguro.marca}
+                    onChange={(e) => setFormSeguro({...formSeguro, marca: e.target.value})}
+                    placeholder="Ford"
+                    data-testid="admin-seguro-marca"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="admin-modelo">Modelo *</Label>
+                  <Input
+                    id="admin-modelo"
+                    value={formSeguro.modelo}
+                    onChange={(e) => setFormSeguro({...formSeguro, modelo: e.target.value})}
+                    placeholder="Focus"
+                    data-testid="admin-seguro-modelo"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="admin-ano">Año *</Label>
+                  <Input
+                    id="admin-ano"
+                    type="number"
+                    value={formSeguro.ano}
+                    onChange={(e) => setFormSeguro({...formSeguro, ano: parseInt(e.target.value)})}
+                    data-testid="admin-seguro-ano"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <h4 className="font-bold text-[#064E3B] mb-4">Tipo y Cobertura</h4>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="admin-tipo">Tipo de Vehículo</Label>
+                  <Select 
+                    value={formSeguro.tipo_vehiculo} 
+                    onValueChange={(v) => setFormSeguro({...formSeguro, tipo_vehiculo: v})}
+                  >
+                    <SelectTrigger data-testid="admin-seguro-tipo">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="auto">Auto</SelectItem>
+                      <SelectItem value="moto">Moto</SelectItem>
+                      <SelectItem value="taxi">Taxi/Remis</SelectItem>
+                      <SelectItem value="app">App (Uber/Didi)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="admin-cobertura">Cobertura</Label>
+                  <Select 
+                    value={formSeguro.cobertura} 
+                    onValueChange={(v) => setFormSeguro({...formSeguro, cobertura: v})}
+                  >
+                    <SelectTrigger data-testid="admin-seguro-cobertura">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="rc">Responsabilidad Civil</SelectItem>
+                      <SelectItem value="completo">Terceros Completo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-4 pt-4">
+              <Button
+                onClick={() => setModalSeguroOpen(false)}
+                variant="outline"
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={guardarSeguro}
+                disabled={loading}
+                className="flex-1 bg-[#064E3B] hover:bg-[#064E3B]/90"
+                data-testid="guardar-seguro-btn"
+              >
+                {loading ? 'Guardando...' : (seguroEditando ? 'Actualizar' : 'Crear Seguro')}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
