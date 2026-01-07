@@ -62,9 +62,8 @@ export default function WhatsAppBotPanel() {
       setConnectedUser(data.user);
       setPausedChats(data.paused_chats || []);
       
-      if (data.status === 'connected') {
-        loadConversations();
-      }
+      // Always load conversations (from MongoDB even if WhatsApp not connected)
+      loadConversations();
     } catch (error) {
       console.error('Error loading status:', error);
     }
