@@ -1,5 +1,6 @@
 from fastapi import FastAPI, APIRouter, HTTPException, status, Request, UploadFile, File, Form
 from fastapi.responses import FileResponse, Response
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -35,6 +36,9 @@ sdk = mercadopago.SDK(mp_access_token)
 # Create the main app
 app = FastAPI(title="Estonia Seguros API")
 api_router = APIRouter(prefix="/api")
+
+# Servir archivos estáticos de uploads
+app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
 
 # Configure logging
 logging.basicConfig(
