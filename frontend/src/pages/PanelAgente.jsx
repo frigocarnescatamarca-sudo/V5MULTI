@@ -121,6 +121,42 @@ export default function PanelAgente() {
     }
   };
 
+  const abrirModalCrear = () => {
+    setFormSeguro({
+      dni: '',
+      nombre: '',
+      email: '',
+      telefono: '',
+      patente: '',
+      marca: '',
+      modelo: '',
+      ano: new Date().getFullYear(),
+      tipo_vehiculo: 'auto',
+      cobertura: 'rc'
+    });
+    setModalCrearOpen(true);
+  };
+
+  const crearSeguro = async () => {
+    // Validar campos
+    if (!formSeguro.dni || !formSeguro.nombre || !formSeguro.email || !formSeguro.patente) {
+      toast.error('Complete todos los campos obligatorios');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await agenteAPI.crearSeguro(token, formSeguro);
+      toast.success('Cobertura creada correctamente');
+      setModalCrearOpen(false);
+      cargarDatos();
+    } catch (error) {
+      toast.error('Error al crear cobertura: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Pantalla de Login
   if (!authenticated) {
     return (
