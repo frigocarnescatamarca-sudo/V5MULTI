@@ -213,8 +213,8 @@ async def process_message_with_ai(phone_number: str, message: str, push_name: st
             initial_messages=initial_messages if initial_messages else None
         )
         
-        # Set model to GPT-4o-mini
-        llm = llm.with_model('openai', 'gpt-4o-mini')
+        # Set model to GPT-4o for better instruction following
+        llm = llm.with_model('openai', 'gpt-4o')
         
         # Send the user message and get response
         ai_response = await llm.send_message(UserMessage(text=message))
