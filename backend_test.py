@@ -524,6 +524,140 @@ class TestRunner:
             self.log_result("Resume Chat", False, f"Exception: {str(e)}")
             return False
 
+    def test_whatsapp_ventas_endpoint(self):
+        """Test V2 feature: GET /api/whatsapp/ventas endpoint"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/whatsapp/ventas")
+            
+            if response.status_code == 200:
+                data = response.json()
+                expected_fields = ["whatsapp_ventas", "tiene_whatsapp"]
+                if all(field in data for field in expected_fields):
+                    whatsapp_ventas = data.get("whatsapp_ventas", "")
+                    tiene_whatsapp = data.get("tiene_whatsapp", False)
+                    self.log_result("WhatsApp Ventas Endpoint", True, 
+                                  f"WhatsApp ventas: '{whatsapp_ventas}', Tiene WhatsApp: {tiene_whatsapp}")
+                    return True
+                else:
+                    missing_fields = [field for field in expected_fields if field not in data]
+                    self.log_result("WhatsApp Ventas Endpoint", False, f"Missing fields: {missing_fields}", data)
+                    return False
+            else:
+                self.log_result("WhatsApp Ventas Endpoint", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("WhatsApp Ventas Endpoint", False, f"Exception: {str(e)}")
+            return False
+
+    def test_coberturas_dni_endpoint(self):
+        """Test V2 feature: GET /api/coberturas/dni/{dni} endpoint"""
+        test_dni = "30456789"
+        
+        try:
+            response = requests.get(f"{BACKEND_URL}/coberturas/dni/{test_dni}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                expected_fields = ["dni", "total", "coberturas"]
+                if all(field in data for field in expected_fields):
+                    dni = data.get("dni")
+                    total = data.get("total", 0)
+                    coberturas = data.get("coberturas", [])
+                    
+                    # Check if we have at least 2 coverages as expected
+                    if total >= 2 and len(coberturas) >= 2:
+                        # Check if coberturas have vigente/vencida status fields
+                        has_status_fields = True
+                        for cob in coberturas:
+                            if "vigente" not in cob or "vencida" not in cob:
+                                has_status_fields = False
+                                break
+                        
+                        if has_status_fields:
+                            self.log_result("Coberturas DNI Endpoint", True, 
+                                          f"DNI {dni}: {total} coberturas found with status fields")
+                            return True
+                        else:
+                            self.log_result("Coberturas DNI Endpoint", False, 
+                                          "Coberturas missing vigente/vencida status fields", coberturas[0] if coberturas else {})
+                            return False
+                    else:
+                        self.log_result("Coberturas DNI Endpoint", False, 
+                                      f"Expected at least 2 coberturas, got {total} (actual: {len(coberturas)})")
+                        return False
+                else:
+                    missing_fields = [field for field in expected_fields if field not in data]
+                    self.log_result("Coberturas DNI Endpoint", False, f"Missing fields: {missing_fields}", data)
+                    return False
+            else:
+                self.log_result("Coberturas DNI Endpoint", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("Coberturas DNI Endpoint", False, f"Exception: {str(e)}")
+            return False
+
+    def test_whatsapp_config_ventas_update(self):
+        """Test V2 feature: Update WhatsApp config with whatsapp_ventas field"""
+        config_update = {
+            "whatsapp_ventas": "5491123456789"
+        }
+        
+        try:
+            response = requests.put(f"{BACKEND_URL}/admin/whatsapp/config", json=config_update)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "whatsapp_ventas" in data and data["whatsapp_ventas"] == "5491123456789":
+                    self.log_result("WhatsApp Config Ventas Update", True, 
+                                  f"WhatsApp ventas number updated to: {data['whatsapp_ventas']}")
+                    return True
+                else:
+                    self.log_result("WhatsApp Config Ventas Update", False, 
+                                  "Updated config doesn't contain expected whatsapp_ventas", data)
+                    return False
+            else:
+                self.log_result("WhatsApp Config Ventas Update", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("WhatsApp Config Ventas Update", False, f"Exception: {str(e)}")
+            return False
+
+    def test_whatsapp_ventas_after_config(self):
+        """Test V2 feature: Verify /api/whatsapp/ventas returns updated number"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/whatsapp/ventas")
+            
+            if response.status_code == 200:
+                data = response.json()
+                expected_fields = ["whatsapp_ventas", "tiene_whatsapp"]
+                if all(field in data for field in expected_fields):
+                    whatsapp_ventas = data.get("whatsapp_ventas", "")
+                    tiene_whatsapp = data.get("tiene_whatsapp", False)
+                    
+                    # Should now have the configured number
+                    if whatsapp_ventas == "5491123456789" and tiene_whatsapp == True:
+                        self.log_result("WhatsApp Ventas After Config", True, 
+                                      f"WhatsApp ventas correctly updated: '{whatsapp_ventas}', Tiene WhatsApp: {tiene_whatsapp}")
+                        return True
+                    else:
+                        self.log_result("WhatsApp Ventas After Config", False, 
+                                      f"Expected '5491123456789' and True, got '{whatsapp_ventas}' and {tiene_whatsapp}")
+                        return False
+                else:
+                    missing_fields = [field for field in expected_fields if field not in data]
+                    self.log_result("WhatsApp Ventas After Config", False, f"Missing fields: {missing_fields}", data)
+                    return False
+            else:
+                self.log_result("WhatsApp Ventas After Config", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("WhatsApp Ventas After Config", False, f"Exception: {str(e)}")
+            return False
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting Estonia Cobertura WhatsApp Bot Backend Tests")
