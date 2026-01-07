@@ -198,7 +198,8 @@ export default function AdminPanel() {
       modelo: '',
       ano: new Date().getFullYear(),
       tipo_vehiculo: 'auto',
-      cobertura: 'rc'
+      cobertura: 'rc',
+      agente_id: ''
     });
     setModalSeguroOpen(true);
   };
@@ -215,7 +216,8 @@ export default function AdminPanel() {
       modelo: seguro.modelo,
       ano: seguro.ano,
       tipo_vehiculo: seguro.tipo_vehiculo,
-      cobertura: seguro.cobertura
+      cobertura: seguro.cobertura,
+      agente_id: seguro.agente_id || ''
     });
     setModalSeguroOpen(true);
   };
@@ -232,6 +234,12 @@ export default function AdminPanel() {
       if (seguroEditando) {
         // Editar
         await adminAPI.actualizarSeguro(seguroEditando.id, formSeguro);
+        
+        // Si se asignó un agente, actualizar la asignación
+        if (formSeguro.agente_id && formSeguro.agente_id !== seguroEditando.agente_id) {
+          await adminAPI.asignarAgente(seguroEditando.id, formSeguro.agente_id);
+        }
+        
         toast.success('Seguro actualizado correctamente');
       } else {
         // Crear
