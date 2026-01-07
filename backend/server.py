@@ -801,6 +801,54 @@ async def obtener_seguros_cliente(dni: str):
     
     return {"seguros": seguros}
 
+@api_router.get("/coberturas/dni/{dni}")
+async def consultar_coberturas_por_dni(dni: str):
+    """Endpoint público para consultar coberturas por DNI - Portal Web"""
+    
+    # Clean DNI - remove dots, spaces and hyphens
+    dni_clean = dni.replace('.', '').replace(' ', '').replace('-', '').strip()
+    
+    if not dni_clean.isdigit() or len(dni_clean) < 7 or len(dni_clean) > 8:
+        raise HTTPException(status_code=400, detail="DNI inválido. Debe contener entre 7 y 8 dígitos.")
+    
+    coberturas = await db.seguros.find(
+        {"dni": dni_clean},
+        {"_id": 0, "email": 0, "telefono": 0}  # Exclude sensitive data
+    ).sort("created_at", -1).to_list(100)
+    
+    # Add status check for each coverage
+    ahora = datetime.now(timezone.utc)
+    for cob in coberturas:
+        vigencia_hasta = cob.get('vigencia_hasta', '')
+        if vigencia_hasta:
+            try:
+                fecha_fin = datetime.fromisoformat(vigencia_hasta)
+                cob['vigente'] = fecha_fin > ahora and cob.get('estado') in ['pagado', 'gratis']
+                cob['vencida'] = fecha_fin <= ahora
+            except:
+                cob['vigente'] = False
+                cob['vencida'] = False
+        else:
+            cob['vigente'] = False
+            cob['vencida'] = False
+    
+    return {
+        "dni": dni_clean,
+        "total": len(coberturas),
+        "coberturas": coberturas
+    }
+
+@api_router.get("/whatsapp/ventas")
+async def obtener_whatsapp_ventas():
+    """Endpoint público para obtener el número de WhatsApp de ventas"""
+    config = await get_bot_config()
+    whatsapp_ventas = config.get('whatsapp_ventas', '')
+    
+    return {
+        "whatsapp_ventas": whatsapp_ventas,
+        "tiene_whatsapp": bool(whatsapp_ventas)
+    }
+
 @api_router.post("/seguros/{seguro_id}/renovar")
 async def renovar_seguro(seguro_id: str):
     """Renueva un seguro existente"""
