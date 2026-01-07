@@ -205,6 +205,11 @@ export const agenteAPI = {
   misVencimientos: async (token) => {
     const response = await api.get(`/agente/vencimientos?token=${token}`);
     return response.data;
+  },
+  
+  crearSeguro: async (token, data) => {
+    const response = await api.post('/agente/crear-seguro', { token, ...data });
+    return response.data;
   }
 };
 
