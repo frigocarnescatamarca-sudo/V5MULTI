@@ -202,6 +202,10 @@ async def admin_confirm_payment(recibo: str, admin_phone: str):
         
         backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://estonia-covers.preview.emergentagent.com')
         
+        # Get the correct JID for the client
+        jid_mapping = await db.whatsapp_jid_mapping.find_one({"phone_number": client_phone})
+        client_jid = jid_mapping.get('jid') if jid_mapping else None
+        
         # Send confirmation to CLIENT
         client_msg = f"""✅ *¡PAGO CONFIRMADO!*
 
@@ -222,7 +226,13 @@ async def admin_confirm_payment(recibo: str, admin_phone: str):
 
 ¡Gracias por confiar en Estonia Cobertura! 🙏"""
         
-        await send_whatsapp_message(client_phone, client_msg)
+        # Use JID if available, otherwise try phone
+        if client_jid:
+            print(f"[WhatsApp Bot] Sending to client using JID: {client_jid}")
+            await send_whatsapp_message_to_jid(client_jid, client_msg)
+        else:
+            print(f"[WhatsApp Bot] No JID found, trying phone: {client_phone}")
+            await send_whatsapp_message(client_phone, client_msg)
         
         # Clean up pending
         if pending:
@@ -234,7 +244,7 @@ async def admin_confirm_payment(recibo: str, admin_phone: str):
         return f"""✅ *PAGO CONFIRMADO*
 
 Cobertura {recibo} activada.
-Se enviaron los comprobantes a {client_phone}.
+Se enviaron los comprobantes al cliente.
 
 👤 {coverage['nombre']}
 🚗 {coverage['marca']} {coverage['modelo']}
