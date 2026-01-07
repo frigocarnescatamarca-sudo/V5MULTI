@@ -1766,6 +1766,7 @@ class WhatsAppConfigUpdate(BaseModel):
     mensaje_bienvenida: Optional[str] = None
     instrucciones_bot: Optional[str] = None
     datos_bancarios: Optional[str] = None
+    numero_admin: Optional[str] = None
     bot_activo: Optional[bool] = None
 
 @api_router.post("/whatsapp/message")
