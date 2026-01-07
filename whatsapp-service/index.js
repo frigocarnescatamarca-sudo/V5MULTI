@@ -237,6 +237,11 @@ async function handleIncomingMessage(message) {
 
             // Send AI response back to WhatsApp using ORIGINAL JID
             if (response.data.reply) {
+                // Add random delay (2-5 seconds) to seem more human
+                const delay = 2000 + Math.random() * 3000;
+                console.log(`Waiting ${Math.round(delay/1000)}s before responding...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                
                 await sendMessageToJid(replyJid, response.data.reply);
             }
 
