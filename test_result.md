@@ -123,11 +123,14 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: true
         - agent: "main"
         - comment: "API endpoints for CRUD agents exist, need to test agent creation and login"
+        - working: true
+        - agent: "testing"
+        - comment: "✅ TESTED: Admin login successful. Created agent 'Agente Test' with username 'agentetest'. Agent login working. Agent dashboard loads correctly with statistics. All agent APIs working properly."
 
   - task: "Admin Premios API"
     implemented: true
