@@ -856,33 +856,50 @@ export default function AdminPanel() {
               {agentes.map((agente) => (
                 <Card key={agente.id} className={!agente.activo ? 'opacity-50' : ''}>
                   <CardContent className="p-6">
-                    <div className="grid md:grid-cols-6 gap-4 items-center">
+                    <div className="grid md:grid-cols-7 gap-4 items-center">
                       <div>
                         <p className="text-sm text-[#64748B]">Agente</p>
                         <p className="font-bold text-[#064E3B]">{agente.nombre}</p>
                         <p className="text-xs text-[#64748B]">@{agente.username}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-[#64748B]">Contacto</p>
-                        <p className="text-sm text-[#064E3B]">{agente.email}</p>
-                        <p className="text-xs text-[#64748B]">{agente.telefono}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-[#64748B]">Comisión</p>
-                        <p className="text-2xl font-bold text-[#10B981]">{agente.comision_porcentaje}%</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-[#64748B]">Estadísticas</p>
+                        <p className="text-sm text-[#64748B]">Ventas / Comisión</p>
                         <p className="text-sm text-[#064E3B]">
                           {agente.estadisticas?.seguros_pagados || 0} vendidos
                         </p>
                         <p className="text-xs text-[#10B981]">
-                          ${(agente.estadisticas?.total_comisiones || 0).toLocaleString('es-AR')} comisiones
+                          ${(agente.estadisticas?.total_comisiones || 0).toLocaleString('es-AR')} ({agente.comision_porcentaje}%)
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-[#64748B]">Saldo Actual</p>
-                        <p className="text-2xl font-bold text-[#F59E0B]" style={{ fontFamily: 'Space Grotesk, monospace' }}>
+                        <p className="text-sm text-[#64748B]">Total Ventas</p>
+                        <p className="text-lg font-bold text-[#064E3B]" style={{ fontFamily: 'Space Grotesk, monospace' }}>
+                          ${(agente.estadisticas?.total_ventas || 0).toLocaleString('es-AR')}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-[#64748B]">Deuda al Admin</p>
+                        <p className={`text-xl font-bold ${(agente.estadisticas?.deuda_actual || 0) > 0 ? 'text-red-500' : 'text-[#10B981]'}`} style={{ fontFamily: 'Space Grotesk, monospace' }}>
+                          ${(agente.estadisticas?.deuda_actual || 0).toLocaleString('es-AR')}
+                        </p>
+                        {(agente.estadisticas?.deuda_actual || 0) > 0 && (
+                          <Button
+                            onClick={() => abrirModalCobros(agente)}
+                            size="sm"
+                            className="mt-1 bg-red-500 hover:bg-red-600 text-white"
+                            data-testid="registrar-cobro-btn"
+                          >
+                            <CreditCard className="w-3 h-3 mr-1" />
+                            Cobrar
+                          </Button>
+                        )}
+                        {(agente.estadisticas?.deuda_actual || 0) <= 0 && (
+                          <p className="text-xs text-[#10B981]">✓ Al día</p>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm text-[#64748B]">Saldo a Favor</p>
+                        <p className="text-lg font-bold text-[#F59E0B]" style={{ fontFamily: 'Space Grotesk, monospace' }}>
                           ${(agente.estadisticas?.saldo_actual || agente.saldo || 0).toLocaleString('es-AR')}
                         </p>
                         <Button
@@ -894,6 +911,21 @@ export default function AdminPanel() {
                         >
                           <DollarSign className="w-3 h-3 mr-1" />
                           Agregar
+                        </Button>
+                      </div>
+                      <div>
+                        <p className="text-sm text-[#64748B]">Cobrado</p>
+                        <p className="text-lg font-bold text-[#10B981]" style={{ fontFamily: 'Space Grotesk, monospace' }}>
+                          ${(agente.estadisticas?.total_cobrado || 0).toLocaleString('es-AR')}
+                        </p>
+                        <Button
+                          onClick={() => abrirModalCobros(agente)}
+                          size="sm"
+                          variant="outline"
+                          className="mt-1 text-slate-500"
+                        >
+                          <History className="w-3 h-3 mr-1" />
+                          Ver
                         </Button>
                       </div>
                       <div className="flex gap-2 justify-end">
