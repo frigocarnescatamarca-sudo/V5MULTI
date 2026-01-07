@@ -297,23 +297,251 @@ class TestRunner:
             self.log_result("Admin Seguros List", False, f"Exception: {str(e)}")
             return False
     
+    def test_whatsapp_status(self):
+        """Test WhatsApp status endpoint"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/admin/whatsapp/status")
+            
+            if response.status_code == 200:
+                data = response.json()
+                expected_fields = ["status", "connected", "user", "paused_chats"]
+                if all(field in data for field in expected_fields):
+                    self.log_result("WhatsApp Status", True, f"Status: {data.get('status')}, Connected: {data.get('connected')}")
+                    return True
+                else:
+                    missing_fields = [field for field in expected_fields if field not in data]
+                    self.log_result("WhatsApp Status", False, f"Missing fields: {missing_fields}", data)
+                    return False
+            else:
+                self.log_result("WhatsApp Status", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("WhatsApp Status", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_whatsapp_config_get(self):
+        """Test getting WhatsApp bot configuration"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/admin/whatsapp/config")
+            
+            if response.status_code == 200:
+                data = response.json()
+                expected_fields = ["mensaje_bienvenida", "instrucciones_bot", "datos_bancarios", "bot_activo"]
+                if all(field in data for field in expected_fields):
+                    self.log_result("WhatsApp Config Get", True, f"Config loaded with {len(data)} fields")
+                    return True
+                else:
+                    missing_fields = [field for field in expected_fields if field not in data]
+                    self.log_result("WhatsApp Config Get", False, f"Missing fields: {missing_fields}", data)
+                    return False
+            else:
+                self.log_result("WhatsApp Config Get", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("WhatsApp Config Get", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_whatsapp_config_update(self):
+        """Test updating WhatsApp bot configuration"""
+        config_update = {
+            "datos_bancarios": "CBU: 1234567890123456789012\nAlias: estonia-coberturas"
+        }
+        
+        try:
+            response = requests.put(f"{BACKEND_URL}/admin/whatsapp/config", json=config_update)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "datos_bancarios" in data and "estonia-coberturas" in data["datos_bancarios"]:
+                    self.log_result("WhatsApp Config Update", True, "Configuration updated successfully")
+                    return True
+                else:
+                    self.log_result("WhatsApp Config Update", False, "Updated config doesn't contain expected data", data)
+                    return False
+            else:
+                self.log_result("WhatsApp Config Update", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("WhatsApp Config Update", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_whatsapp_conversations(self):
+        """Test getting WhatsApp conversations"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/admin/whatsapp/conversations")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "conversations" in data:
+                    conversations = data["conversations"]
+                    # Check if we have the simulated conversation
+                    found_test_conversation = False
+                    for conv in conversations:
+                        if conv.get("phone_number") == "5491155667788":
+                            found_test_conversation = True
+                            break
+                    
+                    if found_test_conversation:
+                        self.log_result("WhatsApp Conversations", True, f"Found {len(conversations)} conversations including test conversation")
+                        return True
+                    else:
+                        self.log_result("WhatsApp Conversations", False, f"Test conversation (5491155667788) not found in {len(conversations)} conversations")
+                        return False
+                else:
+                    self.log_result("WhatsApp Conversations", False, "Response missing 'conversations' field", data)
+                    return False
+            else:
+                self.log_result("WhatsApp Conversations", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("WhatsApp Conversations", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_whatsapp_chat_history(self):
+        """Test getting chat history for specific phone number"""
+        phone_number = "5491155667788"
+        
+        try:
+            response = requests.get(f"{BACKEND_URL}/admin/whatsapp/chat/{phone_number}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "messages" in data and "phone_number" in data:
+                    messages = data["messages"]
+                    if len(messages) >= 10:  # Should have at least 10 messages from simulation
+                        self.log_result("WhatsApp Chat History", True, f"Retrieved {len(messages)} messages for {phone_number}")
+                        return True
+                    else:
+                        self.log_result("WhatsApp Chat History", False, f"Expected at least 10 messages, got {len(messages)}")
+                        return False
+                else:
+                    self.log_result("WhatsApp Chat History", False, "Response missing 'messages' or 'phone_number' field", data)
+                    return False
+            else:
+                self.log_result("WhatsApp Chat History", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("WhatsApp Chat History", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_verificar_seguro(self):
+        """Test verifying insurance by receipt number"""
+        receipt_number = "41702927"
+        
+        try:
+            response = requests.get(f"{BACKEND_URL}/verificar/{receipt_number}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("valido") == True and data.get("mensaje") == "COBERTURA VIGENTE":
+                    self.log_result("Verificar Seguro", True, f"Receipt {receipt_number} verified successfully")
+                    return True
+                else:
+                    self.log_result("Verificar Seguro", False, f"Verification failed: {data.get('mensaje', 'Unknown error')}", data)
+                    return False
+            else:
+                self.log_result("Verificar Seguro", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("Verificar Seguro", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_download_pdf_comprobante(self):
+        """Test downloading PDF receipt"""
+        seguro_id = "cbf07021-fae6-4070-8b69-546300118b9e"
+        
+        try:
+            response = requests.get(f"{BACKEND_URL}/seguros/{seguro_id}/comprobante/pdf")
+            
+            if response.status_code == 200:
+                content_type = response.headers.get('content-type', '')
+                if 'application/pdf' in content_type:
+                    content_length = len(response.content)
+                    self.log_result("Download PDF Comprobante", True, f"PDF downloaded successfully ({content_length} bytes)")
+                    return True
+                else:
+                    self.log_result("Download PDF Comprobante", False, f"Wrong content type: {content_type}")
+                    return False
+            else:
+                self.log_result("Download PDF Comprobante", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("Download PDF Comprobante", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_pause_chat(self):
+        """Test pausing chat for specific phone number"""
+        phone_number = "5491155667788"
+        
+        try:
+            response = requests.post(f"{BACKEND_URL}/admin/whatsapp/pause-chat", 
+                                   json={"phone_number": phone_number})
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("success") == True:
+                    self.log_result("Pause Chat", True, f"Chat paused for {phone_number}")
+                    return True
+                else:
+                    self.log_result("Pause Chat", False, f"Pause failed: {data.get('error', 'Unknown error')}", data)
+                    return False
+            else:
+                self.log_result("Pause Chat", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("Pause Chat", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_resume_chat(self):
+        """Test resuming chat for specific phone number"""
+        phone_number = "5491155667788"
+        
+        try:
+            response = requests.post(f"{BACKEND_URL}/admin/whatsapp/resume-chat", 
+                                   json={"phone_number": phone_number})
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("success") == True:
+                    self.log_result("Resume Chat", True, f"Chat resumed for {phone_number}")
+                    return True
+                else:
+                    self.log_result("Resume Chat", False, f"Resume failed: {data.get('error', 'Unknown error')}", data)
+                    return False
+            else:
+                self.log_result("Resume Chat", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("Resume Chat", False, f"Exception: {str(e)}")
+            return False
+
     def run_all_tests(self):
         """Run all backend tests"""
-        print("🚀 Starting Estonia Cobertura Colaborativa Backend Tests")
+        print("🚀 Starting Estonia Cobertura WhatsApp Bot Backend Tests")
         print(f"Backend URL: {BACKEND_URL}")
         print("=" * 60)
         
-        # Test sequence based on dependencies
+        # Test sequence - WhatsApp Bot specific tests
         tests = [
             self.test_admin_login,
-            self.test_create_agent,
-            self.test_list_agents,
-            self.test_agent_login,
-            self.test_agent_dashboard,
-            self.test_agent_vencimientos,
-            self.test_create_premio,
-            self.test_list_premios,
-            self.test_admin_seguros_list
+            self.test_whatsapp_status,
+            self.test_whatsapp_config_get,
+            self.test_whatsapp_config_update,
+            self.test_whatsapp_conversations,
+            self.test_whatsapp_chat_history,
+            self.test_verificar_seguro,
+            self.test_download_pdf_comprobante,
+            self.test_pause_chat,
+            self.test_resume_chat
         ]
         
         passed = 0
