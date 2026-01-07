@@ -1,29 +1,100 @@
 import { useState, useEffect } from 'react';
-import { Shield, Check, Plus, Trash2, Tag } from 'lucide-react';
+import { Shield, Check, Plus, Trash2, Tag, Download, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { adminAPI } from '@/services/api';
+import { adminAPI, segurosAPI } from '@/services/api';
 import { toast } from 'sonner';
 
 export default function AdminPanel() {
+  const [authenticated, setAuthenticated] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [token, setToken] = useState(null);
+  const [adminUsername, setAdminUsername] = useState('');
   const [seguros, setSeguros] = useState([]);
   const [promoCodes, setPromoCodes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [nuevoPromo, setNuevoPromo] = useState({ codigo: '', descuento_porcentaje: 0, es_master: false });
 
   useEffect(() => {
-    cargarDatos();
+    // Verificar si hay token guardado
+    const savedToken = localStorage.getItem('admin_token');
+    const savedUsername = localStorage.getItem('admin_username');
+    
+    if (savedToken && savedUsername) {
+      verifyToken(savedToken, savedUsername);
+    }
   }, []);
+
+  useEffect(() => {
+    if (authenticated) {
+      cargarDatos();
+    }
+  }, [authenticated]);
+
+  const verifyToken = async (savedToken, savedUsername) => {
+    try {
+      const result = await adminAPI.verifyToken(savedToken);
+      if (result.valid) {
+        setToken(savedToken);
+        setAdminUsername(savedUsername);
+        setAuthenticated(true);
+      } else {
+        // Token inválido, limpiar
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_username');
+      }
+    } catch (error) {
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_username');
+    }
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      const result = await adminAPI.login(username, password);
+      setToken(result.token);
+      setAdminUsername(result.username);
+      setAuthenticated(true);
+      
+      // Guardar token
+      localStorage.setItem('admin_token', result.token);
+      localStorage.setItem('admin_username', result.username);
+      
+      toast.success('Sesión iniciada correctamente');
+    } catch (error) {
+      toast.error('Credenciales incorrectas');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await adminAPI.logout(token);
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_username');
+      setAuthenticated(false);
+      setToken(null);
+      setAdminUsername('');
+      toast.success('Sesión cerrada');
+    } catch (error) {
+      toast.error('Error al cerrar sesión');
+    }
+  };
 
   const cargarDatos = async () => {
     setLoading(true);
     try {
       const [segurosData, codigosData] = await Promise.all([
-        adminAPI.listarSeguros(0, 100),
+        adminAPI.listarSeguros(0, 100, token),
         adminAPI.listarPromoCodes()
       ]);
       setSeguros(segurosData.seguros || []);
@@ -73,6 +144,65 @@ export default function AdminPanel() {
     }
   };
 
+  // Pantalla de Login
+  if (!authenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#F8FAFC] to-white flex items-center justify-center p-6">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 bg-[#064E3B] rounded-xl flex items-center justify-center mx-auto mb-4">
+              <Shield className="w-8 h-8 text-[#D9F99D]" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-[#064E3B]" style={{ fontFamily: 'Manrope, sans-serif' }}>
+              Panel Administrativo
+            </CardTitle>
+            <p className="text-[#64748B]">Estonia Seguros</p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <Label htmlFor="username">Usuario</Label>
+                <Input
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="admin"
+                  required
+                  data-testid="admin-username-input"
+                />
+              </div>
+              <div>
+                <Label htmlFor="password">Contraseña</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  data-testid="admin-password-input"
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#064E3B] hover:bg-[#064E3B]/90"
+                data-testid="admin-login-btn"
+              >
+                {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              </Button>
+              <div className="text-center text-sm text-[#64748B] mt-4">
+                <p>Credenciales por defecto:</p>
+                <p className="font-mono text-xs">Usuario: admin</p>
+                <p className="font-mono text-xs">Contraseña: Estonia2025!</p>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8FAFC] to-white">
       {/* Header */}
@@ -88,7 +218,18 @@ export default function AdminPanel() {
               </h1>
             </div>
           </div>
-          <Button 
+          <div className="flex gap-4 items-center">
+            <span className="text-sm text-[#64748B]">Hola, {adminUsername}</span>
+            <Button 
+              variant="ghost" 
+              onClick={handleLogout}
+              className="text-[#064E3B]"
+              data-testid="admin-logout-btn"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Cerrar Sesión
+            </Button>
+            <Button 
             variant="ghost" 
             onClick={() => window.location.href = '/'}
             className="text-[#064E3B]"
@@ -151,7 +292,27 @@ export default function AdminPanel() {
                           </span>
                         )}
                       </div>
-                      <div className="flex justify-end">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          onClick={() => window.open(segurosAPI.descargarPDF(seguro._id || seguro.numero_recibo), '_blank')}
+                          size="sm"
+                          variant="outline"
+                          className="text-[#064E3B]"
+                          data-testid="admin-download-pdf-btn"
+                        >
+                          <Download className="w-4 h-4 mr-1" />
+                          PDF
+                        </Button>
+                        <Button
+                          onClick={() => window.open(segurosAPI.descargarImagen(seguro._id || seguro.numero_recibo), '_blank')}
+                          size="sm"
+                          variant="outline"
+                          className="text-[#064E3B]"
+                          data-testid="admin-download-img-btn"
+                        >
+                          <Download className="w-4 h-4 mr-1" />
+                          IMG
+                        </Button>
                         {!seguro.procesado && (seguro.estado === 'pagado' || seguro.estado === 'gratis') && (
                           <Button
                             onClick={() => marcarProcesado(seguro._id || seguro.numero_recibo)}
