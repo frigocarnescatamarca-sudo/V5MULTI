@@ -247,13 +247,69 @@ async def disconnect_whatsapp():
 
 
 async def get_conversations():
-    """Get all conversations from WhatsApp service"""
+    """Get all conversations from WhatsApp service and MongoDB"""
+    conversations = {}
+    
+    # Get conversations from MongoDB (our simulated/stored messages)
+    try:
+        # Get unique phone numbers with messages
+        pipeline = [
+            {"$group": {
+                "_id": "$phone_number",
+                "push_name": {"$last": "$push_name"},
+                "last_message": {"$last": "$message"},
+                "last_timestamp": {"$max": "$timestamp"},
+                "message_count": {"$sum": 1}
+            }},
+            {"$sort": {"last_timestamp": -1}}
+        ]
+        
+        results = await db.whatsapp_messages.aggregate(pipeline).to_list(100)
+        
+        for result in results:
+            phone = result["_id"]
+            if phone:
+                conversations[phone] = {
+                    "phone_number": phone,
+                    "push_name": result.get("push_name", ""),
+                    "last_message": result.get("last_message", ""),
+                    "last_message_time": result.get("last_timestamp", ""),
+                    "message_count": result.get("message_count", 0),
+                    "bot_paused": False
+                }
+    except Exception as e:
+        print(f"Error getting MongoDB conversations: {e}")
+    
+    # Also try to get live conversations from WhatsApp service
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(f"{WHATSAPP_SERVICE_URL}/conversations", timeout=10.0)
-            return response.json()
+            ws_data = response.json()
+            
+            # Merge with existing conversations
+            for conv in ws_data.get("conversations", []):
+                phone = conv.get("phone_number")
+                if phone:
+                    if phone in conversations:
+                        # Update bot_paused status from WhatsApp service
+                        conversations[phone]["bot_paused"] = conv.get("bot_paused", False)
+                    else:
+                        conversations[phone] = conv
+            
+            # Get paused chats
+            paused_chats = ws_data.get("paused_chats", [])
+            for phone in paused_chats:
+                if phone in conversations:
+                    conversations[phone]["bot_paused"] = True
+                    
     except Exception as e:
-        return {"conversations": [], "error": str(e)}
+        print(f"Error getting WhatsApp service conversations: {e}")
+    
+    # Convert to list and sort by last_message_time
+    conv_list = list(conversations.values())
+    conv_list.sort(key=lambda x: x.get("last_message_time", ""), reverse=True)
+    
+    return {"conversations": conv_list, "paused_chats": []}
 
 
 async def pause_chat(phone_number: str):
