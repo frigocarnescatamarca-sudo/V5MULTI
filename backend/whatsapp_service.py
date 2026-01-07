@@ -343,19 +343,56 @@ async def process_message_with_ai(phone_number: str, message: str, push_name: st
     
     # Check if this is the ADMIN confirming a payment
     admin_number = config.get('numero_admin', '')
+    admin_lid = config.get('admin_lid', '')  # LID stored when admin is identified
     normalized_admin = normalize_phone(admin_number)
     normalized_phone = normalize_phone(phone_number)
     
-    print(f"[WhatsApp Bot] Checking admin: phone={phone_number} normalized={normalized_phone}, admin={admin_number} normalized={normalized_admin}")
+    # Extract just the number part from phone_number (could be LID like "122441598795892" or phone like "5491123456789")
+    phone_digits = ''.join(filter(str.isdigit, str(phone_number)))
     
-    is_admin = normalized_admin and normalized_phone and (
-        normalized_phone == normalized_admin or
-        normalized_phone.endswith(normalized_admin) or
-        normalized_admin.endswith(normalized_phone)
-    )
+    print(f"[WhatsApp Bot] Checking admin: incoming_phone={phone_number}, phone_digits={phone_digits}")
+    print(f"[WhatsApp Bot] Admin config: numero_admin={admin_number}, admin_lid={admin_lid}")
+    
+    # Check if admin by multiple methods:
+    # 1. By LID match (if we have the admin's LID stored)
+    # 2. By phone number match (normalized)
+    is_admin = False
+    
+    # Method 1: Check by stored LID
+    if admin_lid and phone_digits:
+        if phone_digits == admin_lid or phone_number == admin_lid:
+            is_admin = True
+            print(f"[WhatsApp Bot] Admin matched by LID: {admin_lid}")
+    
+    # Method 2: Check by phone number
+    if not is_admin and normalized_admin and normalized_phone:
+        if (normalized_phone == normalized_admin or
+            normalized_phone.endswith(normalized_admin) or
+            normalized_admin.endswith(normalized_phone)):
+            is_admin = True
+            print(f"[WhatsApp Bot] Admin matched by phone number")
+            # Save this LID for future reference if it looks like a LID (long number without country code pattern)
+            if len(phone_digits) > 12 and not admin_lid:
+                await db.whatsapp_config.update_one(
+                    {"_id": "bot_config"},
+                    {"$set": {"admin_lid": phone_digits}}
+                )
+                print(f"[WhatsApp Bot] Saved admin LID for future: {phone_digits}")
+    
+    # Method 3: If incoming is a LID-like number, check against JID mapping
+    if not is_admin and admin_number:
+        # Check if we have a JID mapping for the admin number
+        admin_mapping = await db.whatsapp_jid_mapping.find_one({"phone_number": admin_number})
+        if admin_mapping:
+            admin_jid = admin_mapping.get('jid', '')
+            # Extract number from JID
+            admin_jid_number = ''.join(filter(str.isdigit, admin_jid.split('@')[0] if '@' in admin_jid else admin_jid))
+            if phone_digits == admin_jid_number:
+                is_admin = True
+                print(f"[WhatsApp Bot] Admin matched by JID mapping")
     
     if is_admin:
-        print(f"[WhatsApp Bot] Admin detected! Message: {message[:50]}")
+        print(f"[WhatsApp Bot] ✅ ADMIN DETECTED! Message: {message[:50]}")
         
         # Check for CONFIRMAR command from admin
         confirm_match = re.match(r'(?:CONFIRMAR|confirmar|Confirmar)\s+([A-Za-z0-9]+)', message.strip())
@@ -370,12 +407,17 @@ async def process_message_with_ai(phone_number: str, message: str, push_name: st
         
         # If admin says hi or asks something general, respond as admin
         if message_lower in ['hola', 'hi', 'hey', 'buenas', 'buen dia', 'buenos dias', 'buenas tardes', 'buenas noches']:
-            return """👋 *¡Hola Admin!*
+            # Get pending count
+            pending_count = await db.seguros.count_documents({"estado": "pendiente_pago"})
+            return f"""👋 *¡Hola Admin!*
 
-Te reconozco como administrador. Estos son los comandos disponibles:
+Te reconozco como administrador. 
 
-📋 *CONFIRMAR [RECIBO]* - Confirma un pago y envía comprobantes al cliente
-📊 *ESTADO* - Ver resumen de coberturas pendientes
+📊 *Coberturas pendientes:* {pending_count}
+
+📋 *Comandos disponibles:*
+• *CONFIRMAR [RECIBO]* - Confirma un pago
+• *ESTADO* - Ver coberturas pendientes
 
 Ejemplo: CONFIRMAR ABC123"""
         
@@ -385,14 +427,17 @@ Ejemplo: CONFIRMAR ABC123"""
             if pending:
                 msg = "📊 *Coberturas pendientes de pago:*\n\n"
                 for p in pending:
-                    msg += f"• {p['numero_recibo']} - {p['nombre']} - ${p['precio_final']:,}\n"
+                    msg += f"• *{p['numero_recibo']}* - {p['nombre']} - ${p['precio_final']:,}\n"
+                msg += f"\nPara confirmar: *CONFIRMAR [RECIBO]*"
                 return msg
             else:
                 return "✅ No hay coberturas pendientes de pago"
         
         # If admin writes something else, don't treat as client - just acknowledge
         if not confirm_match:
-            return f"👋 Hola Admin. Si querés confirmar un pago, escribí: *CONFIRMAR [NÚMERO DE RECIBO]*"
+            return f"👋 Hola Admin. Para confirmar un pago escribí:\n*CONFIRMAR [NÚMERO DE RECIBO]*\n\nPara ver pendientes: *ESTADO*"
+    else:
+        print(f"[WhatsApp Bot] Not admin, treating as client")
     
     # Save incoming message
     await save_message(phone_number, message, "user", push_name)
