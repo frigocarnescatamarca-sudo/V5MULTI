@@ -308,7 +308,21 @@ export default function AdminPanel() {
     setLoading(true);
     try {
       if (agenteEditando) {
-        await adminAPI.actualizarAgente(agenteEditando.id, nuevoAgente);
+        // Construir objeto solo con campos necesarios
+        const updateData = {
+          nombre: nuevoAgente.nombre,
+          email: nuevoAgente.email,
+          telefono: nuevoAgente.telefono,
+          comision_porcentaje: nuevoAgente.comision_porcentaje,
+          activo: agenteEditando.activo !== false  // Mantener estado actual
+        };
+        
+        // Solo enviar password si se ingresó uno nuevo
+        if (nuevoAgente.password && nuevoAgente.password.trim() !== '') {
+          updateData.password = nuevoAgente.password;
+        }
+        
+        await adminAPI.actualizarAgente(agenteEditando.id, updateData);
         toast.success('Agente actualizado');
       } else {
         await adminAPI.crearAgente(nuevoAgente);
