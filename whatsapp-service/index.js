@@ -232,7 +232,8 @@ async function handleIncomingMessage(message) {
                 message: messageText,
                 message_id: message.key.id,
                 timestamp: message.messageTimestamp,
-                push_name: message.pushName || ''
+                push_name: message.pushName || '',
+                reply_jid: replyJid  // Pass the JID for replying to this user
             }, { timeout: 30000 });
 
             // Send AI response back to WhatsApp using ORIGINAL JID
