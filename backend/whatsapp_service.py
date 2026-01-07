@@ -257,15 +257,36 @@ async def process_message_with_ai(phone_number: str, message: str, push_name: st
     if not config.get("bot_activo", True):
         return None  # Bot is disabled globally
     
+    # Normalize phone number for comparison (remove any non-digits)
+    def normalize_phone(phone):
+        if not phone:
+            return ""
+        return ''.join(filter(str.isdigit, str(phone)))[-10:]  # Last 10 digits
+    
     # Check if this is the ADMIN confirming a payment
     admin_number = config.get('numero_admin', '')
-    if admin_number and phone_number == admin_number:
+    normalized_admin = normalize_phone(admin_number)
+    normalized_phone = normalize_phone(phone_number)
+    
+    print(f"[WhatsApp Bot] Checking admin: phone={phone_number} normalized={normalized_phone}, admin={admin_number} normalized={normalized_admin}")
+    
+    is_admin = normalized_admin and normalized_phone and (
+        normalized_phone == normalized_admin or
+        normalized_phone.endswith(normalized_admin) or
+        normalized_admin.endswith(normalized_phone)
+    )
+    
+    if is_admin:
+        print(f"[WhatsApp Bot] Admin detected! Checking for CONFIRMAR command...")
         # Check for CONFIRMAR command from admin
-        confirm_match = re.match(r'(?:CONFIRMAR|confirmar|Confirmar)\s+([A-Z0-9]+)', message.strip())
+        confirm_match = re.match(r'(?:CONFIRMAR|confirmar|Confirmar)\s+([A-Za-z0-9]+)', message.strip())
         if confirm_match:
             recibo = confirm_match.group(1).upper()
+            print(f"[WhatsApp Bot] Admin confirming payment for recibo: {recibo}")
             result = await admin_confirm_payment(recibo, phone_number)
             return result
+        else:
+            print(f"[WhatsApp Bot] Admin message but not CONFIRMAR command: {message[:50]}")
     
     # Save incoming message
     await save_message(phone_number, message, "user", push_name)
