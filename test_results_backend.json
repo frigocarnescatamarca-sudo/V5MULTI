@@ -1,0 +1,65 @@
+[
+  {
+    "test": "Admin Login",
+    "success": true,
+    "message": "Admin login successful",
+    "details": null,
+    "timestamp": "2026-01-07T13:12:49.605658"
+  },
+  {
+    "test": "Create Agent",
+    "success": true,
+    "message": "Agent created with ID: f8805156-4ebd-43cd-9c86-3369efa494d4",
+    "details": null,
+    "timestamp": "2026-01-07T13:12:49.707378"
+  },
+  {
+    "test": "List Agents",
+    "success": true,
+    "message": "Found 1 agents, including created test agent",
+    "details": null,
+    "timestamp": "2026-01-07T13:12:49.747730"
+  },
+  {
+    "test": "Agent Login",
+    "success": true,
+    "message": "Agent login successful for Agente Test",
+    "details": null,
+    "timestamp": "2026-01-07T13:12:49.796715"
+  },
+  {
+    "test": "Agent Dashboard",
+    "success": true,
+    "message": "Dashboard loaded - Total seguros: 0, Pagados: 0",
+    "details": null,
+    "timestamp": "2026-01-07T13:12:49.830782"
+  },
+  {
+    "test": "Agent Vencimientos",
+    "success": true,
+    "message": "Vencimientos loaded with 0 total items",
+    "details": null,
+    "timestamp": "2026-01-07T13:12:49.869764"
+  },
+  {
+    "test": "Create Premio",
+    "success": true,
+    "message": "Premio created with ID: 425f0cee-2658-4d66-8f62-63ff4f317a04",
+    "details": null,
+    "timestamp": "2026-01-07T13:12:49.918519"
+  },
+  {
+    "test": "List Premios",
+    "success": true,
+    "message": "Found 1 premios, including created test premio",
+    "details": null,
+    "timestamp": "2026-01-07T13:12:49.954828"
+  },
+  {
+    "test": "Admin Seguros List",
+    "success": true,
+    "message": "Listed 1 seguros out of 1 total",
+    "details": null,
+    "timestamp": "2026-01-07T13:12:49.988306"
+  }
+]
