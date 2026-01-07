@@ -275,12 +275,17 @@ async def admin_confirm_payment(recibo: str, admin_phone: str):
         
         backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://autocare-12.preview.emergentagent.com')
         
-        # Get the correct JID for the client
-        jid_mapping = await db.whatsapp_jid_mapping.find_one({"phone_number": client_phone})
-        client_jid = jid_mapping.get('jid') if jid_mapping else None
+        # Try to send confirmation to client if we have contact info
+        client_notified = False
         
-        # Send confirmation to CLIENT
-        client_msg = f"""✅ *¡PAGO CONFIRMADO!*
+        if client_phone or client_jid:
+            # Get the correct JID for the client if not already have it
+            if not client_jid and client_phone:
+                jid_mapping = await db.whatsapp_jid_mapping.find_one({"phone_number": client_phone})
+                client_jid = jid_mapping.get('jid') if jid_mapping else None
+            
+            # Send confirmation to CLIENT
+            client_msg = f"""✅ *¡PAGO CONFIRMADO!*
 
 🎉 Tu cobertura está *ACTIVA*
 
@@ -298,23 +303,29 @@ async def admin_confirm_payment(recibo: str, admin_phone: str):
 {backend_url}/verificar/{coverage['numero_recibo']}
 
 ¡Gracias por confiar en Estonia Cobertura! 🙏"""
-        
-        # Use JID if available, otherwise try phone
-        if client_jid:
-            print(f"[WhatsApp Bot] Sending to client using JID: {client_jid}")
-            await send_whatsapp_message_to_jid(client_jid, client_msg)
-        else:
-            print(f"[WhatsApp Bot] No JID found, trying phone: {client_phone}")
-            await send_whatsapp_message(client_phone, client_msg)
+            
+            try:
+                # Use JID if available, otherwise try phone
+                if client_jid:
+                    print(f"[WhatsApp Bot] Sending to client using JID: {client_jid}")
+                    await send_whatsapp_message_to_jid(client_jid, client_msg)
+                    client_notified = True
+                elif client_phone:
+                    print(f"[WhatsApp Bot] No JID found, trying phone: {client_phone}")
+                    await send_whatsapp_message(client_phone, client_msg)
+                    client_notified = True
+            except Exception as send_error:
+                print(f"[WhatsApp Bot] Error sending to client: {send_error}")
         
         # Clean up pending
         if pending:
             await db.whatsapp_pending.delete_one({"_id": pending['_id']})
         
-        print(f"[WhatsApp Bot] Payment confirmed by admin for {recibo}, notification sent to {client_phone}")
+        print(f"[WhatsApp Bot] Payment confirmed by admin for {recibo}, client_notified={client_notified}")
         
         # Confirm to admin
-        return f"""✅ *PAGO CONFIRMADO*
+        if client_notified:
+            return f"""✅ *PAGO CONFIRMADO*
 
 Cobertura {recibo} activada.
 Se enviaron los comprobantes al cliente.
@@ -322,6 +333,18 @@ Se enviaron los comprobantes al cliente.
 👤 {coverage['nombre']}
 🚗 {coverage['marca']} {coverage['modelo']}
 💰 ${coverage['precio_final']:,}"""
+        else:
+            return f"""✅ *PAGO CONFIRMADO*
+
+Cobertura {recibo} activada.
+⚠️ No se pudo notificar al cliente (sin WhatsApp registrado).
+
+👤 {coverage['nombre']}
+🚗 {coverage['marca']} {coverage['modelo']}
+💰 ${coverage['precio_final']:,}
+
+📥 Comprobantes:
+• {backend_url}/verificar/{coverage['numero_recibo']}"""
         
     except Exception as e:
         print(f"[WhatsApp Bot] Error in admin_confirm_payment: {e}")
