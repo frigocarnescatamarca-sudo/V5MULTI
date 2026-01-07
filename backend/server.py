@@ -1149,7 +1149,8 @@ async def listar_agentes():
         agente_id = agente['_id']
         agente['id'] = agente_id
         del agente['_id']
-        del agente['password']  # No exponer passwords
+        if 'password' in agente:
+            del agente['password']  # No exponer passwords
         
         # Contar seguros del agente
         total_seguros = await db.seguros.count_documents({"agente_id": agente_id})
@@ -1169,10 +1170,14 @@ async def listar_agentes():
             for s in seguros
         ])
         
+        # Incluir saldo actual
+        saldo_actual = agente.get('saldo', 0)
+        
         agente['estadisticas'] = {
             "total_seguros": total_seguros,
             "seguros_pagados": seguros_pagados,
-            "total_comisiones": total_comisiones
+            "total_comisiones": total_comisiones,
+            "saldo_actual": saldo_actual
         }
     
     return {"agentes": agentes}
