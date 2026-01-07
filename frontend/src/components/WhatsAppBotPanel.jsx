@@ -433,6 +433,20 @@ export default function WhatsAppBotPanel() {
                 />
               </div>
 
+              {/* Número de WhatsApp para Ventas (Homepage) */}
+              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                <Label className="text-base font-semibold text-green-800">📲 Número de WhatsApp para Ventas</Label>
+                <p className="text-sm text-green-600 mb-2">
+                  Este número aparecerá en el botón "Contratar" de la página principal.
+                </p>
+                <Input 
+                  value={config.whatsapp_ventas || ''}
+                  onChange={(e) => updateConfig('whatsapp_ventas', e.target.value.replace(/\D/g, ''))}
+                  placeholder="Ej: 5491112345678 (con código de país)"
+                  className="font-mono bg-white"
+                />
+              </div>
+
               {/* Datos Bancarios */}
               <div>
                 <Label className="text-base font-semibold">💳 Datos Bancarios para Transferencias</Label>
