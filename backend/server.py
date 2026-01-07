@@ -87,6 +87,28 @@ class PromoCodeCreate(BaseModel):
     descuento_porcentaje: int = Field(ge=0, le=100)
     es_master: bool = False
 
+class AgenteCreate(BaseModel):
+    nombre: str
+    email: EmailStr
+    telefono: str
+    username: str
+    password: str
+    comision_porcentaje: int = Field(ge=0, le=100, default=10)
+    activo: bool = True
+
+class AgenteUpdate(BaseModel):
+    nombre: str
+    email: EmailStr
+    telefono: str
+    comision_porcentaje: int = Field(ge=0, le=100)
+    activo: bool
+
+class PremioCreate(BaseModel):
+    nombre: str
+    cantidad_seguros: int = Field(ge=1)
+    monto_premio: float = Field(ge=0)
+    activo: bool = True
+
 class InsuranceResponse(BaseModel):
     id: str
     numero_recibo: str
