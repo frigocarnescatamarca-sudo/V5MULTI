@@ -1570,6 +1570,161 @@ export default function AdminPanel() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Modal Registrar Cobro a Agente */}
+      <Dialog open={modalCobrosOpen} onOpenChange={setModalCobrosOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-[#064E3B] flex items-center gap-2">
+              <CreditCard className="w-6 h-6" />
+              Cobros - {agenteParaCobro?.nombre}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {agenteParaCobro && (
+            <div className="space-y-6">
+              {/* Resumen de Cuenta */}
+              <div className="grid grid-cols-3 gap-4">
+                <Card className="bg-slate-50">
+                  <CardContent className="p-4 text-center">
+                    <p className="text-xs text-[#64748B]">Total Ventas</p>
+                    <p className="text-xl font-bold text-[#064E3B]" style={{ fontFamily: 'Space Grotesk, monospace' }}>
+                      ${(agenteParaCobro.estadisticas?.total_ventas || 0).toLocaleString('es-AR')}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-green-50 border-green-200">
+                  <CardContent className="p-4 text-center">
+                    <p className="text-xs text-[#64748B]">Comisiones</p>
+                    <p className="text-xl font-bold text-[#10B981]" style={{ fontFamily: 'Space Grotesk, monospace' }}>
+                      -${(agenteParaCobro.estadisticas?.total_comisiones || 0).toLocaleString('es-AR')}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className={`border-2 ${(agenteParaCobro.estadisticas?.deuda_actual || 0) > 0 ? 'bg-red-50 border-red-300' : 'bg-green-50 border-green-300'}`}>
+                  <CardContent className="p-4 text-center">
+                    <p className="text-xs text-[#64748B]">Deuda Actual</p>
+                    <p className={`text-2xl font-bold ${(agenteParaCobro.estadisticas?.deuda_actual || 0) > 0 ? 'text-red-500' : 'text-[#10B981]'}`} style={{ fontFamily: 'Space Grotesk, monospace' }}>
+                      ${(agenteParaCobro.estadisticas?.deuda_actual || 0).toLocaleString('es-AR')}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Fórmula explicativa */}
+              <div className="bg-slate-100 p-3 rounded-lg text-sm text-[#64748B]">
+                <p><strong>Deuda</strong> = Total Ventas - Comisiones ({agenteParaCobro.comision_porcentaje}%) - Cobros Realizados</p>
+                <p className="text-xs mt-1">
+                  ${(agenteParaCobro.estadisticas?.total_ventas || 0).toLocaleString('es-AR')} - 
+                  ${(agenteParaCobro.estadisticas?.total_comisiones || 0).toLocaleString('es-AR')} - 
+                  ${(agenteParaCobro.estadisticas?.total_cobrado || 0).toLocaleString('es-AR')} = 
+                  <strong className="text-red-500"> ${(agenteParaCobro.estadisticas?.deuda_actual || 0).toLocaleString('es-AR')}</strong>
+                </p>
+              </div>
+
+              {/* Formulario Registrar Cobro */}
+              {(agenteParaCobro.estadisticas?.deuda_actual || 0) > 0 && (
+                <Card className="border-red-200">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-red-500 flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5" />
+                      Registrar Cobro
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label>Monto Cobrado ($) *</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max={agenteParaCobro.estadisticas?.deuda_actual || 0}
+                        value={nuevoCobro.monto}
+                        onChange={(e) => setNuevoCobro({...nuevoCobro, monto: e.target.value})}
+                        placeholder={`Máximo: $${(agenteParaCobro.estadisticas?.deuda_actual || 0).toLocaleString('es-AR')}`}
+                        data-testid="monto-cobro-input"
+                      />
+                    </div>
+                    <div>
+                      <Label>Observación</Label>
+                      <Textarea
+                        value={nuevoCobro.observacion}
+                        onChange={(e) => setNuevoCobro({...nuevoCobro, observacion: e.target.value})}
+                        placeholder="Ej: Transferencia bancaria, Pago en efectivo, etc."
+                        rows={2}
+                        data-testid="observacion-cobro-input"
+                      />
+                    </div>
+                    <Button
+                      onClick={registrarCobro}
+                      disabled={loading || !nuevoCobro.monto}
+                      className="w-full bg-red-500 hover:bg-red-600"
+                      data-testid="confirmar-cobro-btn"
+                    >
+                      {loading ? 'Procesando...' : 'Registrar Cobro'}
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              {(agenteParaCobro.estadisticas?.deuda_actual || 0) <= 0 && (
+                <Card className="border-green-200 bg-green-50">
+                  <CardContent className="p-6 text-center">
+                    <Check className="w-12 h-12 text-[#10B981] mx-auto mb-2" />
+                    <p className="text-[#10B981] font-bold">Este agente está al día</p>
+                    <p className="text-sm text-[#64748B]">No tiene deudas pendientes</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Historial de Cobros */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg text-[#064E3B]">
+                    <History className="w-5 h-5" />
+                    Historial de Cobros
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {cobrosAgente.length > 0 ? (
+                    <div className="space-y-3 max-h-64 overflow-y-auto">
+                      {cobrosAgente.map((cobro) => (
+                        <div key={cobro.id} className="flex justify-between items-start p-3 bg-slate-50 rounded-lg">
+                          <div>
+                            <p className="text-sm font-semibold text-red-500">
+                              Cobro: ${cobro.monto.toLocaleString('es-AR')}
+                            </p>
+                            {cobro.observacion && (
+                              <p className="text-xs text-[#64748B] mt-1">{cobro.observacion}</p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-[#64748B]">
+                              {new Date(cobro.fecha).toLocaleDateString('es-AR')}
+                            </p>
+                            <p className="text-xs text-[#64748B]">
+                              {new Date(cobro.fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center text-[#64748B] py-4">No hay cobros registrados</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Button
+                onClick={() => setModalCobrosOpen(false)}
+                variant="outline"
+                className="w-full"
+              >
+                Cerrar
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
