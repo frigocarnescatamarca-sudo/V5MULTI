@@ -343,9 +343,12 @@ export default function AdminPanel() {
       {/* Content */}
       <div className="container mx-auto px-6 py-12">
         <Tabs defaultValue="seguros" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-4xl grid-cols-5">
             <TabsTrigger value="seguros">Seguros</TabsTrigger>
-            <TabsTrigger value="promos">Códigos Promo</TabsTrigger>
+            <TabsTrigger value="agentes">Agentes</TabsTrigger>
+            <TabsTrigger value="premios">Premios</TabsTrigger>
+            <TabsTrigger value="vencimientos">Vencimientos</TabsTrigger>
+            <TabsTrigger value="promos">Códigos</TabsTrigger>
           </TabsList>
 
           {/* Tab Seguros */}
@@ -403,7 +406,17 @@ export default function AdminPanel() {
                           </span>
                         )}
                       </div>
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-2 flex-wrap">
+                        <Button
+                          onClick={() => setSeguroVerDocs(seguro)}
+                          size="sm"
+                          variant="outline"
+                          className="text-[#064E3B]"
+                          data-testid="ver-docs-btn"
+                        >
+                          <ImageIcon className="w-4 h-4 mr-1" />
+                          Docs
+                        </Button>
                         <Button
                           onClick={() => abrirModalEditarSeguro(seguro)}
                           size="sm"
