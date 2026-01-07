@@ -223,4 +223,65 @@ export const agenteAPI = {
   }
 };
 
+export const whatsappAPI = {
+  // Connection
+  getStatus: async () => {
+    const response = await api.get('/admin/whatsapp/status');
+    return response.data;
+  },
+  
+  getQR: async () => {
+    const response = await api.get('/admin/whatsapp/qr');
+    return response.data;
+  },
+  
+  connect: async () => {
+    const response = await api.post('/admin/whatsapp/connect');
+    return response.data;
+  },
+  
+  disconnect: async () => {
+    const response = await api.post('/admin/whatsapp/disconnect');
+    return response.data;
+  },
+  
+  // Configuration
+  getConfig: async () => {
+    const response = await api.get('/admin/whatsapp/config');
+    return response.data;
+  },
+  
+  updateConfig: async (data) => {
+    const response = await api.put('/admin/whatsapp/config', data);
+    return response.data;
+  },
+  
+  // Conversations
+  getConversations: async () => {
+    const response = await api.get('/admin/whatsapp/conversations');
+    return response.data;
+  },
+  
+  getChatHistory: async (phoneNumber, limit = 50) => {
+    const response = await api.get(`/admin/whatsapp/chat/${phoneNumber}?limit=${limit}`);
+    return response.data;
+  },
+  
+  // Chat management
+  pauseChat: async (phoneNumber) => {
+    const response = await api.post('/admin/whatsapp/pause-chat', { phone_number: phoneNumber });
+    return response.data;
+  },
+  
+  resumeChat: async (phoneNumber) => {
+    const response = await api.post('/admin/whatsapp/resume-chat', { phone_number: phoneNumber });
+    return response.data;
+  },
+  
+  sendMessage: async (phoneNumber, message) => {
+    const response = await api.post('/admin/whatsapp/send', { phone_number: phoneNumber, message });
+    return response.data;
+  }
+};
+
 export default api;
