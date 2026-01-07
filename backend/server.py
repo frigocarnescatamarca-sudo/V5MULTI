@@ -655,13 +655,73 @@ async def renovar_seguro(seguro_id: str):
 
 # ============ ADMIN ROUTES ============
 
+@api_router.post("/admin/login")
+async def admin_login(data: dict):
+    """Login de administrador"""
+    username = data.get("username")
+    password = data.get("password")
+    
+    # Credenciales hardcodeadas (en producción usar hash y BD)
+    ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
+    ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "Estonia2025!")
+    
+    if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+        # Generar token simple (en producción usar JWT)
+        import secrets
+        token = secrets.token_urlsafe(32)
+        
+        # Guardar token en base de datos (expira en 24h)
+        await db.admin_sessions.insert_one({
+            "token": token,
+            "username": username,
+            "created_at": datetime.now(timezone.utc),
+            "expires_at": datetime.now(timezone.utc) + timedelta(hours=24)
+        })
+        
+        return {
+            "success": True,
+            "token": token,
+            "username": username
+        }
+    
+    raise HTTPException(status_code=401, detail="Credenciales inválidas")
+
+@api_router.post("/admin/logout")
+async def admin_logout(data: dict):
+    """Logout de administrador"""
+    token = data.get("token")
+    if token:
+        await db.admin_sessions.delete_one({"token": token})
+    return {"success": True}
+
+@api_router.get("/admin/verify")
+async def verify_admin_token(token: str):
+    """Verifica si un token de admin es válido"""
+    session = await db.admin_sessions.find_one({
+        "token": token,
+        "expires_at": {"$gt": datetime.now(timezone.utc)}
+    })
+    
+    if session:
+        return {"valid": True, "username": session["username"]}
+    
+    return {"valid": False}
+
 @api_router.get("/admin/seguros")
-async def listar_seguros_admin(skip: int = 0, limit: int = 50):
+async def listar_seguros_admin(skip: int = 0, limit: int = 50, token: str = None):
     """Lista todos los seguros (admin)"""
     
+    # Verificar token (opcional por ahora para no romper frontend)
+    if token:
+        session = await db.admin_sessions.find_one({
+            "token": token,
+            "expires_at": {"$gt": datetime.now(timezone.utc)}
+        })
+        if not session:
+            raise HTTPException(status_code=401, detail="Token inválido o expirado")
+    
     seguros = await db.seguros.find(
-        {},
-        {"_id": 0}
+        {}
     ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
     
     total = await db.seguros.count_documents({})
