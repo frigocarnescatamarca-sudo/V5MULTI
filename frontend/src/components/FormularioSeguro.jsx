@@ -393,14 +393,25 @@ function Step2({ fotos, setFotos, onNext, onBack }) {
 
   return (
     <div className="space-y-6">
-      <h3 className="text-xl font-bold text-[#064E3B]">Fotos del Vehículo</h3>
-      <p className="text-[#64748B]">Sube 4 fotos del vehículo (frente, lados y trasera)</p>
+      <h3 className="text-xl font-bold text-[#064E3B]">Fotos del Vehículo y Documentos</h3>
+      <p className="text-[#64748B]">Sube las fotos del vehículo y documentos requeridos</p>
       
-      <div className="grid grid-cols-2 gap-4">
-        <FotoDropzone tipo="frente" label="Frente" />
-        <FotoDropzone tipo="lado_izq" label="Lado Izquierdo" />
-        <FotoDropzone tipo="lado_der" label="Lado Derecho" />
-        <FotoDropzone tipo="trasera" label="Trasera" />
+      <div className="space-y-4">
+        <h4 className="font-semibold text-[#064E3B]">Fotos del Vehículo</h4>
+        <div className="grid grid-cols-2 gap-4">
+          <FotoDropzone tipo="frente" label="Frente" />
+          <FotoDropzone tipo="lado_izq" label="Lado Izquierdo" />
+          <FotoDropzone tipo="lado_der" label="Lado Derecho" />
+          <FotoDropzone tipo="trasera" label="Trasera" />
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <h4 className="font-semibold text-[#064E3B]">Documentos</h4>
+        <div className="grid grid-cols-2 gap-4">
+          <FotoDropzone tipo="cedula_vehiculo" label="Cédula del Vehículo" />
+          <FotoDropzone tipo="carnet_conductor" label="Carnet de Conductor" />
+        </div>
       </div>
 
       <div className="flex gap-4">
