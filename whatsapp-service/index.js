@@ -5,6 +5,10 @@ const axios = require('axios');
 const QRCode = require('qrcode');
 const fs = require('fs');
 const path = require('path');
+const pino = require('pino');
+
+// Create pino logger for Baileys
+const logger = pino({ level: 'silent' }); // Use 'debug' for more verbose logging
 
 const app = express();
 app.use(cors());
@@ -37,9 +41,10 @@ async function initWhatsApp() {
 
         sock = makeWASocket({
             version,
+            logger,
             auth: {
                 creds: state.creds,
-                keys: makeCacheableSignalKeyStore(state.keys, console.log)
+                keys: makeCacheableSignalKeyStore(state.keys, logger)
             },
             printQRInTerminal: false,
             browser: ['Estonia Cobertura Bot', 'Chrome', '1.0.0'],
