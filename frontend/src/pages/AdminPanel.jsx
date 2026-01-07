@@ -364,6 +364,50 @@ export default function AdminPanel() {
     }
   };
 
+  // Funciones de Saldo de Agentes
+  const abrirModalSaldo = async (agente) => {
+    setAgenteParaSaldo(agente);
+    setNuevoSaldo({ monto: '', observacion: '' });
+    setModalSaldoOpen(true);
+    
+    // Cargar historial de movimientos
+    try {
+      const data = await adminAPI.obtenerMovimientosAgente(agente.id);
+      setMovimientosAgente(data.movimientos || []);
+    } catch (error) {
+      setMovimientosAgente([]);
+    }
+  };
+
+  const agregarSaldo = async () => {
+    if (!nuevoSaldo.monto || parseFloat(nuevoSaldo.monto) <= 0) {
+      toast.error('Ingrese un monto válido mayor a 0');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await adminAPI.agregarSaldoAgente(
+        agenteParaSaldo.id, 
+        parseFloat(nuevoSaldo.monto), 
+        nuevoSaldo.observacion
+      );
+      toast.success(`Se agregaron $${parseFloat(nuevoSaldo.monto).toLocaleString('es-AR')} al saldo de ${agenteParaSaldo.nombre}`);
+      setNuevoSaldo({ monto: '', observacion: '' });
+      
+      // Recargar movimientos
+      const data = await adminAPI.obtenerMovimientosAgente(agenteParaSaldo.id);
+      setMovimientosAgente(data.movimientos || []);
+      
+      // Recargar agentes para actualizar saldo
+      cargarDatos();
+    } catch (error) {
+      toast.error('Error al agregar saldo');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Pantalla de Login
   if (!authenticated) {
     return (
