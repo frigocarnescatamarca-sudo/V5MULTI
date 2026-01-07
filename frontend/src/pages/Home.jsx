@@ -329,6 +329,7 @@ export default function Home() {
             <div>
               <h4 className="font-bold mb-4">Enlaces</h4>
               <ul className="space-y-2 text-white/70">
+                <li><a href="/mis-coberturas" className="hover:text-[#D9F99D]">Consultar Coberturas</a></li>
                 <li><a href="/cliente" className="hover:text-[#D9F99D]">Portal Cliente</a></li>
                 <li><a href="/admin" className="hover:text-[#D9F99D]">Panel Admin</a></li>
               </ul>
