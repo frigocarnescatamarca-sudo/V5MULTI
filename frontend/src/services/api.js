@@ -148,6 +148,16 @@ export const adminAPI = {
     return response.data;
   },
   
+  agregarSaldoAgente: async (agenteId, monto, observacion) => {
+    const response = await api.post(`/admin/agentes/${agenteId}/agregar-saldo`, { monto, observacion });
+    return response.data;
+  },
+  
+  obtenerMovimientosAgente: async (agenteId) => {
+    const response = await api.get(`/admin/agentes/${agenteId}/movimientos`);
+    return response.data;
+  },
+  
   // Premios
   crearPremio: async (data) => {
     const response = await api.post('/admin/premios', data);
