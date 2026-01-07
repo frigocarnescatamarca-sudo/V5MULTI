@@ -1,10 +1,36 @@
-import { useState } from 'react';
-import { Shield, Phone, CheckCircle, Clock, FileText, Download, Car, Smartphone } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Shield, Phone, CheckCircle, Clock, FileText, Download, Car, Smartphone, MessageCircle } from 'lucide-react';
 import FormularioSeguro from '@/components/FormularioSeguro';
 import { Button } from '@/components/ui/button';
 
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
 export default function Home() {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [whatsappVentas, setWhatsappVentas] = useState('');
+
+  // Fetch WhatsApp ventas number on mount
+  useEffect(() => {
+    const fetchWhatsappVentas = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/whatsapp/ventas`);
+        if (response.ok) {
+          const data = await response.json();
+          setWhatsappVentas(data.whatsapp_ventas || '');
+        }
+      } catch (error) {
+        console.error('Error fetching WhatsApp ventas:', error);
+      }
+    };
+    fetchWhatsappVentas();
+  }, []);
+
+  const handleWhatsAppClick = () => {
+    if (whatsappVentas) {
+      const mensaje = encodeURIComponent('Hola, quiero contratar una cobertura vehicular.');
+      window.open(`https://wa.me/${whatsappVentas}?text=${mensaje}`, '_blank');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F8FAFC] to-white">
