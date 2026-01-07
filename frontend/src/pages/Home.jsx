@@ -47,7 +47,23 @@ export default function Home() {
               </h1>
             </div>
           </div>
-          <div className="hidden md:flex gap-6">
+          <div className="hidden md:flex gap-4 items-center">
+            {whatsappVentas && (
+              <Button 
+                onClick={handleWhatsAppClick}
+                className="bg-[#25D366] hover:bg-[#128C7E] text-white rounded-full"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Contratar
+              </Button>
+            )}
+            <Button 
+              variant="ghost" 
+              onClick={() => window.location.href = '/mis-coberturas'}
+              className="text-[#064E3B]"
+            >
+              Mis Coberturas
+            </Button>
             <Button 
               variant="ghost" 
               onClick={() => window.location.href = '/cliente'}
