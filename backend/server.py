@@ -991,6 +991,9 @@ async def obtener_seguros_agente(token: str):
     
     agente_id = session["agente_id"]
     
+    # Obtener datos del agente
+    agente = await db.agentes.find_one({"_id": agente_id})
+    
     # Obtener seguros asignados al agente
     seguros = await db.seguros.find(
         {"agente_id": agente_id}
@@ -1004,11 +1007,25 @@ async def obtener_seguros_agente(token: str):
     
     # Calcular estadísticas
     total_seguros = len(seguros)
-    seguros_pagados = len([s for s in seguros if s.get('estado') in ['pagado', 'gratis']])
+    seguros_pagados_list = [s for s in seguros if s.get('estado') in ['pagado', 'gratis']]
+    seguros_pagados = len(seguros_pagados_list)
+    
+    # Total ventas y comisiones
+    total_ventas = sum([s.get('precio_final', 0) for s in seguros_pagados_list])
     total_comisiones = sum([
-        s.get('precio_final', 0) * (s.get('comision_porcentaje', 10) / 100)
-        for s in seguros if s.get('estado') in ['pagado', 'gratis']
+        s.get('precio_final', 0) * (s.get('comision_porcentaje', agente.get('comision_porcentaje', 10) if agente else 10) / 100)
+        for s in seguros_pagados_list
     ])
+    
+    # Calcular deuda al admin
+    deuda_bruta = total_ventas - total_comisiones
+    
+    # Obtener cobros realizados
+    cobros = await db.cobros_agentes.find({"agente_id": agente_id}).to_list(1000)
+    total_cobrado = sum([c.get('monto', 0) for c in cobros])
+    
+    # Deuda actual
+    deuda_actual = deuda_bruta - total_cobrado
     
     # Verificar premios ganados
     premios_activos = await db.premios.find({"activo": True}).to_list(100)
@@ -1028,9 +1045,19 @@ async def obtener_seguros_agente(token: str):
             "total_seguros": total_seguros,
             "seguros_pagados": seguros_pagados,
             "seguros_pendientes": total_seguros - seguros_pagados,
+            "total_ventas": total_ventas,
             "total_comisiones": total_comisiones,
+            "deuda_bruta": deuda_bruta,
+            "total_cobrado": total_cobrado,
+            "deuda_actual": deuda_actual,
             "premios_ganados": premios_ganados
-        }
+        },
+        "cobros": [{
+            "id": c["_id"],
+            "monto": c["monto"],
+            "observacion": c.get("observacion", ""),
+            "fecha": c["fecha"]
+        } for c in cobros]
     }
 
 @api_router.get("/agente/vencimientos")
