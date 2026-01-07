@@ -106,6 +106,11 @@ class AgenteUpdate(BaseModel):
     telefono: str
     comision_porcentaje: int = Field(ge=0, le=100)
     activo: bool
+    password: Optional[str] = None  # Password opcional para actualización
+
+class AgregarSaldoAgente(BaseModel):
+    monto: float = Field(gt=0)
+    observacion: str = ""
 
 class PremioCreate(BaseModel):
     nombre: str
