@@ -226,17 +226,17 @@ frontend:
         - agent: "main"
         - comment: "Shows vencimientos with color coding correctly"
 
-  - task: "Visor Documentos Modal"
+  - task: "Homepage Interface"
     implemented: true
     working: true
-    file: "/app/frontend/src/components/VisorDocumentos.jsx"
+    file: "/app/frontend/src/pages/Home.jsx"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
         - working: true
-        - agent: "main"
-        - comment: "Modal opens correctly, shows 6 document slots with correct status indicators"
+        - agent: "testing"
+        - comment: "✅ TESTED: Homepage displays correctly. Header shows 'ESTONIA COBERTURA COLABORATIVA', hero section renders properly, all UI elements functional."
 
   - task: "Panel Agente"
     implemented: true
