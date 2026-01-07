@@ -168,6 +168,85 @@ async def save_message(phone_number: str, message: str, role: str, push_name: st
     return doc
 
 
+async def admin_confirm_payment(recibo: str, admin_phone: str):
+    """Admin confirms a payment - sends confirmation to client"""
+    try:
+        # Find the coverage by recibo
+        coverage = await db.seguros.find_one({"numero_recibo": recibo})
+        
+        if not coverage:
+            return f"❌ No encontré la cobertura con recibo {recibo}"
+        
+        if coverage.get('estado') == 'pagado':
+            return f"⚠️ La cobertura {recibo} ya está marcada como PAGADA"
+        
+        # Find pending record to get client phone
+        pending = await db.whatsapp_pending.find_one({"coverage_id": coverage['_id']})
+        client_phone = pending.get('client_phone') if pending else coverage.get('whatsapp_phone')
+        
+        if not client_phone:
+            return f"❌ No encontré el teléfono del cliente para {recibo}"
+        
+        # Mark as paid
+        await db.seguros.update_one(
+            {"_id": coverage['_id']},
+            {"$set": {
+                "estado": "pagado",
+                "fecha_pago": datetime.now(timezone.utc).isoformat(),
+                "confirmado_por": admin_phone
+            }}
+        )
+        
+        # Get updated coverage
+        coverage = await db.seguros.find_one({"_id": coverage['_id']})
+        
+        backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://estonia-covers.preview.emergentagent.com')
+        
+        # Send confirmation to CLIENT
+        client_msg = f"""✅ *¡PAGO CONFIRMADO!*
+
+🎉 Tu cobertura está *ACTIVA*
+
+📋 *Recibo:* {coverage['numero_recibo']}
+👤 *Titular:* {coverage['nombre']}
+🚗 *Vehículo:* {coverage['marca']} {coverage['modelo']}
+🔢 *Patente:* {coverage['patente']}
+📅 *Vigencia:* {coverage['vigencia_desde'][:10]} al {coverage['vigencia_hasta'][:10]}
+
+📥 *Descargá tus comprobantes:*
+• PDF: {backend_url}/api/seguros/{coverage['_id']}/comprobante/pdf
+• Imagen: {backend_url}/api/seguros/{coverage['_id']}/comprobante/imagen
+
+🔍 *Verificar cobertura online:*
+{backend_url}/verificar/{coverage['numero_recibo']}
+
+¡Gracias por confiar en Estonia Cobertura! 🙏"""
+        
+        await send_whatsapp_message(client_phone, client_msg)
+        
+        # Clean up pending
+        if pending:
+            await db.whatsapp_pending.delete_one({"_id": pending['_id']})
+        
+        print(f"[WhatsApp Bot] Payment confirmed by admin for {recibo}, notification sent to {client_phone}")
+        
+        # Confirm to admin
+        return f"""✅ *PAGO CONFIRMADO*
+
+Cobertura {recibo} activada.
+Se enviaron los comprobantes a {client_phone}.
+
+👤 {coverage['nombre']}
+🚗 {coverage['marca']} {coverage['modelo']}
+💰 ${coverage['precio_final']:,}"""
+        
+    except Exception as e:
+        print(f"[WhatsApp Bot] Error in admin_confirm_payment: {e}")
+        import traceback
+        traceback.print_exc()
+        return f"❌ Error al confirmar pago: {str(e)}"
+
+
 async def process_message_with_ai(phone_number: str, message: str, push_name: str = ""):
     """Process incoming message with ChatGPT and return response"""
     import re
