@@ -304,7 +304,7 @@ function Step1({ formData, onChange, cotizacion, onCotizar, loading, onNext }) {
           id="codigo"
           value={formData.codigo_promocional}
           onChange={(e) => onChange('codigo_promocional', e.target.value.toUpperCase())}
-          placeholder="MASTER"
+          placeholder="Ingresá tu código"
           data-testid="codigo-promo-input"
         />
       </div>
