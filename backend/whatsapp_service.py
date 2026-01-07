@@ -341,3 +341,171 @@ async def create_pending_coverage(phone_number: str, data: dict):
     
     await db.seguros.insert_one(coverage_doc)
     return coverage_doc
+
+
+async def mark_coverage_paid(coverage_id: str):
+    """Mark a coverage as paid"""
+    result = await db.seguros.update_one(
+        {"_id": coverage_id},
+        {"$set": {
+            "estado": "pagado",
+            "fecha_pago": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    return result.modified_count > 0
+
+
+async def get_coverage_by_id(coverage_id: str):
+    """Get coverage by ID"""
+    coverage = await db.seguros.find_one({"_id": coverage_id})
+    return coverage
+
+
+async def get_pending_coverage_by_phone(phone_number: str):
+    """Get pending coverage for a phone number"""
+    coverage = await db.seguros.find_one({
+        "whatsapp_phone": phone_number,
+        "estado": "pendiente_pago"
+    })
+    return coverage
+
+
+async def simulate_conversation_flow(phone_number: str, client_data: dict):
+    """
+    Simulate a complete WhatsApp conversation flow:
+    1. Client initiates contact
+    2. AI collects data
+    3. Coverage is created
+    4. Payment is simulated
+    5. Receipt is sent
+    """
+    import os
+    
+    conversation_log = []
+    
+    # Step 1: Initial greeting from client
+    initial_message = "Hola, quiero contratar una cobertura para mi auto"
+    await save_message(phone_number, initial_message, "user", client_data.get("nombre", "Cliente"))
+    conversation_log.append({"role": "user", "message": initial_message})
+    
+    # Step 2: AI responds with welcome
+    config = await get_bot_config()
+    welcome = config.get("mensaje_bienvenida", "¡Hola! ¿En qué puedo ayudarte?")
+    await save_message(phone_number, welcome, "assistant")
+    conversation_log.append({"role": "assistant", "message": welcome})
+    
+    # Step 3: Client provides vehicle info
+    vehicle_message = f"Mi auto es un {client_data.get('marca', 'Toyota')} {client_data.get('modelo', 'Corolla')} año {client_data.get('ano', 2020)}, patente {client_data.get('patente', 'ABC123')}"
+    await save_message(phone_number, vehicle_message, "user", client_data.get("nombre", "Cliente"))
+    conversation_log.append({"role": "user", "message": vehicle_message})
+    
+    # Step 4: AI asks for personal data
+    ai_response = f"""¡Perfecto! Un {client_data.get('marca', 'Toyota')} {client_data.get('modelo', 'Corolla')} {client_data.get('ano', 2020)} 🚗
+
+Para continuar, necesito tus datos personales:
+- Nombre completo
+- DNI
+- Email
+
+¿Me los proporcionas?"""
+    await save_message(phone_number, ai_response, "assistant")
+    conversation_log.append({"role": "assistant", "message": ai_response})
+    
+    # Step 5: Client provides personal data
+    personal_message = f"Soy {client_data.get('nombre', 'Juan Pérez')}, DNI {client_data.get('dni', '12345678')}, email {client_data.get('email', 'cliente@email.com')}"
+    await save_message(phone_number, personal_message, "user", client_data.get("nombre", "Cliente"))
+    conversation_log.append({"role": "user", "message": personal_message})
+    
+    # Step 6: AI confirms and shows price
+    tipo_vehiculo = client_data.get("tipo_vehiculo", "auto")
+    tipo_cobertura = client_data.get("cobertura", "rc")
+    
+    PRICING = {
+        "auto": {"rc": 6000, "completo": 9000},
+        "moto": {"rc": 5000, "completo": 7500},
+        "taxi": {"rc": 10000, "completo": 18000},
+        "app": {"rc": 6000, "completo": 9000}
+    }
+    precio = PRICING.get(tipo_vehiculo, {}).get(tipo_cobertura, 6000)
+    
+    cobertura_nombre = "Responsabilidad Civil" if tipo_cobertura == "rc" else "Terceros Completo"
+    
+    confirmation_msg = f"""✅ *RESUMEN DE TU COBERTURA*
+
+👤 *Titular:* {client_data.get('nombre', 'Juan Pérez')}
+📄 *DNI:* {client_data.get('dni', '12345678')}
+📧 *Email:* {client_data.get('email', 'cliente@email.com')}
+
+🚗 *Vehículo:* {client_data.get('marca', 'Toyota')} {client_data.get('modelo', 'Corolla')} ({client_data.get('ano', 2020)})
+🔢 *Patente:* {client_data.get('patente', 'ABC123')}
+
+📋 *Cobertura:* {cobertura_nombre}
+💰 *Precio:* ${precio:,}
+⏰ *Vigencia:* 30 días
+
+¿Confirmamos la cobertura? Responde *SÍ* para continuar."""
+    await save_message(phone_number, confirmation_msg, "assistant")
+    conversation_log.append({"role": "assistant", "message": confirmation_msg})
+    
+    # Step 7: Client confirms
+    await save_message(phone_number, "Sí, confirmo", "user", client_data.get("nombre", "Cliente"))
+    conversation_log.append({"role": "user", "message": "Sí, confirmo"})
+    
+    # Step 8: Create coverage
+    coverage = await create_pending_coverage(phone_number, client_data)
+    
+    # Step 9: AI sends payment instructions
+    datos_bancarios = config.get("datos_bancarios", "CVU: A configurar por el administrador")
+    
+    payment_msg = f"""🎉 *¡Cobertura creada exitosamente!*
+
+📝 *Número de recibo:* {coverage['numero_recibo']}
+
+Para activar tu cobertura, realiza el pago de *${precio:,}* por transferencia:
+
+💳 *Datos para transferencia:*
+{datos_bancarios}
+
+Una vez realizado el pago, envíame el comprobante y activaré tu cobertura inmediatamente. ✅"""
+    await save_message(phone_number, payment_msg, "assistant")
+    conversation_log.append({"role": "assistant", "message": payment_msg})
+    
+    # Step 10: Simulate payment confirmation
+    await save_message(phone_number, "Ya transferí, te envío el comprobante 📄", "user", client_data.get("nombre", "Cliente"))
+    conversation_log.append({"role": "user", "message": "Ya transferí, te envío el comprobante 📄"})
+    
+    # Step 11: Mark as paid
+    await mark_coverage_paid(coverage["_id"])
+    
+    # Step 12: Send receipt confirmation
+    backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:3000')
+    
+    receipt_msg = f"""✅ *¡PAGO CONFIRMADO!*
+
+Tu cobertura ha sido activada exitosamente. 🎉
+
+📋 *Detalles de tu cobertura:*
+• Número de recibo: *{coverage['numero_recibo']}*
+• Vigencia: {coverage['vigencia_desde'][:10]} al {coverage['vigencia_hasta'][:10]}
+• Estado: ✅ PAGADO
+
+📥 *Descarga tu comprobante:*
+• PDF: {backend_url}/api/seguros/{coverage['_id']}/comprobante/pdf
+• Imagen: {backend_url}/api/seguros/{coverage['_id']}/comprobante/imagen
+
+🔍 También puedes verificar tu cobertura en:
+{backend_url}/verificar/{coverage['numero_recibo']}
+
+¡Gracias por confiar en Estonia Cobertura Colaborativa! 🙏
+Si tienes alguna duda, estoy aquí para ayudarte."""
+    await save_message(phone_number, receipt_msg, "assistant")
+    conversation_log.append({"role": "assistant", "message": receipt_msg})
+    
+    return {
+        "success": True,
+        "coverage": coverage,
+        "conversation_log": conversation_log,
+        "pdf_url": f"{backend_url}/api/seguros/{coverage['_id']}/comprobante/pdf",
+        "image_url": f"{backend_url}/api/seguros/{coverage['_id']}/comprobante/imagen",
+        "verification_url": f"{backend_url}/verificar/{coverage['numero_recibo']}"
+    }
