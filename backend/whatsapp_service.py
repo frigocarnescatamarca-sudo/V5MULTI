@@ -620,7 +620,7 @@ async def create_coverage_from_whatsapp(phone_number: str, data: dict):
 
 
 async def send_whatsapp_message(phone_number: str, message: str):
-    """Send a message via WhatsApp service"""
+    """Send a message via WhatsApp service using phone number"""
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -631,6 +631,21 @@ async def send_whatsapp_message(phone_number: str, message: str):
             return response.json()
     except Exception as e:
         print(f"Error sending WhatsApp message: {e}")
+        return {"success": False, "error": str(e)}
+
+
+async def send_whatsapp_message_to_jid(jid: str, message: str):
+    """Send a message via WhatsApp service using JID directly"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{WHATSAPP_SERVICE_URL}/send-jid",
+                json={"jid": jid, "message": message},
+                timeout=30.0
+            )
+            return response.json()
+    except Exception as e:
+        print(f"Error sending WhatsApp message to JID: {e}")
         return {"success": False, "error": str(e)}
 
 
