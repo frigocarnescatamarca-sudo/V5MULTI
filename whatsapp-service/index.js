@@ -272,10 +272,10 @@ async function sendMessage(phoneNumber, text) {
         }
 
         // Check if we have a JID mapping for this phone
-        let jid = jidMapping[phoneNumber];
+        let jid = phoneToJid[phoneNumber];
         
         if (!jid) {
-            // Fallback: construct JID
+            // Fallback: construct standard JID
             jid = phoneNumber.includes('@') ? phoneNumber : `${phoneNumber}@s.whatsapp.net`;
         }
         
