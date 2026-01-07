@@ -226,6 +226,21 @@ frontend:
         - agent: "main"
         - comment: "Shows vencimientos with color coding correctly"
 
+  - task: "Visor Documentos Modal"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/VisorDocumentos.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "main"
+        - comment: "Modal opens correctly, shows 6 document slots with correct status indicators"
+        - working: true
+        - agent: "testing"
+        - comment: "✅ TESTED: Document viewer modal working perfectly. Opens from admin panel Seguros tab, shows 6 document categories, modal closes correctly."
+
   - task: "Homepage Interface"
     implemented: true
     working: true
