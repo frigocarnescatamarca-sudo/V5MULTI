@@ -695,6 +695,282 @@ export default function AdminPanel() {
               </div>
             )}
           </TabsContent>
+
+          {/* Tab Agentes */}
+          <TabsContent value="agentes" className="space-y-6" data-testid="tab-agentes">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-[#064E3B]" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                Gestión de Agentes
+              </h2>
+              <Button
+                onClick={abrirModalCrearAgente}
+                className="bg-[#10B981] hover:bg-[#10B981]/90"
+                data-testid="crear-agente-btn"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Crear Agente
+              </Button>
+            </div>
+
+            <div className="grid gap-4">
+              {agentes.map((agente) => (
+                <Card key={agente.id} className={!agente.activo ? 'opacity-50' : ''}>
+                  <CardContent className="p-6">
+                    <div className="grid md:grid-cols-5 gap-4 items-center">
+                      <div>
+                        <p className="text-sm text-[#64748B]">Agente</p>
+                        <p className="font-bold text-[#064E3B]">{agente.nombre}</p>
+                        <p className="text-xs text-[#64748B]">@{agente.username}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-[#64748B]">Contacto</p>
+                        <p className="text-sm text-[#064E3B]">{agente.email}</p>
+                        <p className="text-xs text-[#64748B]">{agente.telefono}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-[#64748B]">Comisión</p>
+                        <p className="text-2xl font-bold text-[#10B981]">{agente.comision_porcentaje}%</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-[#64748B]">Estadísticas</p>
+                        <p className="text-sm text-[#064E3B]">
+                          {agente.estadisticas?.seguros_pagados || 0} vendidos
+                        </p>
+                        <p className="text-xs text-[#10B981]">
+                          ${(agente.estadisticas?.total_comisiones || 0).toLocaleString('es-AR')} comisiones
+                        </p>
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          onClick={() => abrirModalEditarAgente(agente)}
+                          size="sm"
+                          variant="outline"
+                          data-testid="editar-agente-btn"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        {agente.activo && (
+                          <Button
+                            onClick={() => eliminarAgente(agente.id, agente.nombre)}
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-500"
+                            data-testid="desactivar-agente-btn"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {agentes.length === 0 && (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Users className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                  <p className="text-[#64748B]">No hay agentes registrados</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Tab Premios */}
+          <TabsContent value="premios" className="space-y-6" data-testid="tab-premios">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-[#064E3B]" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                Premios por Ventas
+              </h2>
+            </div>
+
+            <Card className="bg-[#F0FDF4]">
+              <CardHeader>
+                <CardTitle>Crear Nuevo Premio</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-4 gap-4 items-end">
+                  <div>
+                    <Label>Nombre del Premio</Label>
+                    <Input
+                      value={nuevoPremio.nombre}
+                      onChange={(e) => setNuevoPremio({...nuevoPremio, nombre: e.target.value})}
+                      placeholder="Ej: Premio 50 Ventas"
+                      data-testid="premio-nombre-input"
+                    />
+                  </div>
+                  <div>
+                    <Label>Cantidad de Seguros</Label>
+                    <Input
+                      type="number"
+                      value={nuevoPremio.cantidad_seguros}
+                      onChange={(e) => setNuevoPremio({...nuevoPremio, cantidad_seguros: parseInt(e.target.value)})}
+                      data-testid="premio-cantidad-input"
+                    />
+                  </div>
+                  <div>
+                    <Label>Monto del Premio ($)</Label>
+                    <Input
+                      type="number"
+                      value={nuevoPremio.monto_premio}
+                      onChange={(e) => setNuevoPremio({...nuevoPremio, monto_premio: parseFloat(e.target.value)})}
+                      data-testid="premio-monto-input"
+                    />
+                  </div>
+                  <Button
+                    onClick={crearPremio}
+                    className="bg-[#10B981] hover:bg-[#10B981]/90"
+                    data-testid="crear-premio-btn"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Crear
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="grid md:grid-cols-3 gap-4">
+              {premios.map((premio) => (
+                <Card key={premio.id} className={!premio.activo ? 'opacity-50' : 'border-[#F59E0B] border-2'}>
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="flex items-center gap-2 text-[#064E3B]">
+                          <Award className="w-5 h-5 text-[#F59E0B]" />
+                          {premio.nombre}
+                        </CardTitle>
+                      </div>
+                      {premio.activo && (
+                        <Button
+                          onClick={() => eliminarPremio(premio.id, premio.nombre)}
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-500"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold text-[#F59E0B]" style={{ fontFamily: 'Space Grotesk, monospace' }}>
+                      ${premio.monto_premio.toLocaleString('es-AR')}
+                    </p>
+                    <p className="text-sm text-[#64748B] mt-2">
+                      Por vender {premio.cantidad_seguros} seguros
+                    </p>
+                    <p className={`text-xs mt-2 font-semibold ${premio.activo ? 'text-[#10B981]' : 'text-red-500'}`}>
+                      {premio.activo ? 'ACTIVO' : 'INACTIVO'}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {premios.length === 0 && (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Award className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                  <p className="text-[#64748B]">No hay premios configurados</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Tab Vencimientos */}
+          <TabsContent value="vencimientos" className="space-y-6" data-testid="tab-vencimientos">
+            <h2 className="text-2xl font-bold text-[#064E3B]" style={{ fontFamily: 'Manrope, sans-serif' }}>
+              Control de Vencimientos
+            </h2>
+
+            {vencimientos && (
+              <>
+                {/* Vencidos */}
+                {vencimientos.vencidos?.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-4 h-4 bg-red-500 rounded-full"></div>
+                      <h3 className="text-xl font-bold text-red-500">
+                        Vencidos ({vencimientos.vencidos.length})
+                      </h3>
+                    </div>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      {vencimientos.vencidos.slice(0, 9).map((seguro) => (
+                        <VencimientoCard key={seguro.id} seguro={seguro} color="red" />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Próximos 7 días */}
+                {vencimientos.proximos_7_dias?.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-4 h-4 bg-red-600 rounded-full"></div>
+                      <h3 className="text-xl font-bold text-red-600">
+                        Próximos 7 días ({vencimientos.proximos_7_dias.length})
+                      </h3>
+                    </div>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      {vencimientos.proximos_7_dias.slice(0, 9).map((seguro) => (
+                        <VencimientoCard key={seguro.id} seguro={seguro} color="red" />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Próximos 15 días */}
+                {vencimientos.proximos_15_dias?.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
+                      <h3 className="text-xl font-bold text-yellow-600">
+                        Próximos 15 días ({vencimientos.proximos_15_dias.length})
+                      </h3>
+                    </div>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      {vencimientos.proximos_15_dias.slice(0, 9).map((seguro) => (
+                        <VencimientoCard key={seguro.id} seguro={seguro} color="yellow" />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Próximos 30 días */}
+                {vencimientos.proximos_30_dias?.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
+                      <h3 className="text-xl font-bold text-orange-600">
+                        Próximos 30 días ({vencimientos.proximos_30_dias.length})
+                      </h3>
+                    </div>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      {vencimientos.proximos_30_dias.slice(0, 9).map((seguro) => (
+                        <VencimientoCard key={seguro.id} seguro={seguro} color="orange" />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Sin vencimientos próximos */}
+                {!vencimientos.vencidos?.length && 
+                 !vencimientos.proximos_7_dias?.length && 
+                 !vencimientos.proximos_15_dias?.length && 
+                 !vencimientos.proximos_30_dias?.length && (
+                  <Card>
+                    <CardContent className="p-12 text-center">
+                      <Calendar className="w-16 h-16 text-[#10B981] mx-auto mb-4" />
+                      <p className="text-[#10B981] font-semibold">
+                        ¡Todos los seguros tienen vigencia mayor a 30 días!
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            )}
+          </TabsContent>
         </Tabs>
       </div>
 
