@@ -586,8 +586,16 @@ async def descargar_comprobante_imagen(seguro_id: str):
     if seguro["estado"] not in ["pagado", "gratis"]:
         raise HTTPException(status_code=400, detail="El seguro debe estar pagado")
     
+    # Mapeo de tipos de cobertura
+    tipos_cobertura = {
+        'rc': 'RESPONSABILIDAD CIVIL',
+        'terceros': 'TERCEROS COMPLETO',
+        'completo': 'TODO RIESGO'
+    }
+    tipo_cobertura_texto = tipos_cobertura.get(seguro.get('cobertura', 'rc'), 'RESPONSABILIDAD CIVIL')
+    
     # Crear imagen
-    img = Image.new('RGB', (800, 1000), color='white')
+    img = Image.new('RGB', (800, 1050), color='white')
     draw = ImageDraw.Draw(img)
     
     # Colores
@@ -596,6 +604,7 @@ async def descargar_comprobante_imagen(seguro_id: str):
     negro = (0, 0, 0)
     gris = (100, 116, 139)
     verde_aprobado = (16, 185, 129)
+    azul_cobertura = (59, 130, 246)
     blanco = (255, 255, 255)
     
     # Fuentes
@@ -641,14 +650,19 @@ async def descargar_comprobante_imagen(seguro_id: str):
     # === NÚMERO DE RECIBO Y SELLO ===
     y_pos = 145
     draw.text((30, y_pos), "COMPROBANTE DE COBERTURA", fill=verde_oscuro, font=font_medium)
-    draw.text((450, y_pos), f"Nº {seguro['numero_recibo']}", fill=verde_oscuro, font=font_medium)
+    draw.text((500, y_pos), f"Nº {seguro['numero_recibo']}", fill=verde_oscuro, font=font_medium)
+    
+    # Tipo de Cobertura (badge azul)
+    y_pos += 35
+    draw.rounded_rectangle([30, y_pos - 5, 250, y_pos + 25], radius=5, fill=azul_cobertura)
+    draw.text((40, y_pos + 2), tipo_cobertura_texto, fill=blanco, font=font_medium)
     
     # Sello APROBADO
-    draw.rounded_rectangle([660, y_pos - 5, 770, y_pos + 30], radius=5, fill=verde_aprobado)
-    draw.text((715, y_pos + 12), "APROBADO", fill=blanco, font=font_medium, anchor="mm")
+    draw.rounded_rectangle([660, y_pos - 5, 770, y_pos + 25], radius=5, fill=verde_aprobado)
+    draw.text((715, y_pos + 10), "APROBADO", fill=blanco, font=font_medium, anchor="mm")
     
     # === DATOS DEL TITULAR ===
-    y_pos = 200
+    y_pos += 50
     draw.text((30, y_pos), "DATOS DEL TITULAR", fill=verde_oscuro, font=font_medium)
     draw.line([(30, y_pos + 20), (300, y_pos + 20)], fill=gris, width=1)
     
@@ -703,15 +717,15 @@ async def descargar_comprobante_imagen(seguro_id: str):
     qr_buffer = generar_qr_code(qr_url)
     qr_img = Image.open(qr_buffer)
     qr_img = qr_img.resize((150, 150))
-    img.paste(qr_img, (600, 700))
+    img.paste(qr_img, (600, 750))
     
-    draw.text((675, 860), "Escanea para verificar", fill=gris, font=font_small, anchor="mm")
-    draw.text((675, 878), "la cobertura", fill=gris, font=font_small, anchor="mm")
+    draw.text((675, 910), "Escanea para verificar", fill=gris, font=font_small, anchor="mm")
+    draw.text((675, 928), "la cobertura", fill=gris, font=font_small, anchor="mm")
     
     # === FOOTER ===
-    draw.text((30, 920), "RECIBO VÁLIDO PARA PRESENTAR DE MANERA DIGITAL O IMPRESO.", fill=gris, font=font_small)
-    draw.text((30, 940), "POR DUDAS O CONSULTAS LLAME A LOS NÚMEROS DE ATENCIÓN AL CLIENTE.", fill=gris, font=font_small)
-    draw.text((30, 960), f"Generado el: {datetime.now().strftime('%d/%m/%Y %H:%M')}", fill=gris, font=font_small)
+    draw.text((30, 970), "RECIBO VÁLIDO PARA PRESENTAR DE MANERA DIGITAL O IMPRESO.", fill=gris, font=font_small)
+    draw.text((30, 990), "POR DUDAS O CONSULTAS LLAME A LOS NÚMEROS DE ATENCIÓN AL CLIENTE.", fill=gris, font=font_small)
+    draw.text((30, 1010), f"Generado el: {datetime.now().strftime('%d/%m/%Y %H:%M')}", fill=gris, font=font_small)
     
     buffer = BytesIO()
     img.save(buffer, format='PNG', quality=95)
