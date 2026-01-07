@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Shield, Check, Plus, Trash2, Tag, Download, LogOut } from 'lucide-react';
+import { Shield, Check, Plus, Trash2, Tag, Download, LogOut, Edit, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { adminAPI, segurosAPI } from '@/services/api';
 import { toast } from 'sonner';
 
@@ -19,6 +20,20 @@ export default function AdminPanel() {
   const [promoCodes, setPromoCodes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [nuevoPromo, setNuevoPromo] = useState({ codigo: '', descuento_porcentaje: 0, es_master: false });
+  const [modalSeguroOpen, setModalSeguroOpen] = useState(false);
+  const [seguroEditando, setSeguroEditando] = useState(null);
+  const [formSeguro, setFormSeguro] = useState({
+    dni: '',
+    nombre: '',
+    email: '',
+    telefono: '',
+    patente: '',
+    marca: '',
+    modelo: '',
+    ano: new Date().getFullYear(),
+    tipo_vehiculo: 'auto',
+    cobertura: 'rc'
+  });
 
   useEffect(() => {
     // Verificar si hay token guardado
@@ -144,6 +159,80 @@ export default function AdminPanel() {
     }
   };
 
+  const abrirModalCrearSeguro = () => {
+    setSeguroEditando(null);
+    setFormSeguro({
+      dni: '',
+      nombre: '',
+      email: '',
+      telefono: '',
+      patente: '',
+      marca: '',
+      modelo: '',
+      ano: new Date().getFullYear(),
+      tipo_vehiculo: 'auto',
+      cobertura: 'rc'
+    });
+    setModalSeguroOpen(true);
+  };
+
+  const abrirModalEditarSeguro = (seguro) => {
+    setSeguroEditando(seguro);
+    setFormSeguro({
+      dni: seguro.dni,
+      nombre: seguro.nombre,
+      email: seguro.email,
+      telefono: seguro.telefono,
+      patente: seguro.patente,
+      marca: seguro.marca,
+      modelo: seguro.modelo,
+      ano: seguro.ano,
+      tipo_vehiculo: seguro.tipo_vehiculo,
+      cobertura: seguro.cobertura
+    });
+    setModalSeguroOpen(true);
+  };
+
+  const guardarSeguro = async () => {
+    // Validar campos
+    if (!formSeguro.dni || !formSeguro.nombre || !formSeguro.email || !formSeguro.patente) {
+      toast.error('Por favor complete todos los campos obligatorios');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (seguroEditando) {
+        // Editar
+        await adminAPI.actualizarSeguro(seguroEditando.id, formSeguro);
+        toast.success('Seguro actualizado correctamente');
+      } else {
+        // Crear
+        await adminAPI.crearSeguroManual(formSeguro);
+        toast.success('Seguro creado correctamente');
+      }
+      
+      setModalSeguroOpen(false);
+      cargarDatos();
+    } catch (error) {
+      toast.error('Error al guardar seguro: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const eliminarSeguro = async (seguroId, numeroRecibo) => {
+    if (!window.confirm(`¿Está seguro de eliminar el seguro ${numeroRecibo}?`)) return;
+    
+    try {
+      await adminAPI.eliminarSeguro(seguroId);
+      toast.success('Seguro eliminado correctamente');
+      cargarDatos();
+    } catch (error) {
+      toast.error('Error al eliminar seguro');
+    }
+  };
+
   // Pantalla de Login
   if (!authenticated) {
     return (
@@ -254,9 +343,19 @@ export default function AdminPanel() {
               <h2 className="text-2xl font-bold text-[#064E3B]" style={{ fontFamily: 'Manrope, sans-serif' }}>
                 Listado de Seguros
               </h2>
-              <Button onClick={cargarDatos} disabled={loading} variant="outline">
-                Recargar
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={abrirModalCrearSeguro}
+                  className="bg-[#10B981] hover:bg-[#10B981]/90"
+                  data-testid="crear-seguro-btn"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Crear Seguro
+                </Button>
+                <Button onClick={cargarDatos} disabled={loading} variant="outline">
+                  Recargar
+                </Button>
+              </div>
             </div>
 
             <div className="grid gap-4">
@@ -295,6 +394,24 @@ export default function AdminPanel() {
                       </div>
                       <div className="flex justify-end gap-2">
                         <Button
+                          onClick={() => abrirModalEditarSeguro(seguro)}
+                          size="sm"
+                          variant="ghost"
+                          className="text-blue-600 hover:text-blue-700"
+                          data-testid="editar-seguro-btn"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          onClick={() => eliminarSeguro(seguro.id, seguro.numero_recibo)}
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-600 hover:text-red-700"
+                          data-testid="eliminar-seguro-btn"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                        <Button
                           onClick={() => window.open(segurosAPI.descargarPDF(seguro.id || seguro.numero_recibo), '_blank')}
                           size="sm"
                           variant="outline"
@@ -322,7 +439,7 @@ export default function AdminPanel() {
                             data-testid="marcar-procesado-btn"
                           >
                             <Check className="w-4 h-4 mr-1" />
-                            Marcar Procesado
+                            Procesado
                           </Button>
                         )}
                       </div>
