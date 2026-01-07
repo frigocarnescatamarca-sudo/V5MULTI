@@ -26,6 +26,7 @@ export default function WhatsAppBotPanel() {
     instrucciones_bot: '',
     datos_bancarios: '',
     numero_admin: '',
+    whatsapp_ventas: '',
     bot_activo: true
   });
   const [configDirty, setConfigDirty] = useState(false);
