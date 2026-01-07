@@ -5,7 +5,7 @@ Handles message processing with ChatGPT integration
 
 import os
 import httpx
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 
