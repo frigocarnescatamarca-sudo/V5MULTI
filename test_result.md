@@ -138,11 +138,14 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: true
         - agent: "main"
         - comment: "API for creating/listing/deleting premios"
+        - working: true
+        - agent: "testing"
+        - comment: "✅ TESTED: Created premio 'Premio 10 Ventas' with 10 seguros requirement and 5000 monto. Premio appears in list correctly. All premio APIs working properly."
 
   - task: "Vencimientos API"
     implemented: true
