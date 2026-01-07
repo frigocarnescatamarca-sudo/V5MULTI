@@ -52,7 +52,8 @@ export default function AdminPanel() {
     modelo: '',
     ano: new Date().getFullYear(),
     tipo_vehiculo: 'auto',
-    cobertura: 'rc'
+    cobertura: 'rc',
+    agente_id: ''
   });
 
   useEffect(() => {
