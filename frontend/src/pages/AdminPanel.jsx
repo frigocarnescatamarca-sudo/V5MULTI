@@ -250,13 +250,9 @@ export default function AdminPanel() {
                           <Tag className="w-4 h-4" />
                           {promo.codigo}
                         </CardTitle>
-                        {promo.es_master && (
-                          <span className="inline-block mt-2 px-2 py-1 bg-[#D9F99D] text-[#064E3B] rounded-full text-xs font-semibold">
-                            MASTER
-                          </span>
-                        )}
+                        {/* Texto MASTER oculto para usuarios */}
                       </div>
-                      {promo.activo && (
+                      {promo.activo && !(promo.codigo === 'MASTER') && (
                         <Button
                           onClick={() => eliminarCodigo(promo.codigo)}
                           size="sm"
