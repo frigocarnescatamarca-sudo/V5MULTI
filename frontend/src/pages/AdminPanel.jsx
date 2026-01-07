@@ -529,11 +529,6 @@ export default function AdminPanel() {
               >
                 {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
               </Button>
-              <div className="text-center text-sm text-[#64748B] mt-4">
-                <p>Credenciales por defecto:</p>
-                <p className="font-mono text-xs">Usuario: admin</p>
-                <p className="font-mono text-xs">Contraseña: Estonia2025!</p>
-              </div>
             </form>
           </CardContent>
         </Card>
