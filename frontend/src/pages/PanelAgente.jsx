@@ -245,7 +245,7 @@ export default function PanelAgente() {
       <div className="container mx-auto px-6 py-12">
         {/* Estadísticas Cards */}
         {estadisticas && (
-          <div className="grid md:grid-cols-4 gap-6 mb-12">
+          <div className="grid md:grid-cols-5 gap-6 mb-8">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -264,12 +264,12 @@ export default function PanelAgente() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-[#64748B]">Seguros Pagados</p>
+                    <p className="text-sm text-[#64748B]">Total Ventas</p>
                     <p className="text-3xl font-bold text-[#064E3B]" style={{ fontFamily: 'Space Grotesk, monospace' }}>
-                      {estadisticas.seguros_pagados}
+                      ${(estadisticas.total_ventas || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })}
                     </p>
                   </div>
-                  <Shield className="w-10 h-10 text-[#10B981]" />
+                  <Shield className="w-10 h-10 text-[#064E3B]" />
                 </div>
               </CardContent>
             </Card>
@@ -278,12 +278,26 @@ export default function PanelAgente() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-[#64748B]">Comisiones Totales</p>
+                    <p className="text-sm text-[#64748B]">Mis Comisiones</p>
                     <p className="text-3xl font-bold text-[#10B981]" style={{ fontFamily: 'Space Grotesk, monospace' }}>
                       ${estadisticas.total_comisiones.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
                     </p>
                   </div>
                   <DollarSign className="w-10 h-10 text-[#10B981]" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className={`border-2 ${(estadisticas.deuda_actual || 0) > 0 ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50'}`}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-[#64748B]">Adeudo a Admin</p>
+                    <p className={`text-3xl font-bold ${(estadisticas.deuda_actual || 0) > 0 ? 'text-red-500' : 'text-[#10B981]'}`} style={{ fontFamily: 'Space Grotesk, monospace' }}>
+                      ${(estadisticas.deuda_actual || 0).toLocaleString('es-AR', { maximumFractionDigits: 0 })}
+                    </p>
+                  </div>
+                  <AlertCircle className={`w-10 h-10 ${(estadisticas.deuda_actual || 0) > 0 ? 'text-red-400' : 'text-[#10B981]'}`} />
                 </div>
               </CardContent>
             </Card>
@@ -302,6 +316,27 @@ export default function PanelAgente() {
               </CardContent>
             </Card>
           </div>
+        )}
+
+        {/* Info de deuda */}
+        {estadisticas && (estadisticas.deuda_actual || 0) > 0 && (
+          <Card className="mb-8 border-2 border-red-300 bg-red-50">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <AlertCircle className="w-8 h-8 text-red-500 flex-shrink-0 mt-1" />
+                <div>
+                  <p className="font-bold text-red-600 mb-2">Tienes un adeudo pendiente con el administrador</p>
+                  <p className="text-sm text-[#64748B] mb-3">
+                    Tu deuda se calcula así: <strong>Total Ventas</strong> (${(estadisticas.total_ventas || 0).toLocaleString('es-AR')}) - 
+                    <strong> Tu Comisión</strong> (${(estadisticas.total_comisiones || 0).toLocaleString('es-AR')}) - 
+                    <strong> Pagos Realizados</strong> (${(estadisticas.total_cobrado || 0).toLocaleString('es-AR')}) = 
+                    <strong className="text-red-500"> ${(estadisticas.deuda_actual || 0).toLocaleString('es-AR')}</strong>
+                  </p>
+                  <p className="text-xs text-[#64748B]">Contacta al administrador para regularizar tu situación.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Premios Ganados */}
