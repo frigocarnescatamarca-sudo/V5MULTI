@@ -724,6 +724,12 @@ async def listar_seguros_admin(skip: int = 0, limit: int = 50, token: str = None
         {}
     ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
     
+    # Convertir _id a string para serialización
+    for seguro in seguros:
+        if '_id' in seguro:
+            seguro['id'] = seguro['_id']
+            del seguro['_id']
+    
     total = await db.seguros.count_documents({})
     
     return {

@@ -295,7 +295,7 @@ export default function AdminPanel() {
                       </div>
                       <div className="flex justify-end gap-2">
                         <Button
-                          onClick={() => window.open(segurosAPI.descargarPDF(seguro._id || seguro.numero_recibo), '_blank')}
+                          onClick={() => window.open(segurosAPI.descargarPDF(seguro.id || seguro.numero_recibo), '_blank')}
                           size="sm"
                           variant="outline"
                           className="text-[#064E3B]"
@@ -305,7 +305,7 @@ export default function AdminPanel() {
                           PDF
                         </Button>
                         <Button
-                          onClick={() => window.open(segurosAPI.descargarImagen(seguro._id || seguro.numero_recibo), '_blank')}
+                          onClick={() => window.open(segurosAPI.descargarImagen(seguro.id || seguro.numero_recibo), '_blank')}
                           size="sm"
                           variant="outline"
                           className="text-[#064E3B]"
@@ -316,7 +316,7 @@ export default function AdminPanel() {
                         </Button>
                         {!seguro.procesado && (seguro.estado === 'pagado' || seguro.estado === 'gratis') && (
                           <Button
-                            onClick={() => marcarProcesado(seguro._id || seguro.numero_recibo)}
+                            onClick={() => marcarProcesado(seguro.id || seguro.numero_recibo)}
                             size="sm"
                             className="bg-[#064E3B] hover:bg-[#064E3B]/90"
                             data-testid="marcar-procesado-btn"
