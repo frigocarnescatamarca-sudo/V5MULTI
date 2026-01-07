@@ -756,6 +756,99 @@ async def marcar_seguro_procesado(seguro_id: str):
     
     return {"success": True}
 
+@api_router.put("/admin/seguros/{seguro_id}")
+async def actualizar_seguro(seguro_id: str, data: InsuranceRequest):
+    """Actualiza un seguro existente (admin)"""
+    
+    seguro_existente = await db.seguros.find_one({"_id": seguro_id})
+    if not seguro_existente:
+        raise HTTPException(status_code=404, detail="Seguro no encontrado")
+    
+    # Calcular nuevo precio si cambió tipo o cobertura
+    precio_base = calcular_precio(data.tipo_vehiculo, data.cobertura)
+    
+    update_data = {
+        "dni": data.dni,
+        "nombre": data.nombre,
+        "email": data.email,
+        "telefono": data.telefono,
+        "patente": data.patente,
+        "marca": data.marca,
+        "modelo": data.modelo,
+        "ano": data.ano,
+        "tipo_vehiculo": data.tipo_vehiculo,
+        "cobertura": data.cobertura,
+        "precio_original": precio_base,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    result = await db.seguros.update_one(
+        {"_id": seguro_id},
+        {"$set": update_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Seguro no encontrado")
+    
+    return {"success": True, "message": "Seguro actualizado correctamente"}
+
+@api_router.delete("/admin/seguros/{seguro_id}")
+async def eliminar_seguro(seguro_id: str):
+    """Elimina un seguro (admin)"""
+    
+    result = await db.seguros.delete_one({"_id": seguro_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Seguro no encontrado")
+    
+    return {"success": True, "message": "Seguro eliminado correctamente"}
+
+@api_router.post("/admin/seguros/crear-manual")
+async def crear_seguro_manual(data: InsuranceRequest):
+    """Crea un seguro manualmente desde admin (sin pago)"""
+    
+    precio_base = calcular_precio(data.tipo_vehiculo, data.cobertura)
+    
+    seguro_id = str(uuid.uuid4())
+    numero_recibo = generar_numero_recibo()
+    fecha_inicio = datetime.now(timezone.utc)
+    fecha_fin = fecha_inicio + timedelta(days=30)
+    
+    seguro_doc = {
+        "_id": seguro_id,
+        "numero_recibo": numero_recibo,
+        "dni": data.dni,
+        "nombre": data.nombre,
+        "email": data.email,
+        "telefono": data.telefono,
+        "patente": data.patente,
+        "marca": data.marca,
+        "modelo": data.modelo,
+        "ano": data.ano,
+        "tipo_vehiculo": data.tipo_vehiculo,
+        "cobertura": data.cobertura,
+        "precio_original": precio_base,
+        "precio_final": precio_base,
+        "estado": "pagado",  # Admin lo crea como pagado
+        "vigencia_desde": fecha_inicio.isoformat(),
+        "vigencia_hasta": fecha_fin.isoformat(),
+        "fotos": [],
+        "procesado": False,
+        "creado_por_admin": True,
+        "created_at": fecha_inicio.isoformat()
+    }
+    
+    await db.seguros.insert_one(seguro_doc)
+    
+    return {
+        "success": True,
+        "seguro": {
+            "id": seguro_id,
+            "numero_recibo": numero_recibo,
+            "estado": "pagado"
+        }
+    }
+
 @api_router.post("/admin/promo-codes", response_model=PromoCode)
 async def crear_codigo_promocional(promo: PromoCodeCreate):
     """Crea un nuevo código promocional"""
