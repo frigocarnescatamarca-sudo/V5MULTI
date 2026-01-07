@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Shield, Phone, CheckCircle, Clock, FileText, Download } from 'lucide-react';
+import { Shield, Phone, CheckCircle, Clock, FileText, Download, Car, Smartphone } from 'lucide-react';
 import FormularioSeguro from '@/components/FormularioSeguro';
 import { Button } from '@/components/ui/button';
 
@@ -40,9 +40,65 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 md:py-32">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#064E3B]/10 to-[#10B981]/10 opacity-50"></div>
+      {/* Hero APPS (Uber/Didi) - Arriba */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#064E3B] to-[#10B981] py-20 md:py-32">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?crop=entropy&cs=srgb&fm=jpg&q=85&w=1920')] bg-cover bg-center opacity-10"></div>
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#D9F99D] rounded-full mb-6">
+              <Smartphone className="w-4 h-4 text-[#064E3B]" />
+              <span className="text-sm font-semibold text-[#064E3B]">Especial para Conductores de Apps</span>
+            </div>
+            
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-white leading-tight mb-6" style={{ fontFamily: 'Manrope, sans-serif' }}>
+              Seguro Express para Conductores Uber/Didi
+            </h1>
+            
+            <p className="text-xl md:text-2xl text-[#D9F99D] mb-8" style={{ fontFamily: 'Inter, sans-serif' }}>
+              Cumplí los requisitos de la plataforma al instante. Comprobante válido para controles viales en minutos.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+              <Button
+                onClick={() => setMostrarFormulario(true)}
+                className="bg-[#D9F99D] text-[#064E3B] hover:bg-[#BEF264] rounded-full px-8 py-6 text-lg font-bold shadow-2xl hover:shadow-3xl transition-all transform hover:-translate-y-1"
+                data-testid="generar-seguro-apps-btn"
+              >
+                <Smartphone className="w-5 h-5 mr-2" />
+                Obtener Seguro Ahora
+              </Button>
+              <Button
+                variant="outline"
+                className="border-2 border-white text-white hover:bg-white/10 rounded-full px-6 py-6 font-semibold backdrop-blur-sm"
+              >
+                Ver Precios
+              </Button>
+            </div>
+
+            {/* Features Grid */}
+            <div className="grid md:grid-cols-3 gap-6 mt-12">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                <CheckCircle className="w-10 h-10 text-[#D9F99D] mb-4 mx-auto" />
+                <h3 className="text-lg font-bold text-white mb-2">Aceptado por Apps</h3>
+                <p className="text-[#D9F99D] text-sm">Válido para Uber, Didi, Cabify y más</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                <Clock className="w-10 h-10 text-[#D9F99D] mb-4 mx-auto" />
+                <h3 className="text-lg font-bold text-white mb-2">En Minutos</h3>
+                <p className="text-[#D9F99D] text-sm">Descargá tu comprobante al instante</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                <FileText className="w-10 h-10 text-[#D9F99D] mb-4 mx-auto" />
+                <h3 className="text-lg font-bold text-white mb-2">100% Digital</h3>
+                <p className="text-[#D9F99D] text-sm">Con QR verificable para controles</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Hero General - Segunda sección */}
+      <section className="relative overflow-hidden py-20 md:py-32 bg-white">
         <div className="container mx-auto px-6 relative z-10">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
@@ -50,12 +106,12 @@ export default function Home() {
                 <span className="text-sm font-semibold text-[#064E3B]">Seguro Express - 30 días de cobertura</span>
               </div>
               
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#064E3B] leading-tight" style={{ fontFamily: 'Manrope, sans-serif' }}>
+              <h2 className="text-4xl sm:text-5xl font-extrabold text-[#064E3B] leading-tight" style={{ fontFamily: 'Manrope, sans-serif' }}>
                 Generá tu seguro rápidamente para circular
-              </h1>
+              </h2>
               
               <p className="text-lg text-[#64748B]" style={{ fontFamily: 'Inter, sans-serif' }}>
-                Obtené tu comprobante de seguro al instante. Válido para controles viales. Sin trámites, 100% digital.
+                Para autos, motos, taxis, remises y conductores de plataformas. Obtenés tu comprobante al instante. Sin trámites, 100% digital.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4">
@@ -65,12 +121,6 @@ export default function Home() {
                   data-testid="generar-seguro-btn"
                 >
                   Generar Seguro Ahora
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-2 border-[#064E3B] text-[#064E3B] hover:bg-[#F0FDF4] rounded-full px-6 py-6 font-semibold"
-                >
-                  Ver Coberturas
                 </Button>
               </div>
               
@@ -99,7 +149,7 @@ export default function Home() {
       </section>
 
       {/* Características */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-gradient-to-br from-[#F8FAFC] to-white">
         <div className="container mx-auto px-6">
           <h2 className="text-3xl md:text-4xl font-bold text-center text-[#064E3B] mb-16" style={{ fontFamily: 'Manrope, sans-serif' }}>
             ¿Por qué elegir Estonia Seguros?
@@ -134,7 +184,7 @@ export default function Home() {
       </section>
 
       {/* Coberturas y Precios */}
-      <section className="py-20 bg-gradient-to-br from-[#F8FAFC] to-[#F0FDF4]">
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-6">
           <h2 className="text-3xl md:text-4xl font-bold text-center text-[#064E3B] mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
             Planes y Coberturas
@@ -144,7 +194,7 @@ export default function Home() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <PlanCard 
               tipo="Autos" 
-              icon="🚗"
+              icon={<Car className="w-8 h-8" />}
               planes={[
                 { nombre: 'Responsabilidad Civil', precio: 6000 },
                 { nombre: 'Terceros Completo', precio: 9000 }
@@ -152,7 +202,7 @@ export default function Home() {
             />
             <PlanCard 
               tipo="Motos" 
-              icon="🏍️"
+              icon={<Car className="w-8 h-8" />}
               planes={[
                 { nombre: 'Responsabilidad Civil', precio: 5000 },
                 { nombre: 'Terceros Completo', precio: 7500 }
@@ -160,7 +210,7 @@ export default function Home() {
             />
             <PlanCard 
               tipo="Taxis/Remises" 
-              icon="🚕"
+              icon={<Car className="w-8 h-8" />}
               planes={[
                 { nombre: 'Responsabilidad Civil', precio: 10000 },
                 { nombre: 'Terceros Completo', precio: 18000 }
@@ -168,7 +218,8 @@ export default function Home() {
             />
             <PlanCard 
               tipo="Apps (Uber/Didi)" 
-              icon="📱"
+              icon={<Smartphone className="w-8 h-8" />}
+              highlight={true}
               planes={[
                 { nombre: 'Responsabilidad Civil', precio: 6000 },
                 { nombre: 'Terceros Completo', precio: 9000 }
@@ -255,10 +306,17 @@ export default function Home() {
   );
 }
 
-function PlanCard({ tipo, icon, planes }) {
+function PlanCard({ tipo, icon, planes, highlight = false }) {
   return (
-    <div className="relative overflow-hidden bg-white rounded-3xl p-8 border-2 border-transparent hover:border-[#10B981] transition-all shadow-card hover:shadow-floating">
-      <div className="text-4xl mb-4">{icon}</div>
+    <div className={`relative overflow-hidden bg-white rounded-3xl p-8 border-2 transition-all shadow-card hover:shadow-floating ${
+      highlight ? 'border-[#10B981] ring-2 ring-[#10B981]/20' : 'border-transparent hover:border-[#10B981]'
+    }`}>
+      {highlight && (
+        <div className="absolute top-4 right-4 px-3 py-1 bg-[#10B981] text-white text-xs font-bold rounded-full">
+          POPULAR
+        </div>
+      )}
+      <div className="text-[#064E3B] mb-4">{icon}</div>
       <h3 className="text-xl font-bold text-[#064E3B] mb-6" style={{ fontFamily: 'Manrope, sans-serif' }}>
         {tipo}
       </h3>
