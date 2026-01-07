@@ -120,6 +120,81 @@ export const adminAPI = {
   eliminarPromoCode: async (codigo) => {
     const response = await api.delete(`/admin/promo-codes/${codigo}`);
     return response.data;
+  },
+  
+  // Agentes
+  crearAgente: async (data) => {
+    const response = await api.post('/admin/agentes', data);
+    return response.data;
+  },
+  
+  listarAgentes: async () => {
+    const response = await api.get('/admin/agentes');
+    return response.data;
+  },
+  
+  actualizarAgente: async (agenteId, data) => {
+    const response = await api.put(`/admin/agentes/${agenteId}`, data);
+    return response.data;
+  },
+  
+  eliminarAgente: async (agenteId) => {
+    const response = await api.delete(`/admin/agentes/${agenteId}`);
+    return response.data;
+  },
+  
+  asignarAgente: async (seguroId, agenteId) => {
+    const response = await api.post(`/admin/seguros/${seguroId}/asignar-agente`, { agente_id: agenteId });
+    return response.data;
+  },
+  
+  // Premios
+  crearPremio: async (data) => {
+    const response = await api.post('/admin/premios', data);
+    return response.data;
+  },
+  
+  listarPremios: async () => {
+    const response = await api.get('/admin/premios');
+    return response.data;
+  },
+  
+  eliminarPremio: async (premioId) => {
+    const response = await api.delete(`/admin/premios/${premioId}`);
+    return response.data;
+  },
+  
+  // Vencimientos
+  obtenerVencimientos: async () => {
+    const response = await api.get('/admin/vencimientos');
+    return response.data;
+  }
+};
+
+export const agenteAPI = {
+  login: async (username, password) => {
+    const response = await api.post('/agente/login', { username, password });
+    return response.data;
+  },
+  
+  logout: async (token) => {
+    const response = await api.post('/agente/logout', { token });
+    return response.data;
+  },
+  
+  verifyToken: async (token) => {
+    const response = await api.get(`/agente/verify?token=${token}`);
+    return response.data;
+  },
+  
+  misSeguros: async (token) => {
+    const response = await api.get(`/agente/mis-seguros?token=${token}`);
+    return response.data;
+  },
+  
+  misVencimientos: async (token) => {
+    const response = await api.get(`/agente/vencimientos?token=${token}`);
+    return response.data;
   }
 };
 
