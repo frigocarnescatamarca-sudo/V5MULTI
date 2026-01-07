@@ -1120,6 +1120,35 @@ export default function AdminPanel() {
               </div>
             </div>
 
+            {/* Asignar Agente (solo en edición) */}
+            {seguroEditando && (
+              <div className="border-t pt-4">
+                <h4 className="font-bold text-[#064E3B] mb-4">Asignar Agente</h4>
+                <div>
+                  <Label>Agente Responsable</Label>
+                  <Select 
+                    value={formSeguro.agente_id || ''} 
+                    onValueChange={(v) => setFormSeguro({...formSeguro, agente_id: v})}
+                  >
+                    <SelectTrigger data-testid="admin-seguro-agente">
+                      <SelectValue placeholder="Sin agente asignado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Sin agente</SelectItem>
+                      {agentes.filter(a => a.activo).map((agente) => (
+                        <SelectItem key={agente.id} value={agente.id}>
+                          {agente.nombre} ({agente.comision_porcentaje}%)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-[#64748B] mt-1">
+                    Al asignar un agente, las comisiones se calcularán automáticamente
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-4 pt-4">
               <Button
                 onClick={() => setModalSeguroOpen(false)}
