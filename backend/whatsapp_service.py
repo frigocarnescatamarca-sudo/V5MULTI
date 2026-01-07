@@ -200,7 +200,7 @@ async def admin_confirm_payment(recibo: str, admin_phone: str):
         # Get updated coverage
         coverage = await db.seguros.find_one({"_id": coverage['_id']})
         
-        backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://estonia-covers.preview.emergentagent.com')
+        backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://autocare-12.preview.emergentagent.com')
         
         # Get the correct JID for the client
         jid_mapping = await db.whatsapp_jid_mapping.find_one({"phone_number": client_phone})
@@ -422,7 +422,7 @@ async def process_bot_commands(phone_number: str, ai_response: str):
                 actions_taken.append('coverage_created')
                 
                 # Get backend URL for links
-                backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://estonia-covers.preview.emergentagent.com')
+                backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://autocare-12.preview.emergentagent.com')
                 
                 # Replace the command with success message
                 success_msg = f"""✅ *¡COBERTURA CREADA!*
@@ -513,7 +513,7 @@ Si tenés alguna duda, podés escribirnos."""
                     else:
                         # No admin number configured - auto confirm (fallback)
                         await mark_coverage_paid(coverage_id)
-                        backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://estonia-covers.preview.emergentagent.com')
+                        backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://autocare-12.preview.emergentagent.com')
                         
                         success_msg = f"""✅ *¡PAGO CONFIRMADO!*
 
