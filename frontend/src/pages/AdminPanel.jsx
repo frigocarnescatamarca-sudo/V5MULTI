@@ -1136,14 +1136,14 @@ export default function AdminPanel() {
                 <div>
                   <Label>Agente Responsable</Label>
                   <Select 
-                    value={formSeguro.agente_id || ''} 
-                    onValueChange={(v) => setFormSeguro({...formSeguro, agente_id: v})}
+                    value={formSeguro.agente_id || 'none'} 
+                    onValueChange={(v) => setFormSeguro({...formSeguro, agente_id: v === 'none' ? '' : v})}
                   >
                     <SelectTrigger data-testid="admin-seguro-agente">
                       <SelectValue placeholder="Sin agente asignado" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Sin agente</SelectItem>
+                      <SelectItem value="none">Sin agente</SelectItem>
                       {agentes.filter(a => a.activo).map((agente) => (
                         <SelectItem key={agente.id} value={agente.id}>
                           {agente.nombre} ({agente.comision_porcentaje}%)
