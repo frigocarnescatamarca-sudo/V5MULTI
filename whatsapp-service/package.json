@@ -3,17 +3,18 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "dev": "node index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "WhatsApp Bot Service for Estonia Cobertura",
   "dependencies": {
-    "@whiskeysockets/baileys": "^7.0.0-rc.9",
-    "axios": "^1.13.2",
+    "@whiskeysockets/baileys": "^6.7.16",
+    "axios": "^1.7.9",
     "cors": "^2.8.5",
-    "express": "^5.2.1",
+    "express": "^4.21.2",
     "qrcode": "^1.5.4"
   }
 }
