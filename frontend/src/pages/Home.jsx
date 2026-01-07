@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Shield, Phone, CheckCircle, Clock, FileText, Download, Car, Smartphone, MessageCircle } from 'lucide-react';
-import FormularioSeguro from '@/components/FormularioSeguro';
+import { Shield, Phone, CheckCircle, Clock, FileText, Car, Smartphone, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 export default function Home() {
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [whatsappVentas, setWhatsappVentas] = useState('');
 
   // Fetch WhatsApp ventas number on mount
@@ -353,11 +351,6 @@ export default function Home() {
         >
           <MessageCircle className="w-8 h-8" />
         </button>
-      )}
-
-      {/* Modal Formulario */}
-      {mostrarFormulario && (
-        <FormularioSeguro onClose={() => setMostrarFormulario(false)} />
       )}
     </div>
   );
