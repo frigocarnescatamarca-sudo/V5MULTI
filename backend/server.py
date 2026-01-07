@@ -1190,6 +1190,10 @@ async def actualizar_agente(agente_id: str, agente: AgenteUpdate):
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     
+    # Solo actualizar password si se proporciona
+    if agente.password:
+        update_data["password"] = agente.password
+    
     result = await db.agentes.update_one(
         {"_id": agente_id},
         {"$set": update_data}
