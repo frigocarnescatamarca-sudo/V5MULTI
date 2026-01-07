@@ -146,11 +146,21 @@ def generar_pdf_comprobante(seguro: dict) -> BytesIO:
     
     # Colores Estonia
     verde_estonia = HexColor(0x064E3B)
+    verde_lima = HexColor(0xD9F99D)
+    
+    # Logo (Escudo simple con iniciales ES)
+    c.setFillColor(verde_estonia)
+    c.rect(50, height - 100, 60, 60, fill=1)
+    c.setFillColor(verde_lima)
+    c.setFont("Helvetica-Bold", 28)
+    c.drawCentredString(80, height - 80, "ES")
     
     # Header
     c.setFillColor(verde_estonia)
     c.setFont("Helvetica-Bold", 24)
-    c.drawString(50, height - 80, "ESTONIA SEGUROS")
+    c.drawString(120, height - 70, "ESTONIA")
+    c.setFont("Helvetica-Bold", 20)
+    c.drawString(120, height - 90, "SEGUROS")
     
     # Teléfonos
     c.setFont("Helvetica", 10)
@@ -427,6 +437,7 @@ async def descargar_comprobante_pdf(seguro_id: str):
 @api_router.get("/seguros/{seguro_id}/comprobante/imagen")
 async def descargar_comprobante_imagen(seguro_id: str):
     """Genera y descarga el comprobante como imagen"""
+    from PIL import Image, ImageDraw, ImageFont
     
     seguro = await db.seguros.find_one({"_id": seguro_id})
     if not seguro:
@@ -435,12 +446,64 @@ async def descargar_comprobante_imagen(seguro_id: str):
     if seguro["estado"] not in ["pagado", "gratis"]:
         raise HTTPException(status_code=400, detail="El seguro debe estar pagado")
     
-    # Generar PDF primero
-    pdf_buffer = generar_pdf_comprobante(seguro)
+    # Crear imagen con información del comprobante
+    img = Image.new('RGB', (800, 1100), color='white')
+    draw = ImageDraw.Draw(img)
     
-    # En producción, convertir PDF a imagen con pdf2image
-    # Por ahora retornamos una imagen simple con la info
-    img = Image.new('RGB', (800, 1000), color='white')
+    # Colores
+    verde_oscuro = (6, 78, 59)
+    verde_lima = (217, 249, 157)
+    negro = (0, 0, 0)
+    rojo = (255, 0, 0)
+    
+    # Logo/Header
+    draw.rectangle([20, 20, 100, 100], fill=verde_oscuro)
+    draw.text((60, 50), "ES", fill=verde_lima, anchor="mm")
+    draw.text((120, 40), "ESTONIA SEGUROS", fill=verde_oscuro)
+    
+    # Teléfonos
+    draw.text((600, 30), "ATENCION AL CLIENTE", fill=negro)
+    draw.text((600, 50), "0800 555 3543", fill=negro)
+    draw.text((600, 70), "0810 362 0700", fill=negro)
+    
+    # Sello PAGADO
+    draw.rectangle([650, 100, 750, 140], outline=rojo, width=3)
+    draw.text((700, 120), "PAGADO", fill=rojo, anchor="mm")
+    
+    # Información principal
+    y_pos = 150
+    draw.text((20, y_pos), f"Pagado el: {seguro['vigencia_desde'][:10]}", fill=negro)
+    draw.text((500, y_pos), f"Recibo Nro: {seguro['numero_recibo']}", fill=negro)
+    
+    y_pos += 40
+    draw.text((20, y_pos), f"DNI: {seguro['dni']}", fill=negro)
+    
+    y_pos += 30
+    draw.text((20, y_pos), f"Asegurado: {seguro['nombre']}", fill=negro)
+    
+    y_pos += 30
+    draw.text((20, y_pos), f"Marca/Modelo: {seguro['marca']} {seguro['modelo']}", fill=negro)
+    
+    y_pos += 30
+    draw.text((20, y_pos), f"Año: {seguro['ano']}", fill=negro)
+    
+    y_pos += 40
+    draw.text((20, y_pos), f"Dominio: {seguro['patente']}", fill=negro)
+    draw.text((500, y_pos), f"Próx Vto: {seguro['vigencia_hasta'][:10]}", fill=negro)
+    
+    y_pos += 40
+    draw.text((500, y_pos), f"Importe: ${seguro['precio_final']:,.0f}", fill=negro)
+    
+    # QR Code
+    qr_buffer = generar_qr_code(f"{os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:3000')}/verificar/{seguro['numero_recibo']}")
+    qr_img = Image.open(qr_buffer)
+    qr_img = qr_img.resize((150, 150))
+    img.paste(qr_img, (20, 450))
+    
+    # Footer
+    draw.text((20, 950), "RECIBO VALIDO PARA PRESENTAR DE MANERA DIGITAL O IMPRESO.", fill=negro)
+    draw.text((20, 980), "POR DUDAS O CONSULTAS LLAME A LOS NUMEROS DE ATENCION AL CLIENTE", fill=negro)
+    
     buffer = BytesIO()
     img.save(buffer, format='PNG')
     buffer.seek(0)
