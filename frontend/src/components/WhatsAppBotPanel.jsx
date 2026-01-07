@@ -26,6 +26,7 @@ export default function WhatsAppBotPanel() {
     instrucciones_bot: '',
     datos_bancarios: '',
     numero_admin: '',
+    admin_lid: '',
     whatsapp_ventas: '',
     bot_activo: true
   });
