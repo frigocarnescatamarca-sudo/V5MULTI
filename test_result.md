@@ -120,3 +120,64 @@ User requested simulation of complete WhatsApp flow with coverage creation and r
 - WhatsApp Chat History: No messages for test phone (expected - simulation data may have been cleared)
 
 ### Backend Status: All V2 features fully functional ✅
+
+---
+
+## V2 Features Frontend Testing Results (January 7, 2026)
+
+### Testing Agent Results ✅
+**All V2 Frontend Features Working:**
+
+#### 1. Homepage WhatsApp Button ✅
+- **Green "Contratar" Button**: ✅ Working
+  - Found in header with WhatsApp icon
+  - Correct green styling (bg-[#25D366])
+  - Opens WhatsApp link (api.whatsapp.com/send) with pre-filled message
+- **Floating WhatsApp Button**: ✅ Working
+  - Visible in bottom-right corner
+  - Correct positioning (fixed bottom-6 right-6)
+  - Proper styling and animation
+
+#### 2. Mis Coberturas Page (DNI Query Portal) ✅
+- **Page Navigation**: ✅ Working
+  - "Mis Coberturas" link found in header menu
+  - Successfully navigates to /mis-coberturas
+- **DNI Search Form**: ✅ Working
+  - DNI input field present and functional
+  - "Consultar" button working correctly
+- **Search Results**: ✅ Working
+  - DNI 30456789 returns 2 coberturas as expected
+  - Proper status badges: "Pendiente de Pago" and "Vigente"
+  - Vehicle information displayed: Toyota Corolla, Honda CBR 600
+  - Coverage types shown: Responsabilidad Civil, Terceros Completo
+  - Validity dates displayed correctly
+  - Download buttons available for paid coverages
+  - Verification links working
+
+#### 3. Navigation Features ✅
+- **"Volver al Inicio" Button**: ✅ Working
+  - Present on Mis Coberturas page
+  - Successfully returns to homepage
+
+#### 4. Admin Panel WhatsApp Config ✅
+- **Admin Login**: ✅ Working
+  - Credentials admin/Estonia2025! work correctly
+- **WhatsApp Bot Tab**: ✅ Working
+  - Tab visible and accessible
+- **Configuración Sub-tab**: ✅ Working
+  - Configuration interface loads correctly
+- **WhatsApp Ventas Field**: ✅ Working
+  - "Número de WhatsApp para Ventas" field visible
+  - Has green background styling
+  - Contains configured value: 5491123456789
+  - Field description explains homepage button functionality
+
+### Test Summary: 4/4 V2 frontend features fully functional ✅
+
+### Frontend Status: All V2 features working correctly ✅
+
+### Integration Status: Frontend-Backend integration working perfectly ✅
+- WhatsApp ventas API endpoint properly integrated
+- DNI query API endpoint working with frontend
+- Admin configuration properly saves and displays
+- Homepage buttons appear when WhatsApp number is configured
