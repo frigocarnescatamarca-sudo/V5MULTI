@@ -1775,14 +1775,28 @@ async def receive_whatsapp_message(data: dict):
     phone_number = data.get("phone_number")
     message = data.get("message")
     push_name = data.get("push_name", "")
+    reply_jid = data.get("reply_jid", "")  # JID for replying to this user
     
     if not phone_number or not message:
         raise HTTPException(status_code=400, detail="phone_number and message required")
+    
+    # Store the JID mapping for this phone
+    if reply_jid:
+        await store_jid_mapping(phone_number, reply_jid)
     
     # Process with AI
     reply = await process_message_with_ai(phone_number, message, push_name)
     
     return {"reply": reply}
+
+async def store_jid_mapping(phone_number: str, jid: str):
+    """Store the JID mapping for a phone number"""
+    from whatsapp_service import db
+    await db.whatsapp_jid_mapping.update_one(
+        {"phone_number": phone_number},
+        {"$set": {"jid": jid, "updated_at": datetime.now(timezone.utc).isoformat()}},
+        upsert=True
+    )
 
 @api_router.get("/admin/whatsapp/status")
 async def admin_get_whatsapp_status():
