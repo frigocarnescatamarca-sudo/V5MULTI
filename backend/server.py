@@ -1098,6 +1098,231 @@ async def eliminar_codigo_promocional(codigo: str):
     
     return {"success": True}
 
+# ============ ADMIN AGENTES ROUTES ============
+
+@api_router.post("/admin/agentes")
+async def crear_agente(agente: AgenteCreate):
+    """Crea un nuevo agente"""
+    
+    # Verificar si ya existe el username
+    existente = await db.agentes.find_one({"username": agente.username})
+    if existente:
+        raise HTTPException(status_code=400, detail="El username ya existe")
+    
+    agente_doc = {
+        "_id": str(uuid.uuid4()),
+        "nombre": agente.nombre,
+        "email": agente.email,
+        "telefono": agente.telefono,
+        "username": agente.username,
+        "password": agente.password,  # En producción usar hash
+        "comision_porcentaje": agente.comision_porcentaje,
+        "activo": agente.activo,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.agentes.insert_one(agente_doc)
+    
+    agente_doc['id'] = agente_doc['_id']
+    del agente_doc['_id']
+    del agente_doc['password']  # No devolver password
+    
+    return {"success": True, "agente": agente_doc}
+
+@api_router.get("/admin/agentes")
+async def listar_agentes():
+    """Lista todos los agentes"""
+    
+    agentes = await db.agentes.find({}).to_list(1000)
+    
+    # Calcular estadísticas para cada agente
+    for agente in agentes:
+        agente_id = agente['_id']
+        agente['id'] = agente_id
+        del agente['_id']
+        del agente['password']  # No exponer passwords
+        
+        # Contar seguros del agente
+        total_seguros = await db.seguros.count_documents({"agente_id": agente_id})
+        seguros_pagados = await db.seguros.count_documents({
+            "agente_id": agente_id,
+            "estado": {"$in": ["pagado", "gratis"]}
+        })
+        
+        # Calcular comisiones
+        seguros = await db.seguros.find({
+            "agente_id": agente_id,
+            "estado": {"$in": ["pagado", "gratis"]}
+        }).to_list(1000)
+        
+        total_comisiones = sum([
+            s.get('precio_final', 0) * (agente.get('comision_porcentaje', 10) / 100)
+            for s in seguros
+        ])
+        
+        agente['estadisticas'] = {
+            "total_seguros": total_seguros,
+            "seguros_pagados": seguros_pagados,
+            "total_comisiones": total_comisiones
+        }
+    
+    return {"agentes": agentes}
+
+@api_router.put("/admin/agentes/{agente_id}")
+async def actualizar_agente(agente_id: str, agente: AgenteUpdate):
+    """Actualiza un agente"""
+    
+    update_data = {
+        "nombre": agente.nombre,
+        "email": agente.email,
+        "telefono": agente.telefono,
+        "comision_porcentaje": agente.comision_porcentaje,
+        "activo": agente.activo,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    result = await db.agentes.update_one(
+        {"_id": agente_id},
+        {"$set": update_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Agente no encontrado")
+    
+    return {"success": True}
+
+@api_router.delete("/admin/agentes/{agente_id}")
+async def eliminar_agente(agente_id: str):
+    """Elimina un agente (lo desactiva)"""
+    
+    result = await db.agentes.update_one(
+        {"_id": agente_id},
+        {"$set": {"activo": False}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Agente no encontrado")
+    
+    return {"success": True}
+
+@api_router.post("/admin/seguros/{seguro_id}/asignar-agente")
+async def asignar_agente_a_seguro(seguro_id: str, data: dict):
+    """Asigna un agente a un seguro"""
+    
+    agente_id = data.get("agente_id")
+    
+    # Verificar que el agente existe
+    agente = await db.agentes.find_one({"_id": agente_id})
+    if not agente:
+        raise HTTPException(status_code=404, detail="Agente no encontrado")
+    
+    result = await db.seguros.update_one(
+        {"_id": seguro_id},
+        {"$set": {
+            "agente_id": agente_id,
+            "agente_nombre": agente['nombre'],
+            "comision_aplicada": agente.get('comision_porcentaje', 10)
+        }}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Seguro no encontrado")
+    
+    return {"success": True}
+
+# ============ ADMIN PREMIOS ROUTES ============
+
+@api_router.post("/admin/premios")
+async def crear_premio(premio: PremioCreate):
+    """Crea un nuevo premio"""
+    
+    premio_doc = {
+        "_id": str(uuid.uuid4()),
+        "nombre": premio.nombre,
+        "cantidad_seguros": premio.cantidad_seguros,
+        "monto_premio": premio.monto_premio,
+        "activo": premio.activo,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.premios.insert_one(premio_doc)
+    
+    premio_doc['id'] = premio_doc['_id']
+    del premio_doc['_id']
+    
+    return {"success": True, "premio": premio_doc}
+
+@api_router.get("/admin/premios")
+async def listar_premios():
+    """Lista todos los premios"""
+    
+    premios = await db.premios.find({}).to_list(100)
+    
+    for premio in premios:
+        premio['id'] = premio['_id']
+        del premio['_id']
+    
+    return {"premios": premios}
+
+@api_router.delete("/admin/premios/{premio_id}")
+async def eliminar_premio(premio_id: str):
+    """Desactiva un premio"""
+    
+    result = await db.premios.update_one(
+        {"_id": premio_id},
+        {"$set": {"activo": False}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Premio no encontrado")
+    
+    return {"success": True}
+
+@api_router.get("/admin/vencimientos")
+async def obtener_vencimientos_admin():
+    """Obtiene todos los vencimientos para el admin"""
+    
+    ahora = datetime.now(timezone.utc)
+    
+    # Todos los seguros pagados/gratis
+    seguros = await db.seguros.find(
+        {"estado": {"$in": ["pagado", "gratis"]}}
+    ).to_list(10000)
+    
+    # Clasificar por vencimiento
+    vencidos = []
+    proximos_7_dias = []
+    proximos_15_dias = []
+    proximos_30_dias = []
+    vigentes = []
+    
+    for seguro in seguros:
+        vigencia_hasta = datetime.fromisoformat(seguro['vigencia_hasta'])
+        dias_restantes = (vigencia_hasta - ahora).days
+        
+        seguro['id'] = seguro['_id']
+        del seguro['_id']
+        seguro['dias_restantes'] = dias_restantes
+        
+        if dias_restantes < 0:
+            vencidos.append(seguro)
+        elif dias_restantes <= 7:
+            proximos_7_dias.append(seguro)
+        elif dias_restantes <= 15:
+            proximos_15_dias.append(seguro)
+        elif dias_restantes <= 30:
+            proximos_30_dias.append(seguro)
+        else:
+            vigentes.append(seguro)
+    
+    return {
+        "vencidos": vencidos,
+        "proximos_7_dias": proximos_7_dias,
+        "proximos_15_dias": proximos_15_dias,
+        "proximos_30_dias": proximos_30_dias,
+        "vigentes": vigentes
+    }
+
 # Include router
 app.include_router(api_router)
 
