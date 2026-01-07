@@ -259,6 +259,96 @@ export default function AdminPanel() {
     }
   };
 
+  // Funciones Agentes
+  const abrirModalCrearAgente = () => {
+    setAgenteEditando(null);
+    setNuevoAgente({ nombre: '', email: '', telefono: '', username: '', password: '', comision_porcentaje: 10 });
+    setModalAgenteOpen(true);
+  };
+
+  const abrirModalEditarAgente = (agente) => {
+    setAgenteEditando(agente);
+    setNuevoAgente({
+      nombre: agente.nombre,
+      email: agente.email,
+      telefono: agente.telefono,
+      username: agente.username,
+      password: '',
+      comision_porcentaje: agente.comision_porcentaje
+    });
+    setModalAgenteOpen(true);
+  };
+
+  const guardarAgente = async () => {
+    if (!nuevoAgente.nombre || !nuevoAgente.email || !nuevoAgente.username) {
+      toast.error('Complete los campos obligatorios');
+      return;
+    }
+
+    if (!agenteEditando && !nuevoAgente.password) {
+      toast.error('La contraseña es requerida para nuevos agentes');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (agenteEditando) {
+        await adminAPI.actualizarAgente(agenteEditando.id, nuevoAgente);
+        toast.success('Agente actualizado');
+      } else {
+        await adminAPI.crearAgente(nuevoAgente);
+        toast.success('Agente creado');
+      }
+      setModalAgenteOpen(false);
+      cargarDatos();
+    } catch (error) {
+      toast.error('Error: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const eliminarAgente = async (agenteId, nombre) => {
+    if (!window.confirm(`¿Desactivar agente ${nombre}?`)) return;
+    
+    try {
+      await adminAPI.eliminarAgente(agenteId);
+      toast.success('Agente desactivado');
+      cargarDatos();
+    } catch (error) {
+      toast.error('Error al desactivar agente');
+    }
+  };
+
+  // Funciones Premios
+  const crearPremio = async () => {
+    if (!nuevoPremio.nombre || nuevoPremio.cantidad_seguros < 1) {
+      toast.error('Complete los campos correctamente');
+      return;
+    }
+
+    try {
+      await adminAPI.crearPremio(nuevoPremio);
+      toast.success('Premio creado');
+      setNuevoPremio({ nombre: '', cantidad_seguros: 50, monto_premio: 10000 });
+      cargarDatos();
+    } catch (error) {
+      toast.error('Error al crear premio');
+    }
+  };
+
+  const eliminarPremio = async (premioId, nombre) => {
+    if (!window.confirm(`¿Desactivar premio "${nombre}"?`)) return;
+    
+    try {
+      await adminAPI.eliminarPremio(premioId);
+      toast.success('Premio desactivado');
+      cargarDatos();
+    } catch (error) {
+      toast.error('Error al desactivar premio');
+    }
+  };
+
   // Pantalla de Login
   if (!authenticated) {
     return (
