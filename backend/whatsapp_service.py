@@ -169,6 +169,73 @@ async def save_message(phone_number: str, message: str, role: str, push_name: st
     return doc
 
 
+async def check_coverages_by_dni(dni: str):
+    """Check coverages for a DNI and return formatted response for WhatsApp"""
+    try:
+        # Clean DNI - remove dots and spaces
+        dni_clean = dni.replace('.', '').replace(' ', '').strip()
+        
+        # Query coverages by DNI
+        coberturas = await db.seguros.find(
+            {"dni": dni_clean},
+            {"_id": 0}
+        ).sort("created_at", -1).to_list(100)
+        
+        if not coberturas:
+            return f"""🔍 *Consulta de Coberturas*
+
+No encontré coberturas registradas para el DNI *{dni_clean}*.
+
+¿Querés contratar una cobertura? Contame qué tipo de vehículo tenés 🚗"""
+        
+        # Build response
+        response = f"""🔍 *Coberturas para DNI {dni_clean}*
+
+Encontré *{len(coberturas)}* cobertura(s):
+
+"""
+        backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://autocare-12.preview.emergentagent.com')
+        
+        for i, cob in enumerate(coberturas, 1):
+            estado = cob.get('estado', 'desconocido')
+            estado_emoji = '✅' if estado in ['pagado', 'gratis'] else '⏳' if estado == 'pendiente_pago' else '❌'
+            
+            # Check if expired
+            vigencia_hasta = cob.get('vigencia_hasta', '')
+            if vigencia_hasta:
+                try:
+                    fecha_fin = datetime.fromisoformat(vigencia_hasta)
+                    if fecha_fin < datetime.now(timezone.utc):
+                        estado_emoji = '⛔'
+                        estado = 'vencida'
+                except:
+                    pass
+            
+            cobertura_tipo = 'Terceros Completo' if cob.get('cobertura') == 'completo' else 'Responsabilidad Civil'
+            
+            response += f"""*{i}. {cob.get('patente', 'N/A')}* {estado_emoji}
+   📋 Recibo: {cob.get('numero_recibo', 'N/A')}
+   🚗 {cob.get('marca', '')} {cob.get('modelo', '')} ({cob.get('ano', '')})
+   📄 {cobertura_tipo}
+   📅 Vigencia: {cob.get('vigencia_desde', '')[:10]} al {vigencia_hasta[:10] if vigencia_hasta else 'N/A'}
+   💰 ${cob.get('precio_final', 0):,}
+   Estado: *{estado.upper()}*
+
+"""
+            # Add verification link for paid coverages
+            if estado in ['pagado', 'gratis']:
+                response += f"   🔗 Verificar: {backend_url}/verificar/{cob.get('numero_recibo')}\n\n"
+        
+        response += """---
+Para más detalles, visitá nuestro portal web o escribime tu consulta."""
+        
+        return response
+        
+    except Exception as e:
+        print(f"[WhatsApp Bot] Error checking coverages by DNI: {e}")
+        return None
+
+
 async def admin_confirm_payment(recibo: str, admin_phone: str):
     """Admin confirms a payment - sends confirmation to client"""
     try:
