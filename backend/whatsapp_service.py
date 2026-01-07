@@ -176,13 +176,30 @@ async def process_message_with_ai(phone_number: str, message: str, push_name: st
         if not llm_key:
             raise ValueError("EMERGENT_LLM_KEY not configured")
         
-        # Call ChatGPT via emergentintegrations
-        response = await chat(
-            api_key=llm_key,
-            model=LlmModel.GPT_4O_MINI,
-            messages=messages
-        )
+        # Call ChatGPT via emergentintegrations LlmChat
+        llm = LlmChat(api_key=llm_key, model="gpt-4o-mini")
         
+        # Add system message
+        llm.add_message("system", system_prompt)
+        
+        # Add welcome message for new conversations
+        if is_new_conversation:
+            welcome_msg = config.get("mensaje_bienvenida", DEFAULT_BOT_CONFIG["mensaje_bienvenida"])
+            llm.add_message("assistant", welcome_msg)
+        
+        # Add conversation history
+        for msg in history:
+            role = msg.get("role", "user")
+            content = msg.get("message", "")
+            if content:
+                llm.add_message(role, content)
+        
+        # Add current message if not already in history
+        if not history or history[-1].get("message") != message:
+            llm.add_message("user", message)
+        
+        # Get response
+        response = await llm.chat_async()
         ai_response = response.message if hasattr(response, 'message') else str(response)
         
         # Save AI response
