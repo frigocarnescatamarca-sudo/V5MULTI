@@ -56,3 +56,30 @@ Test the WhatsApp Bot feature including conversation simulation and coverage cre
 
 ## Incorporate User Feedback
 User requested simulation of complete WhatsApp flow with coverage creation and receipt generation.
+
+---
+
+## V2 Features Testing (January 7, 2026)
+
+### New Features Implemented:
+1. **Homepage WhatsApp Button** - Button to contact sales via WhatsApp with pre-filled message
+2. **DNI Query via Bot** - Bot can now detect DNI and return coverage info
+3. **Web DNI Query Portal** - New page /mis-coberturas for public DNI lookup
+
+### New Endpoints:
+- GET /api/whatsapp/ventas - Returns WhatsApp sales number for homepage button
+- GET /api/coberturas/dni/{dni} - Public endpoint for DNI coverage lookup
+
+### New Frontend Pages:
+- /mis-coberturas - New page for DNI-based coverage consultation
+
+### Configuration Updates:
+- WhatsApp Bot Panel now includes "Número de WhatsApp para Ventas" field
+- Homepage shows floating WhatsApp button when ventas number is configured
+
+### Testing Required:
+1. ✅ Backend endpoint /api/whatsapp/ventas works
+2. ✅ Backend endpoint /api/coberturas/dni/{dni} works  
+3. ⏳ Homepage WhatsApp button visibility (needs config)
+4. ⏳ MisCoberturas page DNI search functionality
+5. ⏳ Bot DNI detection and response
