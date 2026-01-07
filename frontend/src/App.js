@@ -7,6 +7,7 @@ import PortalCliente from '@/pages/PortalCliente';
 import AdminPanel from '@/pages/AdminPanel';
 import PanelAgente from '@/pages/PanelAgente';
 import Verificar from '@/pages/Verificar';
+import MisCoberturas from '@/pages/MisCoberturas';
 import { Toaster } from '@/components/ui/sonner';
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/agente" element={<PanelAgente />} />
           <Route path="/verificar/:numero_recibo" element={<Verificar />} />
+          <Route path="/mis-coberturas" element={<MisCoberturas />} />
         </Routes>
       </BrowserRouter>
       <Toaster />
