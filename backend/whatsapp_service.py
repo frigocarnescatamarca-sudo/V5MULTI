@@ -434,6 +434,9 @@ async def create_coverage_from_whatsapp(phone_number: str, data: dict):
     await db.seguros.insert_one(coverage_doc)
     print(f"[WhatsApp Bot] Coverage created: {numero_recibo}")
     return coverage_doc
+
+
+async def send_whatsapp_message(phone_number: str, message: str):
     """Send a message via WhatsApp service"""
     try:
         async with httpx.AsyncClient() as client:
