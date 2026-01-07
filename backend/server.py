@@ -1742,6 +1742,111 @@ async def obtener_vencimientos_admin():
         "vigentes": vigentes
     }
 
+# ============ WHATSAPP BOT ROUTES ============
+
+from whatsapp_service import (
+    process_message_with_ai,
+    get_bot_config,
+    update_bot_config,
+    get_whatsapp_status,
+    get_whatsapp_qr,
+    connect_whatsapp,
+    disconnect_whatsapp,
+    get_conversations,
+    pause_chat,
+    resume_chat,
+    send_whatsapp_message,
+    get_chat_history
+)
+
+class WhatsAppConfigUpdate(BaseModel):
+    mensaje_bienvenida: Optional[str] = None
+    instrucciones_bot: Optional[str] = None
+    datos_bancarios: Optional[str] = None
+    bot_activo: Optional[bool] = None
+
+@api_router.post("/whatsapp/message")
+async def receive_whatsapp_message(data: dict):
+    """Receive message from WhatsApp service and process with AI"""
+    phone_number = data.get("phone_number")
+    message = data.get("message")
+    push_name = data.get("push_name", "")
+    
+    if not phone_number or not message:
+        raise HTTPException(status_code=400, detail="phone_number and message required")
+    
+    # Process with AI
+    reply = await process_message_with_ai(phone_number, message, push_name)
+    
+    return {"reply": reply}
+
+@api_router.get("/admin/whatsapp/status")
+async def admin_get_whatsapp_status():
+    """Get WhatsApp connection status"""
+    return await get_whatsapp_status()
+
+@api_router.get("/admin/whatsapp/qr")
+async def admin_get_whatsapp_qr():
+    """Get QR code for WhatsApp connection"""
+    return await get_whatsapp_qr()
+
+@api_router.post("/admin/whatsapp/connect")
+async def admin_connect_whatsapp():
+    """Initiate WhatsApp connection"""
+    return await connect_whatsapp()
+
+@api_router.post("/admin/whatsapp/disconnect")
+async def admin_disconnect_whatsapp():
+    """Disconnect WhatsApp"""
+    return await disconnect_whatsapp()
+
+@api_router.get("/admin/whatsapp/config")
+async def admin_get_whatsapp_config():
+    """Get bot configuration"""
+    return await get_bot_config()
+
+@api_router.put("/admin/whatsapp/config")
+async def admin_update_whatsapp_config(data: WhatsAppConfigUpdate):
+    """Update bot configuration"""
+    update_data = {k: v for k, v in data.dict().items() if v is not None}
+    return await update_bot_config(update_data)
+
+@api_router.get("/admin/whatsapp/conversations")
+async def admin_get_conversations():
+    """Get all conversations"""
+    return await get_conversations()
+
+@api_router.post("/admin/whatsapp/pause-chat")
+async def admin_pause_chat(data: dict):
+    """Pause bot for a specific chat"""
+    phone_number = data.get("phone_number")
+    if not phone_number:
+        raise HTTPException(status_code=400, detail="phone_number required")
+    return await pause_chat(phone_number)
+
+@api_router.post("/admin/whatsapp/resume-chat")
+async def admin_resume_chat(data: dict):
+    """Resume bot for a specific chat"""
+    phone_number = data.get("phone_number")
+    if not phone_number:
+        raise HTTPException(status_code=400, detail="phone_number required")
+    return await resume_chat(phone_number)
+
+@api_router.post("/admin/whatsapp/send")
+async def admin_send_message(data: dict):
+    """Send a message manually"""
+    phone_number = data.get("phone_number")
+    message = data.get("message")
+    if not phone_number or not message:
+        raise HTTPException(status_code=400, detail="phone_number and message required")
+    return await send_whatsapp_message(phone_number, message)
+
+@api_router.get("/admin/whatsapp/chat/{phone_number}")
+async def admin_get_chat_history(phone_number: str, limit: int = 50):
+    """Get chat history for a specific number"""
+    messages = await get_chat_history(phone_number, limit)
+    return {"messages": messages, "phone_number": phone_number}
+
 # Include router
 app.include_router(api_router)
 
