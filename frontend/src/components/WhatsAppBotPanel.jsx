@@ -396,6 +396,20 @@ export default function WhatsAppBotPanel() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Número del Admin */}
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <Label className="text-base font-semibold text-blue-800">📱 Número del Admin (para confirmar pagos)</Label>
+                <p className="text-sm text-blue-600 mb-2">
+                  Cuando un cliente diga que pagó, recibirás un WhatsApp para confirmar. Ingresá tu número con código de país (ej: 5491112345678)
+                </p>
+                <Input 
+                  value={config.numero_admin || ''}
+                  onChange={(e) => updateConfig('numero_admin', e.target.value.replace(/\D/g, ''))}
+                  placeholder="5491112345678"
+                  className="font-mono"
+                />
+              </div>
+
               {/* Mensaje de Bienvenida */}
               <div>
                 <Label className="text-base font-semibold">Mensaje de Bienvenida</Label>
