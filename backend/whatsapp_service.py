@@ -200,8 +200,8 @@ async def process_message_with_ai(phone_number: str, message: str, push_name: st
         if not llm_key:
             raise ValueError("EMERGENT_LLM_KEY not configured")
         
-        # Build initial messages for context
-        initial_messages = []
+        # Build initial messages for context - MUST include system message first!
+        initial_messages = [{"role": "system", "content": system_prompt}]
         
         # Add welcome message for new conversations
         if is_new_conversation:
@@ -215,12 +215,12 @@ async def process_message_with_ai(phone_number: str, message: str, push_name: st
             if content:
                 initial_messages.append({"role": role, "content": content})
         
-        # Create LlmChat with correct parameters
+        # Create LlmChat - pass initial_messages which already includes system message
         llm = LlmChat(
             api_key=llm_key,
             session_id=f"whatsapp-{phone_number}",
-            system_message=system_prompt,
-            initial_messages=initial_messages if initial_messages else None
+            system_message="",  # Empty since we're passing it in initial_messages
+            initial_messages=initial_messages
         )
         
         # Set model to GPT-4o for better instruction following
