@@ -143,32 +143,8 @@ async def process_message_with_ai(phone_number: str, message: str, push_name: st
     datos_bancarios = config.get("datos_bancarios", DEFAULT_BOT_CONFIG["datos_bancarios"])
     system_prompt = instrucciones.replace("{datos_bancarios}", datos_bancarios)
     
-    # Build messages for ChatGPT
-    messages = [
-        {"role": "system", "content": system_prompt}
-    ]
-    
     # Check if this is a new conversation (first message or no recent history)
     is_new_conversation = len(history) <= 1
-    
-    # Add welcome context if new conversation
-    if is_new_conversation:
-        welcome_msg = config.get("mensaje_bienvenida", DEFAULT_BOT_CONFIG["mensaje_bienvenida"])
-        messages.append({
-            "role": "assistant",
-            "content": welcome_msg
-        })
-    
-    # Add conversation history
-    for msg in history:
-        role = msg.get("role", "user")
-        content = msg.get("message", "")
-        if content:
-            messages.append({"role": role, "content": content})
-    
-    # Add current message if not already in history
-    if not history or history[-1].get("message") != message:
-        messages.append({"role": "user", "content": message})
     
     try:
         # Get Emergent LLM Key
