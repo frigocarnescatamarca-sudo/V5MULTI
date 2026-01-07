@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, Check, Plus, Trash2, Tag, Download, LogOut, Edit, X, Image as ImageIcon, Users, Award, Calendar, TrendingUp, DollarSign, History } from 'lucide-react';
+import { Shield, Check, Plus, Trash2, Tag, Download, LogOut, Edit, X, Image as ImageIcon, Users, Award, Calendar, TrendingUp, DollarSign, History, CreditCard, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -48,6 +48,11 @@ export default function AdminPanel() {
   const [agenteParaSaldo, setAgenteParaSaldo] = useState(null);
   const [nuevoSaldo, setNuevoSaldo] = useState({ monto: '', observacion: '' });
   const [movimientosAgente, setMovimientosAgente] = useState([]);
+  // Estados para modal de cobros
+  const [modalCobrosOpen, setModalCobrosOpen] = useState(false);
+  const [agenteParaCobro, setAgenteParaCobro] = useState(null);
+  const [nuevoCobro, setNuevoCobro] = useState({ monto: '', observacion: '' });
+  const [cobrosAgente, setCobrosAgente] = useState([]);
   const [formSeguro, setFormSeguro] = useState({
     dni: '',
     nombre: '',
