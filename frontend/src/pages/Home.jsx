@@ -17,7 +17,7 @@ export default function Home() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-[#064E3B]" style={{ fontFamily: 'Manrope, sans-serif' }}>
-                ESTONIA SEGUROS
+                ESTONIA COBERTURA COLABORATIVA
               </h1>
             </div>
           </div>
@@ -51,7 +51,7 @@ export default function Home() {
             </div>
             
             <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-white leading-tight mb-6" style={{ fontFamily: 'Manrope, sans-serif' }}>
-              Seguro Express para Conductores Uber/Didi
+              Cobertura Express para Conductores Uber/Didi
             </h1>
             
             <p className="text-xl md:text-2xl text-[#D9F99D] mb-8" style={{ fontFamily: 'Inter, sans-serif' }}>
@@ -65,7 +65,7 @@ export default function Home() {
                 data-testid="generar-seguro-apps-btn"
               >
                 <Smartphone className="w-5 h-5 mr-2" />
-                Obtener Seguro Ahora
+                Obtener Cobertura Ahora
               </Button>
               <Button
                 variant="outline"
@@ -103,7 +103,7 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               <div className="inline-block px-4 py-2 bg-[#D9F99D] rounded-full">
-                <span className="text-sm font-semibold text-[#064E3B]">Seguro Express - 30 días de cobertura</span>
+                <span className="text-sm font-semibold text-[#064E3B]">Cobertura Express - 30 días de cobertura</span>
               </div>
               
               <h2 className="text-4xl sm:text-5xl font-extrabold text-[#064E3B] leading-tight" style={{ fontFamily: 'Manrope, sans-serif' }}>
@@ -120,7 +120,7 @@ export default function Home() {
                   className="bg-[#064E3B] text-white hover:bg-[#064E3B]/90 rounded-full px-8 py-6 text-lg font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
                   data-testid="generar-seguro-btn"
                 >
-                  Generar Seguro Ahora
+                  Generar Cobertura Ahora
                 </Button>
               </div>
               
@@ -152,7 +152,7 @@ export default function Home() {
       <section className="py-20 bg-gradient-to-br from-[#F8FAFC] to-white">
         <div className="container mx-auto px-6">
           <h2 className="text-3xl md:text-4xl font-bold text-center text-[#064E3B] mb-16" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            ¿Por qué elegir Estonia Seguros?
+            ¿Por qué elegir Estonia Cobertura Colaborativa?
           </h2>
           
           <div className="grid md:grid-cols-3 gap-8">
@@ -276,7 +276,7 @@ export default function Home() {
         <div className="container mx-auto px-6">
           <div className="grid md:grid-cols-3 gap-8">
             <div>
-              <h3 className="text-xl font-bold mb-4">Estonia Seguros</h3>
+              <h3 className="text-xl font-bold mb-4">Estonia Cobertura Colaborativa</h3>
               <p className="text-white/70">Seguros express para circular sin preocupaciones</p>
             </div>
             <div>
@@ -293,7 +293,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-white/10 mt-8 pt-8 text-center text-white/50">
-            <p>© 2025 Estonia Seguros. Todos los derechos reservados.</p>
+            <p>© 2025 Estonia Cobertura Colaborativa. Todos los derechos reservados.</p>
           </div>
         </div>
       </footer>
