@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, Check, Plus, Trash2, Tag, Download, LogOut, Edit, X, Image as ImageIcon, Users, Award, Calendar, TrendingUp, DollarSign, History, CreditCard, AlertTriangle } from 'lucide-react';
+import { Shield, Check, Plus, Trash2, Tag, Download, LogOut, Edit, X, Image as ImageIcon, Users, Award, Calendar, TrendingUp, DollarSign, History, CreditCard, AlertTriangle, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { adminAPI, segurosAPI } from '@/services/api';
 import { toast } from 'sonner';
 import VisorDocumentos from '@/components/VisorDocumentos';
+import WhatsAppBotPanel from '@/components/WhatsAppBotPanel';
 
 export default function AdminPanel() {
   const [authenticated, setAuthenticated] = useState(false);
