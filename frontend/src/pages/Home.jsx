@@ -102,11 +102,11 @@ export default function Home() {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Button
-                onClick={() => setMostrarFormulario(true)}
+                onClick={handleWhatsAppClick}
                 className="bg-[#D9F99D] text-[#064E3B] hover:bg-[#BEF264] rounded-full px-8 py-6 text-lg font-bold shadow-2xl hover:shadow-3xl transition-all transform hover:-translate-y-1"
                 data-testid="generar-seguro-apps-btn"
               >
-                <Smartphone className="w-5 h-5 mr-2" />
+                <MessageCircle className="w-5 h-5 mr-2" />
                 Obtener Cobertura Ahora
               </Button>
               <Button
@@ -158,11 +158,12 @@ export default function Home() {
               
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button
-                  onClick={() => setMostrarFormulario(true)}
+                  onClick={handleWhatsAppClick}
                   className="bg-[#064E3B] text-white hover:bg-[#064E3B]/90 rounded-full px-8 py-6 text-lg font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
                   data-testid="generar-seguro-btn"
                 >
-                  Generar Cobertura Ahora
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  Contratar por WhatsApp
                 </Button>
               </div>
               
@@ -304,10 +305,11 @@ export default function Home() {
           </div>
           
           <Button
-            onClick={() => setMostrarFormulario(true)}
+            onClick={handleWhatsAppClick}
             className="bg-[#D9F99D] text-[#064E3B] hover:bg-[#BEF264] rounded-full px-8 py-6 text-lg font-bold shadow-lg"
             data-testid="cta-generar-seguro-btn"
           >
+            <MessageCircle className="w-5 h-5 mr-2" />
             Comenzar Ahora
           </Button>
         </div>
