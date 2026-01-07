@@ -959,7 +959,7 @@ async def crear_seguro_agente(data: dict):
     cobertura = data.get('cobertura', 'rc')
     precio = precios_cobertura.get(cobertura, 15000)
     
-    # Crear el seguro
+    # Crear el seguro - APROBADO DIRECTAMENTE cuando lo crea un agente
     seguro_doc = {
         "_id": str(uuid.uuid4()),
         "numero_recibo": numero_recibo,
@@ -975,12 +975,14 @@ async def crear_seguro_agente(data: dict):
         "cobertura": cobertura,
         "precio_original": precio,
         "precio_final": precio,
-        "estado": "pendiente",
+        "estado": "pagado",  # Aprobado directamente
+        "procesado": True,
         "vigencia_desde": datetime.now(timezone.utc).isoformat(),
         "vigencia_hasta": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
         "fotos": {},
         "agente_id": agente_id,
         "agente_nombre": agente['nombre'],
+        "comision_porcentaje": agente.get('comision_porcentaje', 10),
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
