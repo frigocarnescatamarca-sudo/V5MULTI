@@ -1,4 +1,4 @@
-const { makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore } = require('@whiskeysockets/baileys');
+const { makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, jidNormalizedUser } = require('@whiskeysockets/baileys');
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
@@ -26,6 +26,10 @@ let pausedChats = new Set(); // Chats where bot is paused (admin intervention)
 
 // Store for pending messages
 let pendingMessages = [];
+
+// Store mapping: LID -> real phone number, and phone -> JID for replies
+let lidToPhone = {};
+let phoneToJid = {};
 
 async function initWhatsApp() {
     try {
