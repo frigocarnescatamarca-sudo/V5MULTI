@@ -1351,6 +1351,120 @@ export default function AdminPanel() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Agregar Saldo a Agente */}
+      <Dialog open={modalSaldoOpen} onOpenChange={setModalSaldoOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-[#064E3B]">
+              Gestión de Saldo - {agenteParaSaldo?.nombre}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {agenteParaSaldo && (
+            <div className="space-y-6">
+              {/* Saldo Actual */}
+              <Card className="bg-gradient-to-r from-[#FEF3C7] to-white border-[#F59E0B]">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-sm text-[#64748B]">Saldo Actual</p>
+                      <p className="text-4xl font-bold text-[#F59E0B]" style={{ fontFamily: 'Space Grotesk, monospace' }}>
+                        ${(agenteParaSaldo.estadisticas?.saldo_actual || agenteParaSaldo.saldo || 0).toLocaleString('es-AR')}
+                      </p>
+                    </div>
+                    <DollarSign className="w-16 h-16 text-[#F59E0B]/30" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Formulario Agregar Saldo */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg text-[#064E3B]">Agregar Saldo</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Monto a Agregar ($) *</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={nuevoSaldo.monto}
+                      onChange={(e) => setNuevoSaldo({...nuevoSaldo, monto: e.target.value})}
+                      placeholder="Ej: 5000"
+                      data-testid="monto-saldo-input"
+                    />
+                  </div>
+                  <div>
+                    <Label>Observación</Label>
+                    <Textarea
+                      value={nuevoSaldo.observacion}
+                      onChange={(e) => setNuevoSaldo({...nuevoSaldo, observacion: e.target.value})}
+                      placeholder="Ej: Pago de comisiones mes de enero, Bono por ventas, etc."
+                      rows={3}
+                      data-testid="observacion-saldo-input"
+                    />
+                  </div>
+                  <Button
+                    onClick={agregarSaldo}
+                    disabled={loading || !nuevoSaldo.monto}
+                    className="w-full bg-[#F59E0B] hover:bg-[#F59E0B]/90"
+                    data-testid="confirmar-saldo-btn"
+                  >
+                    {loading ? 'Procesando...' : 'Agregar Saldo'}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Historial de Movimientos */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg text-[#064E3B]">
+                    <History className="w-5 h-5" />
+                    Historial de Movimientos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {movimientosAgente.length > 0 ? (
+                    <div className="space-y-3 max-h-64 overflow-y-auto">
+                      {movimientosAgente.map((mov) => (
+                        <div key={mov.id} className="flex justify-between items-start p-3 bg-slate-50 rounded-lg">
+                          <div>
+                            <p className="text-sm font-semibold text-[#10B981]">
+                              +${mov.monto.toLocaleString('es-AR')}
+                            </p>
+                            {mov.observacion && (
+                              <p className="text-xs text-[#64748B] mt-1">{mov.observacion}</p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-[#64748B]">
+                              {new Date(mov.fecha).toLocaleDateString('es-AR')}
+                            </p>
+                            <p className="text-xs text-[#64748B]">
+                              {new Date(mov.fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center text-[#64748B] py-4">No hay movimientos registrados</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Button
+                onClick={() => setModalSaldoOpen(false)}
+                variant="outline"
+                className="w-full"
+              >
+                Cerrar
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
