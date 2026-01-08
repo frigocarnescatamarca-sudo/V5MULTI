@@ -1962,6 +1962,24 @@ async def startup_event():
             "created_at": datetime.now(timezone.utc).isoformat()
         })
         logger.info("Código MASTER creado")
+    
+    # Start background task for followup messages
+    import asyncio
+    asyncio.create_task(followup_scheduler())
+
+async def followup_scheduler():
+    """Background task to send followup messages to inactive conversations"""
+    from whatsapp_service import send_followup_messages
+    import asyncio
+    
+    while True:
+        try:
+            await send_followup_messages()
+        except Exception as e:
+            print(f"[Followup Scheduler] Error: {e}")
+        
+        # Check every 2 minutes
+        await asyncio.sleep(120)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
