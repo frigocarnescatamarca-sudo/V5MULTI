@@ -805,9 +805,20 @@ Ejemplo: CONFIRMAR ABC123"""
     tabla_precios = "| Vehículo     | RC      | Completo |\n|--------------|---------|----------|\n"
     for p in precios:
         if p.get("activo", True):
-            tabla_precios += f"| {p['tipo']:<12} | ${p['rc']:,}  | ${p['completo']:,}   |\n"
+            tabla_precios += f"| {p['emoji']} {p['tipo']:<10} | ${p['rc']:,}  | ${p['completo']:,}   |\n"
     
+    # Replace placeholders if they exist
     system_prompt = instrucciones.replace("{datos_bancarios}", datos_bancarios).replace("{tabla_precios}", tabla_precios)
+    
+    # ALWAYS append prices and bank info at the end (in case user edited instructions and removed placeholders)
+    system_prompt += f"""
+
+=== PRECIOS ACTUALES (REFERENCIA OBLIGATORIA) ===
+{tabla_precios}
+
+=== DATOS BANCARIOS PARA PAGOS ===
+{datos_bancarios}
+"""
     
     # Add client memory context to system prompt
     if client_memory:
