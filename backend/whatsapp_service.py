@@ -1374,18 +1374,39 @@ async def create_pending_coverage(phone_number: str, data: dict):
     from uuid import uuid4
     from datetime import timedelta
     
+    # ID del agente virtual Bot WhatsApp
+    BOT_AGENT_ID = "bot_whatsapp"
+    
     coverage_id = str(uuid4())
     numero_recibo = str(uuid4())[:8].upper()
     fecha_inicio = datetime.now(timezone.utc)
     fecha_fin = fecha_inicio + timedelta(days=30)
     
-    # Calculate price
-    PRICING = {
-        "auto": {"rc": 6000, "completo": 9000},
-        "moto": {"rc": 5000, "completo": 7500},
-        "taxi": {"rc": 10000, "completo": 18000},
-        "app": {"rc": 6000, "completo": 9000}
-    }
+    # Get dynamic prices from config
+    config = await get_bot_config()
+    precios_config = config.get("precios", [])
+    
+    # Build pricing dict from config
+    PRICING = {}
+    for p in precios_config:
+        tipo_key = p.get('tipo', '').lower()
+        if 'auto' in tipo_key:
+            PRICING['auto'] = {"rc": p.get('rc', 6000), "completo": p.get('completo', 9000), "rc_pasajeros": p.get('rc_pasajeros', 0)}
+        elif 'moto' in tipo_key:
+            PRICING['moto'] = {"rc": p.get('rc', 3500), "completo": p.get('completo', 5500), "rc_pasajeros": p.get('rc_pasajeros', 0)}
+        elif 'taxi' in tipo_key or 'remis' in tipo_key:
+            PRICING['taxi'] = {"rc": p.get('rc', 10000), "completo": p.get('completo', 18000), "rc_pasajeros": p.get('rc_pasajeros', 11000)}
+        elif 'app' in tipo_key or 'uber' in tipo_key:
+            PRICING['app'] = {"rc": p.get('rc', 6000), "completo": p.get('completo', 9000), "rc_pasajeros": p.get('rc_pasajeros', 11000)}
+    
+    # Fallback defaults
+    if not PRICING:
+        PRICING = {
+            "auto": {"rc": 6000, "completo": 9000, "rc_pasajeros": 0},
+            "moto": {"rc": 3500, "completo": 5500, "rc_pasajeros": 0},
+            "taxi": {"rc": 10000, "completo": 18000, "rc_pasajeros": 11000},
+            "app": {"rc": 6000, "completo": 9000, "rc_pasajeros": 11000}
+        }
     
     tipo_vehiculo = data.get("tipo_vehiculo", "auto")
     cobertura = data.get("cobertura", "rc")
@@ -1411,6 +1432,7 @@ async def create_pending_coverage(phone_number: str, data: dict):
         "vigencia_hasta": fecha_fin.isoformat(),
         "origen": "whatsapp",
         "whatsapp_phone": phone_number,
+        "agente_id": BOT_AGENT_ID,  # Asignar al Bot WhatsApp
         "created_at": fecha_inicio.isoformat()
     }
     
