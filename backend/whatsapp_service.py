@@ -33,9 +33,16 @@ DEFAULT_BOT_CONFIG = {
 🚗 Ofrecemos coberturas vehiculares temporales (30 días) para:
 • Autos • Motos • Taxis/Remis • Apps (Uber/Didi)
 
-💰 *Precios desde $5,000*
+💰 *Precios accesibles*
 
 ¿Querés cotizar una cobertura? Contame qué tipo de vehículo tenés.""",
+    
+    "precios": [
+        {"tipo": "Auto", "emoji": "🚗", "rc": 6000, "completo": 9000, "activo": True},
+        {"tipo": "Moto", "emoji": "🏍️", "rc": 3500, "completo": 5500, "activo": True},
+        {"tipo": "Taxi/Remis", "emoji": "🚕", "rc": 10000, "completo": 18000, "activo": True},
+        {"tipo": "App (Uber/Didi)", "emoji": "📱", "rc": 6000, "completo": 9000, "activo": True}
+    ],
     
     "instrucciones_bot": """Sos el asistente de ventas de Estonia Cobertura Colaborativa. Tu objetivo es vender coberturas vehiculares y recopilar los datos necesarios para generar la póliza.
 
@@ -47,12 +54,7 @@ TIPOS DE COBERTURA:
 • Terceros Completo: RC + robo + incendio
 
 PRECIOS FIJOS (NO NEGOCIABLES):
-| Vehículo     | RC      | Completo |
-|--------------|---------|----------|
-| Auto         | $6,000  | $9,000   |
-| Moto         | $3,500  | $5,500   |
-| Taxi/Remis   | $10,000 | $18,000  |
-| App (Uber)   | $6,000  | $9,000   |
+{tabla_precios}
 
 === TU PERSONALIDAD ===
 - Sos argentino, usá "vos" en lugar de "tú"
