@@ -127,6 +127,7 @@ class PrecioVehiculo(BaseModel):
     emoji: str = "🚗"
     rc: int
     completo: int
+    rc_pasajeros: int = 0
     activo: bool = True
 
 class PreciosUpdate(BaseModel):
