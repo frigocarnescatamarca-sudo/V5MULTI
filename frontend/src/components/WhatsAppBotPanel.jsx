@@ -157,7 +157,7 @@ export default function WhatsAppBotPanel() {
       return;
     }
     setPrecios([...precios, { ...newTipoVehiculo }]);
-    setNewTipoVehiculo({ tipo: '', emoji: '🚗', rc: 0, completo: 0, activo: true });
+    setNewTipoVehiculo({ tipo: '', emoji: '🚗', rc: 0, completo: 0, rc_pasajeros: 0, activo: true });
     setPreciosDirty(true);
     toast.success('Tipo de vehículo agregado');
   };
