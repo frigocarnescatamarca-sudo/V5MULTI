@@ -441,7 +441,7 @@ export default function AdminSandwich() {
                   {/* Registered Deliveries */}
                   {config.delivery_phones && config.delivery_phones.length > 0 && (
                     <div className="p-4 rounded-lg bg-gray-50">
-                      <h3 className="font-bold mb-2">🛵 Deliveries Registrados</h3>
+                      <h3 className="font-bold mb-2">🛵 Deliveries Registrados (método antiguo)</h3>
                       <div className="flex flex-wrap gap-2">
                         {config.delivery_phones.map((phone, idx) => (
                           <Badge key={idx} variant="outline">{phone}</Badge>
@@ -449,6 +449,65 @@ export default function AdminSandwich() {
                       </div>
                     </div>
                   )}
+
+                  {/* Bot Users */}
+                  <div className="p-4 rounded-lg bg-purple-50">
+                    <h3 className="font-bold mb-2">👥 Usuarios del Bot</h3>
+                    {botUsers.length === 0 ? (
+                      <p className="text-sm text-gray-500">No hay usuarios creados. El admin principal puede crear usuarios vía WhatsApp con: <code className="bg-gray-200 px-1">CREAR ADMIN user clave</code></p>
+                    ) : (
+                      <div className="space-y-2">
+                        {botUsers.map((user, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <span>{user.role === 'admin' ? '👤' : '🛵'}</span>
+                            <span className="font-medium">{user.username}</span>
+                            <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>{user.role}</Badge>
+                            {user.activo ? (
+                              <Badge className="bg-green-100 text-green-800">Activo</Badge>
+                            ) : (
+                              <Badge className="bg-red-100 text-red-800">Inactivo</Badge>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Active Sessions */}
+                  <div className="p-4 rounded-lg bg-cyan-50">
+                    <h3 className="font-bold mb-2">📱 Sesiones Activas</h3>
+                    {(botSessions.admin_sessions?.length || 0) + (botSessions.delivery_sessions?.length || 0) === 0 ? (
+                      <p className="text-sm text-gray-500">No hay sesiones activas. Los usuarios se loguean vía WhatsApp con: <code className="bg-gray-200 px-1">soy [usuario] clave [clave]</code></p>
+                    ) : (
+                      <div className="space-y-2">
+                        {botSessions.admin_sessions?.map((session, idx) => (
+                          <div key={`admin-${idx}`} className="flex items-center gap-2">
+                            <span>👤</span>
+                            <span className="font-medium">{session.username}</span>
+                            <span className="text-xs text-gray-500">en {session.phone_number}</span>
+                            <Badge className="bg-blue-100 text-blue-800">Admin</Badge>
+                          </div>
+                        ))}
+                        {botSessions.delivery_sessions?.map((session, idx) => (
+                          <div key={`delivery-${idx}`} className="flex items-center gap-2">
+                            <span>🛵</span>
+                            <span className="font-medium">{session.username}</span>
+                            <span className="text-xs text-gray-500">en {session.phone_number}</span>
+                            <Badge className="bg-orange-100 text-orange-800">Delivery</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Reminder Info */}
+                  <div className="p-4 rounded-lg bg-yellow-50">
+                    <h3 className="font-bold mb-2">⏰ Recordatorios Automáticos</h3>
+                    <p className="text-sm text-gray-600">
+                      El sistema envía recordatorios automáticos a todos los admins activos cuando un pedido lleva más de 5 minutos sin confirmar.
+                      Los recordatorios se repiten cada 5 minutos hasta que el pedido sea confirmado o rechazado.
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
