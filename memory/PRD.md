@@ -35,30 +35,60 @@ Sistema multi-negocio para gestión de:
 
 ## Implementado
 
-### 2025-01-08 - Bot Modo Cocina V2 (10 mejoras)
+### 2025-01-08 - Sistema de Usuarios y Recordatorios
 
-1. ✅ **Solicitar número de WhatsApp** - Bot pide número después de crear pedido para que delivery contacte
-2. ✅ **Corregir mensaje admin** - Admin ya no ve "necesita aprobación" al confirmar
-3. ✅ **Números secuenciales** - Pedidos usan #1, #2, #3... en lugar de IDs aleatorios
-4. ✅ **Ubicación compartida** - Detecta y guarda ubicación del cliente, muestra link a Google Maps
-5. ✅ **Preguntar modificaciones** - Bot pregunta "¿sin mayo? ¿extra queso?" antes de confirmar
+**Sistema de Gestión de Usuarios (vía WhatsApp):**
+- ✅ **Crear usuarios:** `CREAR ADMIN/DELIVERY usuario clave` (solo master admin)
+- ✅ **Login:** `soy [usuario] clave [clave]` desde cualquier número
+- ✅ **Logout:** `cerrar sesión`
+- ✅ **Kick usuarios:** `KICKEAR usuario` (cierra sesión remota)
+- ✅ **Eliminar usuarios:** `ELIMINAR usuario`
+- ✅ **Listar usuarios:** `USUARIOS` (muestra usuarios y sesiones activas)
+
+**Notificaciones Múltiples:**
+- ✅ Todos los admins activos (master + logueados) reciben notificaciones de nuevos pedidos
+- ✅ Todos los deliveries reciben notificación cuando un pedido está listo para entrega
+
+**Recordatorios Automáticos:**
+- ✅ Cada 5 minutos se verifican pedidos pendientes sin confirmar
+- ✅ Recordatorio se envía a TODOS los admins activos
+- ✅ Se repite cada 5 min hasta confirmar o rechazar
+
+**Delivery puede marcar LISTO:**
+- ✅ Los deliveries logueados pueden usar `LISTO X` además de `ENCAMINO X` y `ENTREGADO X`
+
+### 2025-01-08 - Bot Modo Cocina V2 (10 mejoras anteriores)
+
+1. ✅ **Solicitar WhatsApp del cliente** - Después de crear pedido, pide número para que delivery contacte
+2. ✅ **Mensaje de admin corregido** - Ya no muestra "necesita aprobación del gerente"
+3. ✅ **Números secuenciales** - Pedidos ahora usan #1, #2, #3... 
+4. ✅ **Ubicación compartida** - Detecta y guarda ubicación, muestra link a Google Maps en panel
+5. ✅ **Preguntar modificaciones** - Bot pregunta "¿sin mayo?, ¿extra queso?" antes de confirmar
 6. ✅ **Controles del cliente** - Puede cancelar pedido y pedir hablar con humano
-7. ✅ **Handover humano** - Pausa bot por 2 horas cuando cliente pide humano, auto-resume
-8. ✅ **Rol de Delivery** - Nuevo rol con comandos: PEDIDO #X, ENCAMINO X, ENTREGADO X
-9. ✅ **Comando "Listo"** - Admin marca pedido listo, notifica al cliente
-10. ✅ **Consulta de estado** - Cliente pregunta "¿cómo va mi pedido?", admin responde
+7. ✅ **Handover con auto-resume** - Pausa 2h automáticamente, luego se reanuda
+8. ✅ **Rol de Delivery** - Nuevo rol con comandos PEDIDO #X, ENCAMINO, ENTREGADO
+9. ✅ **Comando "Listo"** - Admin marca listo, notifica al cliente
+10. ✅ **Consulta de estado** - Cliente pregunta estado, admin responde y bot retransmite
 
 ### Comandos WhatsApp Implementados
 
-**Admin:**
-- PEDIDOS, PEDIDO #X, CONFIRMAR X, RECHAZAR X
-- LISTO X, ENCAMINO X, ENTREGADO X
-- ESTADO X [respuesta], PAUSAR TEL, REANUDAR TEL
-- DELIVERY TEL (agregar delivery)
+**Master Admin (número en config):**
+- Todo lo de Admin +
+- `CREAR ADMIN user clave` / `CREAR DELIVERY user clave`
+- `USUARIOS` - Listar usuarios y sesiones
+- `ELIMINAR user` - Eliminar usuario
+- `KICKEAR user` - Cerrar sesión de usuario
 
-**Delivery:**
-- PEDIDO #X (ver detalles con dirección, WhatsApp, ubicación)
-- ENCAMINO X, ENTREGADO X
+**Admin (logueado):**
+- `PEDIDOS`, `PEDIDO #X`, `CONFIRMAR X`, `RECHAZAR X [motivo]`
+- `LISTO X`, `ENCAMINO X`, `ENTREGADO X`
+- `ESTADO X [respuesta]`, `PAUSAR TEL`, `REANUDAR TEL`
+- `cerrar sesión` - Logout
+
+**Delivery (logueado):**
+- `PEDIDO #X` (ver detalles con dirección, WhatsApp, ubicación)
+- `LISTO X`, `ENCAMINO X`, `ENTREGADO X`
+- `cerrar sesión` - Logout
 
 **Cliente:**
 - "cancelar" - cancela pedido activo
@@ -77,5 +107,15 @@ Sistema multi-negocio para gestión de:
 ## Notas Técnicas
 - WhatsApp Sandwich service corre en puerto 3003
 - WhatsApp Seguros service corre en puerto 3002
-- Los números de delivery se configuran en `/admin-sandwich` → Configuración
+- Master admin = número configurado en `admin_phone` del config
+- Los recordatorios se disparan automáticamente cada 5 min desde el servicio Node.js
 - Zona restringida (sin delivery): "Valle Viejo" configurable en admin
+
+## Colecciones MongoDB (Sandwich)
+- `sandwich_config` - Configuración del bot
+- `sandwich_pedidos` - Pedidos
+- `sandwich_messages` - Historial de mensajes
+- `sandwich_bot_users` - Usuarios creados (admins/deliveries)
+- `sandwich_bot_sessions` - Sesiones activas
+- `sandwich_order_counter` - Contador secuencial de pedidos
+- `sandwich_client_data` - Ubicaciones y datos de clientes
