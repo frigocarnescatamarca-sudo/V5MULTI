@@ -280,13 +280,13 @@ export default function Home() {
                 className="bg-white text-purple-700 hover:bg-purple-50 rounded-full px-8 py-6 text-lg font-bold"
               >
                 <MessageCircle className="w-5 h-5 mr-2" />
-                Contratar Cobertura Pasajeros
+                Activar por $11.000 ahora
               </Button>
             </div>
 
             {/* Aclaración legal */}
             <p className="text-xs text-center text-[#94A3B8] mt-6 max-w-3xl mx-auto">
-              La cobertura para pasajeros funciona bajo un sistema de economía colaborativa y solidaria. No constituye un seguro ni una póliza. Los reintegros están sujetos a las condiciones del sistema y a la disponibilidad del fondo común.
+              La cobertura para pasajeros funciona bajo un sistema de economía colaborativa y solidaria. No constituye un seguro ni una póliza. Los reintegros están sujetos a las condiciones del sistema y a la disponibilidad del fondo común. <strong>Aplica durante viajes activos.</strong>
             </p>
           </div>
         </div>
