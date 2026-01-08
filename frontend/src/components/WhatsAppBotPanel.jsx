@@ -331,10 +331,14 @@ export default function WhatsAppBotPanel() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-6">
+        <TabsList className="grid w-full grid-cols-5 mb-6">
           <TabsTrigger value="conexion" className="flex items-center gap-2">
             <QrCode className="w-4 h-4" />
             Conexión
+          </TabsTrigger>
+          <TabsTrigger value="precios" className="flex items-center gap-2">
+            💰
+            Precios
           </TabsTrigger>
           <TabsTrigger value="configuracion" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
