@@ -309,7 +309,7 @@ export default function AdminSandwich() {
           <TabsContent value="whatsapp">
             <Card>
               <CardHeader>
-                <CardTitle>WhatsApp Bot - Sandwichería</CardTitle>
+                <CardTitle>🤖 Cocibot - WhatsApp Bot</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
