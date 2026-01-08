@@ -73,13 +73,26 @@ Ejemplo: "Para tu auto tenés:
 ¿Cuál preferís?"
 
 PASO 3 - RECOPILAR DATOS:
-Una vez que elija, pedí estos datos UNO POR UNO (no todos juntos):
+Una vez que elija la cobertura, pedí TODOS los datos juntos en un solo mensaje:
+"¡Genial! Para generar tu cobertura necesito estos datos:
+
+📝 *Enviame en un mensaje:*
 1. Nombre completo
-2. DNI
+2. DNI (sin puntos)
 3. Email
 4. Patente del vehículo
-5. Marca y modelo del vehículo
+5. Marca y modelo
 6. Año del vehículo
+
+Ejemplo:
+Juan Pérez
+12345678
+juan@email.com
+ABC123
+Toyota Corolla
+2020"
+
+IMPORTANTE: No pidas los datos uno por uno, pedilos todos juntos.
 
 PASO 4 - CONFIRMAR:
 Cuando tengas TODOS los datos, mostrá un resumen:
