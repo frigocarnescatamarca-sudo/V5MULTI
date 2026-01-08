@@ -1125,27 +1125,138 @@ async def process_sandwich_message_with_ai(phone_number: str, message: str, push
     admin_lid = config.get('admin_lid', '')
     phone_digits = ''.join(filter(str.isdigit, str(phone_number)))
     
-    # Check if admin
-    is_admin = False
+    # ============ LOGIN/LOGOUT DETECTION ============
+    message_lower = message.lower().strip()
+    
+    # Check for logout command first
+    if message_lower in ['cerrar sesion', 'cerrar sesión', 'logout', 'salir']:
+        session = await get_session(phone_number)
+        if session:
+            await close_session(phone_number)
+            return f"✅ Sesión cerrada. ¡Hasta luego, {session.get('username')}!"
+        return "No tenés una sesión activa."
+    
+    # Check for login attempt: "soy admin1 clave 1234" or "soy delivery1 clave 1234"
+    login_match = re.match(r'soy\s+(\w+)\s+clave\s+(\S+)', message_lower)
+    if login_match:
+        username = login_match.group(1)
+        password = login_match.group(2)
+        
+        user = await authenticate_user(username, password)
+        if user:
+            await create_session(phone_number, username, user['role'])
+            role_emoji = "👤" if user['role'] == 'admin' else "🛵"
+            pending_count = await db.sandwich_pedidos.count_documents({"estado": "pendiente"})
+            
+            welcome_msg = f"""{role_emoji} *¡Bienvenido, {username}!*
+
+Sesión iniciada como *{user['role'].upper()}*
+📊 Pedidos pendientes: {pending_count}
+
+Para cerrar sesión: *cerrar sesión*"""
+            
+            if user['role'] == 'admin':
+                welcome_msg += """
+
+📋 *Comandos Admin:*
+• *PEDIDOS* - Ver pendientes
+• *CONFIRMAR X* / *RECHAZAR X*
+• *LISTO X* / *ENCAMINO X* / *ENTREGADO X*"""
+            else:
+                welcome_msg += """
+
+📋 *Comandos Delivery:*
+• *PEDIDO #X* - Ver detalles
+• *LISTO X* - Marcar listo
+• *ENCAMINO X* - En camino
+• *ENTREGADO X* - Entregado"""
+            
+            return welcome_msg
+        else:
+            return "❌ Usuario o clave incorrectos. Intentá de nuevo.\n\nFormato: *soy [usuario] clave [clave]*"
+    
+    # ============ DETERMINE USER ROLE ============
+    
+    # Check if master admin (from config)
+    is_master_admin_user = False
     if admin_lid and (phone_digits == admin_lid or phone_number == admin_lid):
-        is_admin = True
+        is_master_admin_user = True
     elif admin_phone:
         normalized_admin = normalize_phone(admin_phone)
         normalized_phone = normalize_phone(phone_number)
         if normalized_phone == normalized_admin or normalized_phone.endswith(normalized_admin) or normalized_admin.endswith(normalized_phone):
-            is_admin = True
+            is_master_admin_user = True
             if len(phone_digits) > 12 and not admin_lid:
                 await db.sandwich_config.update_one(
                     {"_id": "bot_config"},
                     {"$set": {"admin_lid": phone_digits}}
                 )
     
-    # Check if delivery person
-    is_delivery = await is_delivery_person(phone_number)
+    # Check if logged in as admin or delivery
+    session = await get_session(phone_number)
+    is_logged_admin = session and session.get('role') == 'admin'
+    is_logged_delivery = session and session.get('role') == 'delivery'
+    
+    # Check old-style delivery (from config list)
+    is_config_delivery = await is_delivery_person(phone_number)
+    
+    # Determine effective role
+    is_admin = is_master_admin_user or is_logged_admin
+    is_delivery = is_logged_delivery or is_config_delivery
+    
+    # ============ MASTER ADMIN ONLY COMMANDS ============
+    if is_master_admin_user:
+        # CREAR ADMIN/DELIVERY command
+        crear_match = re.match(r'(?:CREAR|crear)\s+(ADMIN|admin|DELIVERY|delivery)\s+(\w+)\s+(\S+)', message.strip())
+        if crear_match:
+            role = crear_match.group(1).lower()
+            username = crear_match.group(2)
+            password = crear_match.group(3)
+            user, msg = await create_bot_user(username, password, role, phone_number)
+            return msg
+        
+        # ELIMINAR command
+        eliminar_match = re.match(r'(?:ELIMINAR|eliminar)\s+(\w+)', message.strip())
+        if eliminar_match:
+            username = eliminar_match.group(1)
+            success, msg = await delete_bot_user(username)
+            return msg
+        
+        # USUARIOS command
+        if message_lower == 'usuarios':
+            users = await get_all_bot_users()
+            if not users:
+                return "No hay usuarios creados.\n\nPara crear: *CREAR ADMIN usuario clave*\no *CREAR DELIVERY usuario clave*"
+            
+            msg = "👥 *USUARIOS REGISTRADOS:*\n\n"
+            for u in users:
+                role_emoji = "👤" if u['role'] == 'admin' else "🛵"
+                status = "✅" if u.get('activo', True) else "❌"
+                msg += f"{role_emoji} *{u['username']}* - {u['role'].upper()} {status}\n"
+            
+            # Show active sessions
+            sessions = await db.sandwich_bot_sessions.find({}).to_list(100)
+            if sessions:
+                msg += "\n📱 *Sesiones activas:*\n"
+                for s in sessions:
+                    msg += f"• {s.get('username')} en {s.get('phone_number')}\n"
+            
+            msg += "\nPara eliminar: *ELIMINAR usuario*\nPara cerrar sesión: *KICKEAR usuario*"
+            return msg
+        
+        # KICKEAR command (close someone's session)
+        kickear_match = re.match(r'(?:KICKEAR|kickear|KICK|kick)\s+(\w+)', message.strip())
+        if kickear_match:
+            username = kickear_match.group(1)
+            count = await close_session_by_username(username)
+            if count > 0:
+                return f"✅ Sesión de *{username}* cerrada."
+            return f"❌ *{username}* no tiene sesión activa."
     
     # ============ ADMIN COMMANDS ============
     if is_admin:
-        print(f"[Sandwich Bot] ✅ ADMIN DETECTED! Message: {message[:50]}")
+        logged_as = f" ({session.get('username')})" if session else ""
+        print(f"[Sandwich Bot] ✅ ADMIN DETECTED{logged_as}! Message: {message[:50]}")
         
         # CONFIRMAR command
         confirm_match = re.match(r'(?:CONFIRMAR|confirmar|Confirmar)\s+(\d+)', message.strip())
@@ -1199,7 +1310,7 @@ async def process_sandwich_message_with_ai(phone_number: str, message: str, push
             numero = entregado_match.group(1)
             return await delivery_mark_delivered(numero, phone_number)
         
-        # DELIVERY command - register delivery person
+        # DELIVERY command - register delivery person (old style)
         delivery_add_match = re.match(r'(?:DELIVERY|delivery)\s+(\d+)', message.strip())
         if delivery_add_match:
             new_delivery_phone = delivery_add_match.group(1)
@@ -1210,12 +1321,12 @@ async def process_sandwich_message_with_ai(phone_number: str, message: str, push
             return f"✅ {new_delivery_phone} agregado como delivery.\n\nDeliveries registrados: {', '.join(current_deliveries)}"
         
         # PEDIDOS command
-        if message.lower().strip() == 'pedidos':
+        if message_lower == 'pedidos':
             pending = await db.sandwich_pedidos.find({"estado": "pendiente"}).to_list(10)
             if pending:
                 msg = "📋 *PEDIDOS PENDIENTES:*\n\n"
                 for p in pending:
-                    msg += f"• *#{p['numero_pedido']}* - {p['nombre']} - ${p['total']:,}\n"
+                    msg += f"• *#{p['numero_pedido']}* - {p.get('nombre', 'Sin nombre')} - ${p.get('total', 0):,}\n"
                 msg += "\nPara confirmar: *CONFIRMAR [N°]*"
                 return msg
             return "✅ No hay pedidos pendientes"
@@ -1228,10 +1339,9 @@ async def process_sandwich_message_with_ai(phone_number: str, message: str, push
             return response
         
         # Admin greeting
-        message_lower = message.lower().strip()
         if message_lower in ['hola', 'hi', 'hey', 'buenas']:
             pending_count = await db.sandwich_pedidos.count_documents({"estado": "pendiente"})
-            return f"""👋 *¡Hola Admin!*
+            admin_greeting = f"""👋 *¡Hola Admin{logged_as}!*
 
 📊 *Pedidos pendientes:* {pending_count}
 
@@ -1239,27 +1349,29 @@ async def process_sandwich_message_with_ai(phone_number: str, message: str, push
 • *PEDIDOS* - Ver pendientes
 • *PEDIDO #X* - Ver detalles
 • *CONFIRMAR X* - Confirmar pedido
-• *RECHAZAR X* - Rechazar pedido
+• *RECHAZAR X [motivo]* - Rechazar pedido
 • *LISTO X* - Marcar como listo
 • *ENCAMINO X* - Marcar en camino
 • *ENTREGADO X* - Marcar entregado
-• *ESTADO X [resp]* - Responder consulta
-• *PAUSAR TEL* - Atender manualmente
-• *REANUDAR TEL* - Reactivar bot
-• *DELIVERY TEL* - Agregar delivery"""
+• *ESTADO X [resp]* - Responder consulta"""
+            
+            if is_master_admin_user:
+                admin_greeting += """
+
+👑 *Comandos Admin Principal:*
+• *CREAR ADMIN user clave*
+• *CREAR DELIVERY user clave*
+• *USUARIOS* - Ver usuarios
+• *ELIMINAR user* - Eliminar usuario
+• *KICKEAR user* - Cerrar sesión"""
+            
+            return admin_greeting
         
         return """👋 Comandos disponibles:
 
 • *PEDIDOS* - Ver pendientes
-• *PEDIDO #X* - Ver detalles
-• *CONFIRMAR X* - Confirmar
-• *RECHAZAR X* - Rechazar
-• *LISTO X* - Listo para entrega
-• *ENCAMINO X* - En camino
-• *ENTREGADO X* - Entregado
-• *ESTADO X [resp]* - Responder cliente
-• *PAUSAR TEL* - Atender manual
-• *REANUDAR TEL* - Reactivar bot"""
+• *CONFIRMAR X* / *RECHAZAR X*
+• *LISTO X* / *ENCAMINO X* / *ENTREGADO X*"""
     
     # ============ DELIVERY COMMANDS ============
     if is_delivery:
