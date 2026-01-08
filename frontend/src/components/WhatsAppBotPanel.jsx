@@ -944,9 +944,14 @@ export default function WhatsAppBotPanel() {
                     <p className="text-sm text-green-700">Confirma el pago de una cobertura y envía comprobantes al cliente.</p>
                     <code className="text-xs bg-green-100 px-2 py-1 rounded mt-2 block">Ejemplo: CONFIRMAR ABC123</code>
                   </div>
+                  <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                    <h4 className="font-bold text-red-800 mb-2">RECHAZAR [RECIBO] [MOTIVO]</h4>
+                    <p className="text-sm text-red-700">Informa al cliente que el pago no llegó. Puede confirmar después.</p>
+                    <code className="text-xs bg-red-100 px-2 py-1 rounded mt-2 block">Ejemplo: RECHAZAR ABC123 No veo el pago</code>
+                  </div>
                   <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                     <h4 className="font-bold text-blue-800 mb-2">ESTADO</h4>
-                    <p className="text-sm text-blue-700">Muestra lista de coberturas pendientes de pago.</p>
+                    <p className="text-sm text-blue-700">Muestra lista de coberturas pendientes y rechazadas.</p>
                     <code className="text-xs bg-blue-100 px-2 py-1 rounded mt-2 block">Ejemplo: ESTADO</code>
                   </div>
                   <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
@@ -959,7 +964,7 @@ export default function WhatsAppBotPanel() {
                     <p className="text-sm text-teal-700">Reactiva el bot para ese cliente.</p>
                     <code className="text-xs bg-teal-100 px-2 py-1 rounded mt-2 block">Ejemplo: REANUDAR 5491112345678</code>
                   </div>
-                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 md:col-span-2">
+                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <h4 className="font-bold text-gray-800 mb-2">PAUSADOS</h4>
                     <p className="text-sm text-gray-700">Muestra lista de todos los chats que están en atención humana.</p>
                     <code className="text-xs bg-gray-100 px-2 py-1 rounded mt-2 block">Ejemplo: PAUSADOS</code>
