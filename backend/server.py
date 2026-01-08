@@ -2222,7 +2222,7 @@ async def sandwich_get_pedido(numero_pedido: str):
 async def sandwich_update_pedido_estado(numero_pedido: str, data: dict):
     """Update order status"""
     nuevo_estado = data.get("estado")
-    if nuevo_estado not in ["pendiente", "confirmado", "preparando", "listo", "entregado", "cancelado"]:
+    if nuevo_estado not in ["pendiente", "confirmado", "preparando", "listo", "en_camino", "entregado", "cancelado"]:
         raise HTTPException(status_code=400, detail="Estado inválido")
     
     await db.sandwich_pedidos.update_one(
