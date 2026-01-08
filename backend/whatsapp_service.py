@@ -654,22 +654,59 @@ async def process_message_with_ai(phone_number: str, message: str, push_name: st
             result = await admin_confirm_payment(recibo, phone_number)
             return result
         
-        # Check for other admin commands or just greeting
+        # Check for PAUSAR command
+        pausar_match = re.match(r'(?:PAUSAR|pausar|Pausar)\s+(\d+)', message.strip())
+        if pausar_match:
+            client_phone = pausar_match.group(1)
+            await pause_chat(client_phone, phone_number)
+            return f"""✅ *Chat pausado*
+
+El bot ya no responde a {client_phone}.
+Ahora podés atenderlo manualmente.
+
+Cuando termines, escribí:
+*REANUDAR {client_phone}*"""
+        
+        # Check for REANUDAR command
+        reanudar_match = re.match(r'(?:REANUDAR|reanudar|Reanudar)\s+(\d+)', message.strip())
+        if reanudar_match:
+            client_phone = reanudar_match.group(1)
+            await resume_chat(client_phone)
+            return f"""✅ *Chat reanudado*
+
+El bot vuelve a atender a {client_phone}."""
+        
+        # Check for PAUSADOS command
         message_lower = message.lower().strip()
+        if message_lower == 'pausados':
+            paused = await get_paused_chats()
+            if paused:
+                msg = "⏸️ *Chats pausados (atención humana):*\n\n"
+                for p in paused:
+                    msg += f"• {p['phone_number']} (desde {p.get('paused_at', 'N/A')[:10]})\n"
+                msg += f"\nPara reanudar: *REANUDAR [NÚMERO]*"
+                return msg
+            else:
+                return "✅ No hay chats pausados"
         
         # If admin says hi or asks something general, respond as admin
         if message_lower in ['hola', 'hi', 'hey', 'buenas', 'buen dia', 'buenos dias', 'buenas tardes', 'buenas noches']:
             # Get pending count
             pending_count = await db.seguros.count_documents({"estado": "pendiente_pago"})
+            paused_count = await db.whatsapp_paused.count_documents({})
             return f"""👋 *¡Hola Admin!*
 
 Te reconozco como administrador. 
 
 📊 *Coberturas pendientes:* {pending_count}
+⏸️ *Chats pausados:* {paused_count}
 
 📋 *Comandos disponibles:*
 • *CONFIRMAR [RECIBO]* - Confirma un pago
 • *ESTADO* - Ver coberturas pendientes
+• *PAUSAR [NÚMERO]* - Pausar bot para atender manualmente
+• *REANUDAR [NÚMERO]* - Reactivar bot para un cliente
+• *PAUSADOS* - Ver chats pausados
 
 Ejemplo: CONFIRMAR ABC123"""
         
@@ -687,9 +724,20 @@ Ejemplo: CONFIRMAR ABC123"""
         
         # If admin writes something else, don't treat as client - just acknowledge
         if not confirm_match:
-            return f"👋 Hola Admin. Para confirmar un pago escribí:\n*CONFIRMAR [NÚMERO DE RECIBO]*\n\nPara ver pendientes: *ESTADO*"
+            return f"""👋 Hola Admin. Comandos disponibles:
+
+• *CONFIRMAR [RECIBO]* - Confirmar pago
+• *ESTADO* - Ver pendientes
+• *PAUSAR [NÚMERO]* - Atender manualmente
+• *REANUDAR [NÚMERO]* - Reactivar bot
+• *PAUSADOS* - Ver chats pausados"""
     else:
         print(f"[WhatsApp Bot] Not admin, treating as client")
+    
+    # Check if chat is paused (human is attending)
+    if await is_chat_paused(phone_number):
+        print(f"[WhatsApp Bot] Chat {phone_number} is paused - not responding")
+        return None  # Don't respond, human is attending
     
     # Save incoming message
     await save_message(phone_number, message, "user", push_name)
