@@ -274,7 +274,7 @@ export default function WhatsAppBotPanel() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
+        <TabsList className="grid w-full grid-cols-4 mb-6">
           <TabsTrigger value="conexion" className="flex items-center gap-2">
             <QrCode className="w-4 h-4" />
             Conexión
@@ -286,6 +286,10 @@ export default function WhatsAppBotPanel() {
           <TabsTrigger value="conversaciones" className="flex items-center gap-2">
             <MessageCircle className="w-4 h-4" />
             Chats
+          </TabsTrigger>
+          <TabsTrigger value="guia" className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4" />
+            Guía
           </TabsTrigger>
         </TabsList>
 
