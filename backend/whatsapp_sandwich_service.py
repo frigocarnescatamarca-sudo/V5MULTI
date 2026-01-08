@@ -428,7 +428,7 @@ async def answer_status_query(numero_pedido: str, response: str, phone_number: s
 
 {response}"""
                 await send_sandwich_message(client_phone, client_msg)
-                return f"✅ Respuesta enviada al cliente"
+                return "✅ Respuesta enviada al cliente"
         return f"❌ No encontré consulta pendiente para el pedido #{numero_pedido}"
     
     # Mark as answered
@@ -443,7 +443,7 @@ async def answer_status_query(numero_pedido: str, response: str, phone_number: s
 {response}"""
     
     await send_sandwich_message(query["phone_number"], client_msg)
-    return f"✅ Respuesta enviada al cliente"
+    return "✅ Respuesta enviada al cliente"
 
 
 # ============ ORDER MANAGEMENT ============
@@ -1016,7 +1016,7 @@ async def process_sandwich_message_with_ai(phone_number: str, message: str, push
 • *REANUDAR TEL* - Reactivar bot
 • *DELIVERY TEL* - Agregar delivery"""
         
-        return f"""👋 Comandos disponibles:
+        return """👋 Comandos disponibles:
 
 • *PEDIDOS* - Ver pendientes
 • *PEDIDO #X* - Ver detalles
