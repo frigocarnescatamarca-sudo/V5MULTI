@@ -1086,6 +1086,66 @@ export default function WhatsAppBotPanel() {
             </CardContent>
           </Card>
 
+          {/* Cobertura Solidaria Pasajeros */}
+          <Card>
+            <CardHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-t-lg">
+              <CardTitle className="flex items-center gap-2">
+                🩺 Cobertura Solidaria para Pasajeros
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                  <h4 className="font-bold text-purple-800 mb-2">¿A quién aplica?</h4>
+                  <p className="text-sm text-purple-700">
+                    Solo para <strong>Taxi/Remis</strong> y <strong>Apps (Uber, Didi, etc.)</strong>
+                  </p>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-white rounded-lg border shadow-sm">
+                    <h4 className="font-bold text-gray-800 mb-2">💊 Medicamentos y Atención</h4>
+                    <p className="text-2xl font-bold text-purple-600">Hasta $80,000</p>
+                    <p className="text-sm text-gray-500">Reintegro contra comprobantes</p>
+                  </div>
+                  <div className="p-4 bg-white rounded-lg border shadow-sm">
+                    <h4 className="font-bold text-gray-800 mb-2">🏥 Lesiones Mayores</h4>
+                    <p className="text-2xl font-bold text-purple-600">Hasta $200,000</p>
+                    <p className="text-sm text-gray-500">Fracturas, estudios, tratamientos</p>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-gray-50 rounded-lg border">
+                  <h4 className="font-bold text-gray-800 mb-3">⚙️ ¿Cómo funciona?</h4>
+                  <ol className="text-sm text-gray-600 space-y-2 list-decimal list-inside">
+                    <li>Ocurre un accidente durante el viaje</li>
+                    <li>El pasajero recibe atención médica</li>
+                    <li>Se presentan las facturas o comprobantes</li>
+                    <li>Se reintegra el gasto hasta el monto máximo</li>
+                  </ol>
+                </div>
+
+                <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                  <h4 className="font-bold text-amber-800 mb-2">⚠️ Importante</h4>
+                  <p className="text-sm text-amber-700">
+                    Es <strong>REINTEGRO</strong> contra comprobantes válidos, no pago automático.
+                    Proceso simple, transparente y respaldado por el fondo solidario.
+                  </p>
+                </div>
+
+                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                  <h4 className="font-bold text-green-800 mb-2">💰 Precio</h4>
+                  <p className="text-sm text-green-700">
+                    <strong>$11,000</strong> - Incluye RC + Cobertura Solidaria Pasajeros
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">
+                    📄 Incluye certificado para circular | ⚡ Activación en el día
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Técnicas de Venta */}
           <Card>
             <CardHeader className="bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-t-lg">
