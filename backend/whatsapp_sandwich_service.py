@@ -1384,6 +1384,12 @@ Para cerrar sesión: *cerrar sesión*"""
             order, response = await get_order_for_delivery(numero)
             return response
         
+        # LISTO command (delivery can also mark as ready)
+        listo_match = re.match(r'(?:LISTO|listo|Listo)\s+(\d+)', message.strip())
+        if listo_match:
+            numero = listo_match.group(1)
+            return await admin_order_ready(numero, phone_number)
+        
         # ENCAMINO command
         encamino_match = re.match(r'(?:ENCAMINO|encamino|Encamino|EN CAMINO|en camino)\s+(\d+)', message.strip())
         if encamino_match:
@@ -1397,26 +1403,28 @@ Para cerrar sesión: *cerrar sesión*"""
             return await delivery_mark_delivered(numero, phone_number)
         
         # Delivery greeting
-        message_lower = message.lower().strip()
+        logged_as = f" ({session.get('username')})" if session else ""
         if message_lower in ['hola', 'hi', 'hey', 'buenas']:
             # Show pending deliveries
             ready_orders = await db.sandwich_pedidos.find(
-                {"estado": {"$in": ["listo", "en_camino"]}, "tipo_entrega": "delivery"}
+                {"estado": {"$in": ["confirmado", "preparando", "listo", "en_camino"]}, "tipo_entrega": "delivery"}
             ).to_list(10)
             
             if ready_orders:
-                msg = "🛵 *¡Hola Delivery!*\n\n📦 *Pedidos listos:*\n\n"
+                msg = f"🛵 *¡Hola Delivery{logged_as}!*\n\n📦 *Pedidos activos:*\n\n"
                 for o in ready_orders:
-                    msg += f"• *#{o['numero_pedido']}* - {o['nombre']} - {o['estado'].upper()}\n"
+                    msg += f"• *#{o['numero_pedido']}* - {o.get('nombre', 'Sin nombre')} - {o['estado'].upper()}\n"
                 msg += "\nPara ver detalles: *PEDIDO #X*"
                 return msg
-            return "🛵 *¡Hola Delivery!*\n\nNo hay pedidos listos para entrega.\n\nPara ver un pedido: *PEDIDO #X*"
+            return f"🛵 *¡Hola Delivery{logged_as}!*\n\nNo hay pedidos activos para entrega.\n\nPara ver un pedido: *PEDIDO #X*"
         
         return """🛵 *Comandos Delivery:*
 
 • *PEDIDO #X* - Ver detalles del pedido
+• *LISTO X* - Marcar pedido como listo
 • *ENCAMINO X* - Marcar en camino
-• *ENTREGADO X* - Marcar entregado"""
+• *ENTREGADO X* - Marcar entregado
+• *cerrar sesión* - Salir"""
     
     # ============ CLIENT FLOW ============
     
