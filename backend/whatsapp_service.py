@@ -882,10 +882,11 @@ Ejemplo: RECHAZAR ABC123 No veo el pago"""
                 return "✅ No hay coberturas pendientes de pago"
         
         # If admin writes something else, don't treat as client - just acknowledge
-        if not confirm_match:
+        if not confirm_match and not rechazar_match:
             return f"""👋 Hola Admin. Comandos disponibles:
 
 • *CONFIRMAR [RECIBO]* - Confirmar pago
+• *RECHAZAR [RECIBO]* - Pago no llegó
 • *ESTADO* - Ver pendientes
 • *PAUSAR [NÚMERO]* - Atender manualmente
 • *REANUDAR [NÚMERO]* - Reactivar bot
