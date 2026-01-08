@@ -460,7 +460,7 @@ export default function AdminSandwich() {
                     <Input
                       value={config.nombre_negocio || ''}
                       onChange={(e) => setConfig({...config, nombre_negocio: e.target.value})}
-                      placeholder="Sandwichería"
+                      placeholder="Modo Cocina"
                     />
                   </div>
                   <div>
@@ -518,6 +518,15 @@ export default function AdminSandwich() {
                     />
                   </div>
                   <div>
+                    <Label>Zona Restringida (sin delivery)</Label>
+                    <Input
+                      value={config.zona_restringida || ''}
+                      onChange={(e) => setConfig({...config, zona_restringida: e.target.value})}
+                      placeholder="Valle Viejo"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">El bot informará que no hay delivery a esta zona</p>
+                  </div>
+                  <div>
                     <Label>Tiempo de Preparación</Label>
                     <Input
                       value={config.tiempo_preparacion || ''}
@@ -532,6 +541,15 @@ export default function AdminSandwich() {
                       onChange={(e) => setConfig({...config, admin_phone: e.target.value})}
                       placeholder="5491112345678"
                     />
+                  </div>
+                  <div>
+                    <Label>Números de Delivery (separados por coma)</Label>
+                    <Input
+                      value={(config.delivery_phones || []).join(', ')}
+                      onChange={(e) => setConfig({...config, delivery_phones: e.target.value.split(',').map(p => p.trim()).filter(p => p)})}
+                      placeholder="3834111111, 3834222222"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Los deliveries pueden consultar pedidos y marcar estados vía WhatsApp</p>
                   </div>
                   <Button onClick={saveConfig} className="bg-amber-500 hover:bg-amber-600">
                     💾 Guardar Configuración
