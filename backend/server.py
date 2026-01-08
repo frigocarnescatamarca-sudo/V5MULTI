@@ -122,6 +122,16 @@ class PremioCreate(BaseModel):
     monto_premio: float = Field(ge=0)
     activo: bool = True
 
+class PrecioVehiculo(BaseModel):
+    tipo: str
+    emoji: str = "🚗"
+    rc: int
+    completo: int
+    activo: bool = True
+
+class PreciosUpdate(BaseModel):
+    precios: List[PrecioVehiculo]
+
 class InsuranceResponse(BaseModel):
     id: str
     numero_recibo: str
