@@ -95,7 +95,7 @@ class TestAdminCommands:
     
     def test_admin_pausar_command(self):
         """Test PAUSAR command for human handover"""
-        test_client = f"TEST_{random.randint(1000000000, 9999999999)}"
+        test_client = f"{random.randint(1000000000, 9999999999)}"  # Must be digits only
         response = requests.post(
             f"{BASE_URL}/api/sandwich/whatsapp/message",
             json={"phone_number": ADMIN_PHONE, "message": f"PAUSAR {test_client}"}
@@ -108,7 +108,7 @@ class TestAdminCommands:
     
     def test_admin_reanudar_command(self):
         """Test REANUDAR command"""
-        test_client = f"TEST_{random.randint(1000000000, 9999999999)}"
+        test_client = f"{random.randint(1000000000, 9999999999)}"  # Must be digits only
         # First pause
         requests.post(
             f"{BASE_URL}/api/sandwich/whatsapp/message",
@@ -127,7 +127,7 @@ class TestAdminCommands:
     
     def test_admin_delivery_command(self):
         """Test DELIVERY command to add delivery person"""
-        new_delivery = f"TEST{random.randint(1000000, 9999999)}"
+        new_delivery = f"{random.randint(1000000000, 9999999999)}"  # Must be digits only
         response = requests.post(
             f"{BASE_URL}/api/sandwich/whatsapp/message",
             json={"phone_number": ADMIN_PHONE, "message": f"DELIVERY {new_delivery}"}
