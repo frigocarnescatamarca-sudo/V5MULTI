@@ -606,7 +606,17 @@ export default function WhatsAppBotPanel() {
                       className="font-mono"
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div>
+                    <Label className="text-xs text-gray-500">RC+Pasajeros ($)</Label>
+                    <Input 
+                      type="number"
+                      value={newTipoVehiculo.rc_pasajeros || ''}
+                      onChange={(e) => setNewTipoVehiculo({...newTipoVehiculo, rc_pasajeros: parseInt(e.target.value) || 0})}
+                      placeholder="0"
+                      className="font-mono"
+                    />
+                  </div>
+                  <div>
                     <Button 
                       onClick={addTipoVehiculo}
                       className="w-full bg-green-600 hover:bg-green-700"
