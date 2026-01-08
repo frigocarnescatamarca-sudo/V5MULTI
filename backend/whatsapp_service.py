@@ -207,8 +207,6 @@ async def get_inactive_conversations(minutes: int = 10):
 
 async def send_followup_messages():
     """Send followup messages to inactive conversations"""
-    from whatsapp_service import send_whatsapp_message, send_whatsapp_message_to_jid
-    
     inactive = await get_inactive_conversations(minutes=10)
     
     for conv in inactive:
