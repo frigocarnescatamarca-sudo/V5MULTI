@@ -1045,8 +1045,9 @@ export default function WhatsAppBotPanel() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left py-2 px-4">Vehículo</th>
-                      <th className="text-center py-2 px-4">RC (Resp. Civil)</th>
+                      <th className="text-center py-2 px-4">RC</th>
                       <th className="text-center py-2 px-4">Completo</th>
+                      <th className="text-center py-2 px-4">RC+Pasajeros</th>
                       <th className="text-center py-2 px-4">Estado</th>
                     </tr>
                   </thead>
@@ -1057,6 +1058,13 @@ export default function WhatsAppBotPanel() {
                         <td className="text-center py-2 px-4">${p.rc?.toLocaleString('es-AR')}</td>
                         <td className="text-center py-2 px-4">${p.completo?.toLocaleString('es-AR')}</td>
                         <td className="text-center py-2 px-4">
+                          {p.rc_pasajeros > 0 ? (
+                            <span className="text-purple-600 font-medium">${p.rc_pasajeros?.toLocaleString('es-AR')}</span>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="text-center py-2 px-4">
                           <span className={`px-2 py-1 rounded text-xs ${p.activo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                             {p.activo ? 'Activo' : 'Inactivo'}
                           </span>
@@ -1064,7 +1072,7 @@ export default function WhatsAppBotPanel() {
                       </tr>
                     )) : (
                       <tr>
-                        <td colSpan={4} className="text-center py-4 text-gray-500">
+                        <td colSpan={5} className="text-center py-4 text-gray-500">
                           No hay precios configurados. Ve a la pestaña "Precios" para agregarlos.
                         </td>
                       </tr>
