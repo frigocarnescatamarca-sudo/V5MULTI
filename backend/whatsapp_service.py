@@ -872,14 +872,26 @@ Ejemplo: RECHAZAR ABC123 No veo el pago"""
         if message_lower == 'estado':
             # Show pending coverages
             pending = await db.seguros.find({"estado": "pendiente_pago"}).to_list(10)
+            rechazados = await db.seguros.find({"estado": "pago_rechazado"}).to_list(10)
+            
+            msg = ""
+            
             if pending:
-                msg = "📊 *Coberturas pendientes de pago:*\n\n"
+                msg += "📊 *Coberturas pendientes de pago:*\n\n"
                 for p in pending:
                     msg += f"• *{p['numero_recibo']}* - {p['nombre']} - ${p['precio_final']:,}\n"
-                msg += f"\nPara confirmar: *CONFIRMAR [RECIBO]*"
-                return msg
-            else:
+                msg += f"\nPara confirmar: *CONFIRMAR [RECIBO]*\n"
+            
+            if rechazados:
+                msg += "\n⏳ *Coberturas con pago rechazado (esperando):*\n\n"
+                for r in rechazados:
+                    msg += f"• *{r['numero_recibo']}* - {r['nombre']} - ${r['precio_final']:,}\n"
+                msg += f"\nCuando llegue el pago: *CONFIRMAR [RECIBO]*"
+            
+            if not pending and not rechazados:
                 return "✅ No hay coberturas pendientes de pago"
+            
+            return msg
         
         # If admin writes something else, don't treat as client - just acknowledge
         if not confirm_match and not rechazar_match:
