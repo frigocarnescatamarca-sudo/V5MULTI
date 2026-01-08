@@ -38,10 +38,10 @@ DEFAULT_BOT_CONFIG = {
 ¿Querés cotizar una cobertura? Contame qué tipo de vehículo tenés.""",
     
     "precios": [
-        {"tipo": "Auto", "emoji": "🚗", "rc": 6000, "completo": 9000, "activo": True},
-        {"tipo": "Moto", "emoji": "🏍️", "rc": 3500, "completo": 5500, "activo": True},
-        {"tipo": "Taxi/Remis", "emoji": "🚕", "rc": 10000, "completo": 18000, "activo": True},
-        {"tipo": "App (Uber/Didi)", "emoji": "📱", "rc": 6000, "completo": 9000, "activo": True}
+        {"tipo": "Auto", "emoji": "🚗", "rc": 6000, "completo": 9000, "rc_pasajeros": 0, "activo": True},
+        {"tipo": "Moto", "emoji": "🏍️", "rc": 3500, "completo": 5500, "rc_pasajeros": 0, "activo": True},
+        {"tipo": "Taxi/Remis", "emoji": "🚕", "rc": 10000, "completo": 18000, "rc_pasajeros": 11000, "activo": True},
+        {"tipo": "App (Uber/Didi)", "emoji": "📱", "rc": 6000, "completo": 9000, "rc_pasajeros": 11000, "activo": True}
     ],
     
     "instrucciones_bot": """Sos el asistente de ventas de Estonia Cobertura Colaborativa. Tu objetivo es vender coberturas vehiculares y recopilar los datos necesarios para generar la póliza.
