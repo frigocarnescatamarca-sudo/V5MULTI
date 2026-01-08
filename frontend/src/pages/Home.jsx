@@ -79,6 +79,11 @@ export default function Home() {
             <p className="text-xl md:text-2xl text-[#D9F99D] mb-8" style={{ fontFamily: 'Inter, sans-serif' }}>
               Certificado inmediato para autos, Uber, taxis y motos
             </p>
+
+            {/* Frase de miedo controlado */}
+            <p className="text-white/80 text-lg mb-8">
+              ⚠️ Evitá problemas en controles viales. Circulá tranquilo desde hoy.
+            </p>
             
             {/* CTA Principal */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
