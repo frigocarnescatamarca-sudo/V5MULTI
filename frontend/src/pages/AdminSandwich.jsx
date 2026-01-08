@@ -426,9 +426,9 @@ export default function AdminSandwich() {
                     <h3 className="font-bold mb-2">👤 Funciones del Cliente</h3>
                     <ul className="text-sm space-y-1">
                       <li>📍 <strong>Compartir ubicación:</strong> El cliente puede enviar su ubicación para facilitar la entrega</li>
-                      <li>❓ <strong>Consultar estado:</strong> "¿Cómo va mi pedido?" - Se consulta al admin y se responde</li>
-                      <li>👤 <strong>Hablar con humano:</strong> "Quiero hablar con alguien" - Pausa el bot 2 horas</li>
-                      <li>❌ <strong>Cancelar pedido:</strong> "Cancelar" - Cancela el pedido activo</li>
+                      <li>❓ <strong>Consultar estado:</strong> &quot;¿Cómo va mi pedido?&quot; - Se consulta al admin y se responde</li>
+                      <li>👤 <strong>Hablar con humano:</strong> &quot;Quiero hablar con alguien&quot; - Pausa el bot 2 horas</li>
+                      <li>❌ <strong>Cancelar pedido:</strong> &quot;Cancelar&quot; - Cancela el pedido activo</li>
                     </ul>
                   </div>
 
