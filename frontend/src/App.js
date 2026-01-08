@@ -8,6 +8,8 @@ import AdminPanel from '@/pages/AdminPanel';
 import PanelAgente from '@/pages/PanelAgente';
 import Verificar from '@/pages/Verificar';
 import MisCoberturas from '@/pages/MisCoberturas';
+import Terminos from '@/pages/Terminos';
+import Privacidad from '@/pages/Privacidad';
 import { Toaster } from '@/components/ui/sonner';
 
 function App() {
@@ -23,6 +25,8 @@ function App() {
           <Route path="/agente" element={<PanelAgente />} />
           <Route path="/verificar/:numero_recibo" element={<Verificar />} />
           <Route path="/mis-coberturas" element={<MisCoberturas />} />
+          <Route path="/terminos" element={<Terminos />} />
+          <Route path="/privacidad" element={<Privacidad />} />
         </Routes>
       </BrowserRouter>
       <Toaster />
