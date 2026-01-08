@@ -690,15 +690,7 @@ async def answer_status_query(numero_pedido: str, response: str, phone_number: s
 # ============ ORDER MANAGEMENT ============
 
 async def notify_sandwich_admin(order_data: dict):
-    """Notify admin about new order"""
-    config = await get_sandwich_config()
-    admin_phone = config.get('admin_phone', '')
-    admin_lid = config.get('admin_lid', '')
-    
-    if not admin_phone and not admin_lid:
-        print("[Sandwich Bot] No admin configured for notifications")
-        return
-    
+    """Notify ALL admins about new order"""
     location_info = ""
     if order_data.get('has_location'):
         location_info = "\n📍 *Ubicación compartida:* ✅ Disponible"
@@ -728,14 +720,9 @@ async def notify_sandwich_admin(order_data: dict):
 Para confirmar: *CONFIRMAR {order_data['numero_pedido']}*
 Para rechazar: *RECHAZAR {order_data['numero_pedido']}*"""
     
-    try:
-        if admin_lid:
-            await send_sandwich_message_to_jid(f"{admin_lid}@lid", notification)
-        elif admin_phone:
-            await send_sandwich_message(admin_phone, notification)
-        print(f"[Sandwich Bot] Notified admin about order {order_data['numero_pedido']}")
-    except Exception as e:
-        print(f"[Sandwich Bot] Error notifying admin: {e}")
+    # Notify ALL active admins
+    notified = await notify_all_admins(notification)
+    print(f"[Sandwich Bot] Notified about order {order_data['numero_pedido']}: {notified}")
 
 
 async def get_sandwich_conversation_history(phone_number: str, limit: int = 10):
