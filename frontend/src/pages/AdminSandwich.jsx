@@ -113,10 +113,11 @@ export default function AdminSandwich() {
       confirmado: 'bg-blue-100 text-blue-800',
       preparando: 'bg-purple-100 text-purple-800',
       listo: 'bg-green-100 text-green-800',
+      en_camino: 'bg-cyan-100 text-cyan-800',
       entregado: 'bg-gray-100 text-gray-800',
       cancelado: 'bg-red-100 text-red-800'
     };
-    return <Badge className={colors[estado] || 'bg-gray-100'}>{estado?.toUpperCase()}</Badge>;
+    return <Badge className={colors[estado] || 'bg-gray-100'}>{estado?.toUpperCase().replace('_', ' ')}</Badge>;
   };
 
   if (loading) {
