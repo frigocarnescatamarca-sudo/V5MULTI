@@ -789,7 +789,15 @@ Ejemplo: CONFIRMAR ABC123"""
     # Build system prompt with instructions
     instrucciones = config.get("instrucciones_bot", DEFAULT_BOT_CONFIG["instrucciones_bot"])
     datos_bancarios = config.get("datos_bancarios", DEFAULT_BOT_CONFIG["datos_bancarios"])
-    system_prompt = instrucciones.replace("{datos_bancarios}", datos_bancarios)
+    
+    # Build dynamic price table from config
+    precios = config.get("precios", DEFAULT_BOT_CONFIG["precios"])
+    tabla_precios = "| Vehículo     | RC      | Completo |\n|--------------|---------|----------|\n"
+    for p in precios:
+        if p.get("activo", True):
+            tabla_precios += f"| {p['tipo']:<12} | ${p['rc']:,}  | ${p['completo']:,}   |\n"
+    
+    system_prompt = instrucciones.replace("{datos_bancarios}", datos_bancarios).replace("{tabla_precios}", tabla_precios)
     
     # Add client memory context to system prompt
     if client_memory:
