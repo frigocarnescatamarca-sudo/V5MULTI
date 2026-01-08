@@ -427,4 +427,22 @@ app.listen(PORT, () => {
         console.log('[Sandwich] Found existing auth, attempting to connect...');
         initWhatsApp();
     }
+    
+    // Setup order reminder check every 5 minutes
+    const REMINDER_INTERVAL = 5 * 60 * 1000; // 5 minutes
+    setInterval(async () => {
+        try {
+            if (sock && sock.user) {
+                console.log('[Sandwich] Checking for pending orders needing reminders...');
+                const response = await axios.post(`${FASTAPI_URL}/api/sandwich/send-reminders`, {}, { timeout: 30000 });
+                if (response.data.reminders_sent > 0) {
+                    console.log(`[Sandwich] Sent ${response.data.reminders_sent} order reminders`);
+                }
+            }
+        } catch (error) {
+            console.error('[Sandwich] Error sending reminders:', error.message);
+        }
+    }, REMINDER_INTERVAL);
+    
+    console.log('[Sandwich] Order reminder check enabled (every 5 minutes)');
 });
