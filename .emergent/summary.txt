@@ -1,184 +1,171 @@
 <analysis>**original_problem_statement:**
-The user initially requested a web application, Estonia Cobertura Colaborativa, to generate and manage temporary vehicle coverage policies. The scope expanded significantly to include:
-1.  **Admin/Agent Structure:** Admin management of agents (passwords, balances) and visibility into which agent created which policy.
-2.  **Accounts Receivable:** A system for agents to accrue debt and for admins to register payments.
-3.  **WhatsApp AI Bot:** A complete, AI-driven sales and support bot using WhatsApp. The bot handles the full sales funnel, creates coverages, and has a complex payment confirmation flow requiring admin approval via a separate WhatsApp chat.
-4.  **V2 Enhancements:** A new set of features including a Contact via WhatsApp button on the homepage, the ability for clients to query their coverages by DNI (both via the bot and a new web portal).
+The user's initial request was for a web application, Estonia Cobertura Colaborativa, to manage vehicle coverage. The project has since expanded dramatically to include:
+1.  **Admin/Agent/Finance System:** A full-stack application for admins to manage agents, policies, and finances.
+2.  **WhatsApp AI Bot (V1):** A complete, AI-driven sales and support bot using WhatsApp, featuring a complex sales funnel and an admin-via-WhatsApp payment approval flow.
+3.  **V2 Features:** Addition of a Contact via WhatsApp button on the homepage, a DNI-based coverage query for clients (both via bot and a new web portal).
+4.  **Bot Intelligence & Control:** Implementation of client memory, inactivity follow-ups, sales optimization techniques in the prompt, and a human-handover flow allowing admins to pause/resume the bot for specific chats.
+5.  **Dynamic Pricing:** A full UI in the admin panel to dynamically edit vehicle types, prices, and activate/deactivate them, which the bot uses in real-time.
+6.  **New Product:** A new Solidarity Coverage for Passengers plan with its own pricing, logic, and explanations.
+7.  **CRO & Legal:** A complete conversion-rate-optimized overhaul of the landing page, plus the creation of Terms and Conditions and Privacy Policy pages.
 
 **User's preferred language**: español
 
 **what currently exists?**
-A feature-rich, stable full-stack application.
--   **Backend (FastAPI):** Contains all original API endpoints, a comprehensive agent accounting system, and the complete Python-based logic for the WhatsApp AI bot. This includes AI integration, conversation management, and database interactions.
+A highly advanced and feature-rich full-stack application.
+-   **Backend (FastAPI):** Contains all original API endpoints, plus new logic for the DNI query, client memory, inactivity follow-ups, human handover commands (/), and dynamic pricing. The bot's system prompt is now dynamically constructed with sales techniques and a real-time price list from the database.
 -   **Frontend (React):**
-    -   **Admin Panel:** A dashboard to manage coverages, agents, and agent finances. It features a sophisticated, real-time WhatsApp Bot panel that mimics the WhatsApp Web UI, allowing for QR code connection, live chat viewing, and bot configuration (prompts, bank details, admin's contact number).
-    -   **Agent Panel:** A functional dashboard for agents to create policies and track their financial status.
-    -   **Homepage:** A basic landing page.
--   **WhatsApp Service (Node.js):** A separate microservice running on port 3002 that uses the  library to maintain a persistent connection to WhatsApp. It forwards incoming messages to the FastAPI backend and sends outgoing messages.
+    -   **Admin Panel:** The  has been significantly enhanced with three new tabs:
+        1.  **Precios:** A comprehensive UI to add, edit, activate/deactivate, and delete vehicle types and their prices (RC, Completo, and the new RC+Pasajeros).
+        2.  **Guía:** An auto-updating documentation page detailing all admin commands, bot features, and current prices.
+        3.  **Configuración:** Updated to include a field for the admin's WhatsApp LID to fix recognition issues.
+    -   **Homepage:** Completely rewritten and optimized for conversion (CRO), with new copy, structure, and a dedicated section for the new passenger coverage.
+    -   **New Pages:**  (DNI query portal),  (Terms & Conditions), and  (Privacy Policy).
+-   **WhatsApp Service (Node.js):** The -based microservice remains, forwarding messages to the enhanced FastAPI backend.
 
 **Last working item**:
--   **Last item agent was working:** The agent began implementing the V2 features. Specifically, it added a new  field to the backend database model () to store a configurable sales contact number and was about to modify the homepage () to use this new configuration.
--   **Status:** IN PROGRESS
+-   **Last item agent was working:** Implementing four final Conversion Rate Optimization (CRO) tweaks on the newly designed homepage () as requested by the user.
+    -   1. Add a controlled fear phrase. (DONE)
+    -   2. Clarify passenger coverage is per trip. (DONE)
+    -   3. Make the passenger coverage CTA more aggressive. (DONE)
+    -   4. Add social proof. (DONE)
+-   **Status:** IN PROGRESS (The agent implemented the changes but was in the middle of verifying them via screenshot when the session ended).
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** both (This feature set involves frontend UI changes on the homepage and a new web portal, as well as new backend endpoints and bot logic).
+-   **Which testing method agent to use?** Frontend testing agent (to verify the final UI tweaks on the homepage).
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1:** Global rebranding is incomplete (P2)
+-   **Issue 1:** Global rebranding is incomplete (P2).
 
 **Issues Detail:**
 -   **Issue 1:**
     -   **Description:** A project-wide, case-insensitive replacement of seguro/seguros with cobertura/coberturas is still pending. This affects variable names, function names, and user-facing text. The user has consistently deferred this task in favor of new features.
     -   **Attempted fixes:** None.
-    -   **Next debug checklist:** Perform a global search and replace, then thoroughly test both frontend and backend to ensure no logic was broken.
-    -   **Why fix this issue and what will be achieved with the fix?** To align the application's terminology with the user's final branding.
+    -   **Next debug checklist:** Perform a global search and replace across the entire  directory. Then, conduct thorough testing on both the frontend and backend to ensure no logic was broken by the renaming. Pay special attention to API payloads and database field names.
+    -   **Why fix this issue and what will be achieved with the fix?** To align the application's internal and external terminology with the user's final branding, ensuring consistency.
     -   **Status:** NOT STARTED
     -   **Is recurring issue?** Y
     -   **Should Test frontend/backend/both after fix?** Both.
     -   **Blocked on other issue:** None.
 
 **In progress Task List**:
--   **Task 1:** Implement V2 Features (P0)
+-   **Task 1:** Verify Final CRO Tweaks (P0)
 
 **Task Detail:**
 -   **Task 1:**
-    -   **Where to resume:** This is a multi-part task.
-        1.  **Homepage Button:**
-            -   **Backend:** Add the  field to the  endpoint in  and the  Pydantic model.
-            -   **Frontend:** Add an input for Número de WhatsApp para ventas in . In , fetch this number from the config and create a Contratar button that links to .
-        2.  **Bot DNI Query:** In , modify  to add logic that detects if a user's message is a DNI. If so, query the  collection and return a formatted list of all their coverages.
-        3.  **Web DNI Query Portal:**
-            -   **Backend:** Create a new endpoint in , e.g., , to fetch all coverages for a given DNI.
-            -   **Frontend:** Create a new page  with a form to enter a DNI. On submit, call the new endpoint and display the results. Add a route for this page in .
-    -   **What will be achieved with this?** The V2 features will be complete, providing new sales and customer self-service channels.
+    -   **Where to resume:** The agent has already applied the final four CRO edits to . The next step is to take a final set of screenshots of the homepage to visually confirm that all four changes are correctly implemented and look good:
+        1.  The fear phrase ().
+        2.  The social proof block ().
+        3.  The updated passenger coverage CTA ().
+        4.  The Aplica durante viajes activos clarification.
+    -   **What will be achieved with this?** Completion of all user-requested landing page enhancements.
     -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** Both.
+    -   **Should Test frontend/backend/both after fix?** Frontend.
     -   **Blocked on something:** None.
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **P1: Homepage Editor:** Implement a system in the admin panel to allow dynamic editing of the homepage content.
+    -   **P1: User verification:** After the CRO tweaks are verified, the agent should summarize all the massive changes from this session and ask the user to test the full flow, especially:
+        -   Editing prices in the admin panel and seeing if the bot uses them.
+        -   The human handover flow (/).
+        -   The new passenger coverage sales flow.
+        -   The inactivity follow-up.
+
+-   **Future Tasks:**
+    -   **P2: Adapt for a new business:** The user mentioned wanting to use this project as a prototype for a sandwich shop. This would be a significant future task involving forking the project and adapting the bot's logic and UI for a completely different business domain.
 
 **Completed work in this session**
--   **WhatsApp AI Bot (Fully Implemented & User-Verified):**
-    -   **Architecture:** Successfully deployed a hybrid architecture using a Node.js/Baileys microservice for the connection and a FastAPI backend for the AI logic.
-    -   **Admin Panel UI:** Created a comprehensive and visually appealing WhatsApp management panel () with QR connection, a real-time chat UI mimicking WhatsApp Web, and a full configuration tab.
-    -   **Admin-via-WhatsApp Flow:** Implemented a sophisticated workflow where the bot notifies the admin of a pending payment, and the admin can approve it by replying CONFIRMAR [RECIBO] from their own WhatsApp. The bot correctly identifies the admin using their unique WhatsApp LID.
-    -   **Sales Funnel:** The bot now handles the entire sales flow: greeting, data collection, quoting fixed prices, creating a pending coverage in the DB, providing payment instructions, and awaiting admin confirmation.
-    -   **Automated Delivery:** Upon admin confirmation, the bot automatically sends the client their PDF/Image proofs of coverage and a link to the verification page.
-    -   **Human-like Delay:** Added a randomized delay to bot responses to make it feel less robotic.
--   **Numerous Bug Fixes:**
-    -   Resolved multiple issues with phone number formats (standard vs. WhatsApp's internal ), ensuring the bot can reply to clients and correctly identify the admin.
-    -   Fixed a critical bug in the  library usage that was preventing the  from being passed to the LLM.
-    -   Corrected a bug preventing the admin's phone number from being saved in the configuration panel.
-    -   Fixed a crash in the Node.js service by adding the correct logger ().
+-   **V2 Features Fully Implemented:**
+    -   Homepage Contratar button linked to a configurable sales WhatsApp number.
+    -   Bot logic to query coverages by DNI.
+    -   Web portal () for clients to query coverages by DNI.
+-   **Critical Bug Fixes:**
+    -   **Admin Recognition:** Solved the critical bug where the admin wasn't recognized by adding an  field to the configuration and logic to capture and use it.
+    -   **Receipt Confirmation:** Fixed a crash when confirming a receipt for a coverage created without a .
+    -   **Bot Conversation Flow:** Corrected logic that confused a DNI for contracting with a DNI for querying, and adjusted the prompt to request all data at once.
+-   **Major Bot Enhancements:**
+    -   **Sales Prompt:** Integrated a sophisticated sales optimization prompt to improve closing rates.
+    -   **Human Handover:** Implemented a full flow for clients to request a human, which notifies the admin and allows the admin to  and  the bot for specific chats.
+    -   **Client Memory:** The bot now stores client data (name, DNI, etc.) and remembers them in future conversations.
+    -   **Inactivity Follow-up:** A background process now checks for inactive chats and sends a polite follow-up/goodbye message after 10 minutes.
+-   **Dynamic Pricing System (Major Feature):**
+    -   Created a Precios tab in the admin panel to allow dynamic editing, creation, and activation/deactivation of vehicle types and their prices.
+    -   The bot now reads these prices directly from the database to construct its offers.
+-   **New Product: Cobertura Solidaria Pasajeros:**
+    -   Added a new coverage tier () for Taxis and Apps.
+    -   Implemented backend logic, bot instructions, and admin panel UI to manage and sell this new product.
+-   **Admin Panel Documentation:**
+    -   Added a Guía tab with comprehensive, auto-updating documentation on all bot commands, features, and prices.
+-   **CRO & Legal Overhaul (Major Feature):**
+    -   Completely rewrote  with a conversion-optimized design and copy.
+    -   Created new pages for Términos y Condiciones () and Política de Privacidad ().
+    -   Added legal links and a disclaimer to the site footer.
+    -   Applied final CRO tweaks (fear phrase, social proof, aggressive CTA).
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Hybrid Architecture:** A Node.js microservice for real-time WebSocket communication with WhatsApp, coupled with a Python/FastAPI backend for business and AI logic.
--   **WhatsApp Integration (Unofficial):** Using the  library, which requires handling session persistence and WhatsApp-specific identifiers (JIDs, LIDs).
--   **Admin by LID:** The system identifies the administrator using their unique WhatsApp Business LID (e.g., ) for the payment confirmation workflow.
--   **AI-driven Actions:** The bot's system prompt is engineered to have the LLM output specific commands (e.g., ) which are parsed by the backend to trigger database actions.
+-   **Hybrid Architecture:** Node.js service for WhatsApp connection + FastAPI backend for AI/business logic.
+-   **Dynamic Prompt Engineering:** The bot's system prompt is assembled on the fly, combining static instructions, user-editable sales techniques, and a dynamically generated price table from the database.
+-   **Stateful Bot Conversation:** The bot now maintains state through a  collection (for long-term memory) and a  list in the config (for human handover).
+-   **Dynamic Frontend Configuration:** The admin panel is now a powerful configuration hub, controlling not just bot behavior but also the core product offering (prices, vehicle types).
+-   **Conversion Rate Optimization (CRO):** The frontend work shifted from pure functionality to being heavily focused on sales psychology and user flow optimization.
 
 **key DB schema**
--   **coberturas:** Added  and .
--   **whatsapp_config:** New collection storing .
--   **whatsapp_messages:** New collection for storing all chat histories.
--   **whatsapp_jid_mapping:** New collection to map phone numbers to their corresponding WhatsApp JIDs for reliable message delivery.
+-   **whatsapp_config:** Heavily modified. Now stores , a  list, and a  array of objects: .
+-   **whatsapp_clients:** A new collection to store client memory: .
 
 **changes in tech stack**
--   **Added Node.js Service:** Introduced a new stack component with , npm <command>
-
-Usage:
-
-npm install        install all the dependencies in your project
-npm install <foo>  add the <foo> dependency to your project
-npm test           run this project's tests
-npm run <foo>      run the script named <foo>
-npm <command> -h   quick help on <command>
-npm -l             display usage info for all commands
-npm help <term>    search for help on <term>
-npm help npm       more involved overview
-
-All commands:
-
-    access, adduser, audit, bugs, cache, ci, completion,
-    config, dedupe, deprecate, diff, dist-tag, docs, doctor,
-    edit, exec, explain, explore, find-dupes, fund, get, help,
-    help-search, hook, init, install, install-ci-test,
-    install-test, link, ll, login, logout, ls, org, outdated,
-    owner, pack, ping, pkg, prefix, profile, prune, publish,
-    query, rebuild, repo, restart, root, run-script, sbom,
-    search, set, shrinkwrap, star, stars, start, stop, team,
-    test, token, uninstall, unpublish, unstar, update, version,
-    view, whoami
-
-Specify configs in the ini-formatted file:
-    /root/.npmrc
-or on the command line via: npm <command> --key=value
-
-More configuration info: npm help config
-Configuration fields: npm help 7 config
-
-npm@10.8.2 /usr/lib/node_modules/npm, , , , .
--   **Backend:** Added .
+-   No changes to the core stack, but significant evolution in application logic and complexity.
 
 **All files of reference**
--   : The heart of the bot's Python logic.
--   : Main server file, integrates the bot service.
--   : The entire UI for bot management.
--   : The Node.js service managing the WhatsApp connection.
--   : Supervisor config for the new Node.js service.
-
-**Areas that need refactoring**:
--   The JID/LID handling logic is functional but complex and spread across the Node.js and Python services. It's a potential point of failure if WhatsApp changes its identifier formats.
--    remains monolithic, although the new bot logic was correctly modularized into .
-
-**key api endpoints**
--   : Internal endpoint called by the Node.js service to pass incoming messages to the Python backend.
--   : A RESTful interface for the frontend to manage the bot (get status, connect, get/update config, view conversations).
--    &  (in Node.js service): Endpoints called by the Python backend to send messages via WhatsApp.
+-   **/app/frontend/src/pages/Home.jsx**: Completely rewritten for CRO. This is the new landing page.
+-   **/app/frontend/src/components/WhatsAppBotPanel.jsx**: The main hub for the new admin features (Precios, Guía tabs).
+-   **/app/backend/whatsapp_service.py**: The heart of all new bot logic (memory, pricing, handover, sales prompt).
+-   **/app/backend/server.py**: Contains the new API endpoints supporting the dynamic features.
+-   **/app/frontend/src/pages/Terminos.jsx**: New legal page.
+-   **/app/frontend/src/pages/Privacidad.jsx**: New legal page.
 
 **Critical Info for New Agent**
--   **V2 Plan is the Priority:** The immediate task is to implement the three V2 features agreed upon with the user (Homepage button, DNI query in bot, DNI web portal).
--   **Two-Service Architecture:** Remember that the bot is composed of two services. The  service (Node.js) handles the connection, while the  service (Python) handles the logic. Both may need changes and restarts (whatsapp: stopped
-whatsapp: started / backend: stopped
-backend: started).
--   **Admin Identification:** The admin is identified by their WhatsApp  (a long number, not a standard phone number) stored in the configuration. This is crucial for the payment confirmation flow. Do not change it to a standard phone number without testing, as it will likely break the admin recognition logic.
+-   **Pricing is Dynamic:** Do not hardcode prices anywhere. All pricing is managed from the Precios tab in the admin panel and stored in the  collection in MongoDB. The bot reads this config in real-time.
+-   **Bot Prompt is Complex:** The bot's  is dynamically built in  in . It combines multiple sources: instructions from the DB, sales techniques, client memory, and the dynamic price table.
+-   **Admin Commands:** The admin has powerful commands sent via WhatsApp: , , , , .
+-   **User Focus is on Sales:** The user's recent requests are all geared towards increasing sales and conversion. Any new suggestions should align with this goal.
+
+**documents and test reports created in this job**
+-    (Updated during V2 testing)
 
 **Last 10 User Messages and any pending HUMAN messages**
-10. **Request:** User is impressed with the working bot and asks to start V2: edit the homepage to add a contact us button that goes to a configurable WhatsApp number.
-9. **Request:** As part of V2, user wants clients to be able to query their coverage status by sending their DNI to the bot.
-8. **Request:** Also part of V2, user wants a public web page where anyone can enter a DNI and see all active coverages associated with it.
-7. **Confirmation:** User agrees this plan constitutes a stable V2.
-6. **Clarification:** User confirms the homepage WhatsApp button should have a pre-filled message.
-5. **Clarification:** User confirms the web DNI query page does not need extra authentication.
-4. **Bug Report:** User notes that after connecting their real WhatsApp, the chat conversations are not appearing in the admin panel.
-3. **Bug Report:** User reports that the admin number for payment confirmations is not saving.
-2. **Feedback:** User wants the chat UI to look like the real WhatsApp, not show raw identifiers.
-1. **Confirmation:** User confirms that the final implementation of the entire WhatsApp bot, including the admin confirmation flow, works perfectly.
+10. **Request:** Implement a Solidarity Coverage for Passengers product with specific pricing and rules. (Completed)
+9.  **Approval:** User approves the plan for the passenger coverage. (Completed)
+8.  **Request:** User provides a detailed, multi-part prompt for a complete CRO overhaul of the landing page and the creation of legal pages (Terms & Privacy). (Completed)
+7.  **Approval:** Agent confirms understanding and user approves implementation. (Completed)
+6.  **Request:** User provides four final, specific CRO tweaks for the new landing page to sell more. (In Progress)
+5.  **Confirmation:** Agent starts implementing the final tweaks. (In Progress)
+4.  **Query:** User asks if the new dynamic pricing will conflict with the editable instructions box in the admin panel. (Resolved)
+3.  **Confirmation:** Agent explains the fix (always injecting prices at the end of the prompt) and user is satisfied. (Resolved)
+2.  **Request:** User asks to add passenger accident coverage. (Completed)
+1.  **Approval:** User approves the plan to implement passenger coverage. (Completed)
 
 **Project Health Check:**
--   **Broken:** None. The application is stable and the main feature (WhatsApp Bot) is user-verified.
--   **Mocked:** A  endpoint exists for development and testing but is not part of the production flow.
+-   **Broken:** None
+-   **Mocked:** The  endpoint still exists for development.
 
 **3rd Party Integrations**
 -   **MercadoPago:** For payment processing.
--   **OpenAI GPT-4o:** Powers the conversational AI for the WhatsApp bot. Uses the Emergent LLM Key.
--   **Baileys (Node.js library):** An unofficial API for connecting to WhatsApp Web.
+-   **OpenAI GPT-4o:** Powers the conversational AI. Uses Emergent LLM Key.
+-   **Baileys (Node.js library):** Unofficial API for WhatsApp Web connection.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES, for backend API endpoints.
+-   **Testing agent used after significant changes:** YES, used for the initial V2 feature completion.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:**  was updated for the bot testing.
--   **Known regressions:** None. The agent successfully fixed all reported bugs during the session.
+-   **Test files created:** None.  was updated.
+-   **Known regressions:** None.
 
 **Credentials to test flow:**
--   **Admin:** Login at . Credentials are  / .
--   **Agent:** Login at . An agent exists with email  and password .
--   **WhatsApp Admin:** The user's own WhatsApp account. The identifier (LID) is stored in the bot's configuration and is required for the payment approval flow to work.
+-   **Admin:** ,  / 
+-   **Agent:** ,  / 
+-   **WhatsApp Admin:** Requires configuring the user's personal WhatsApp LID in the bot's configuration panel for the admin commands to work.
 
 **What agent forgot to execute**
--   The agent has successfully addressed all user requests and bug reports from the session. The only intentionally deferred task from previous sessions is the global rebranding of seguro to cobertura.</analysis>
+-   The agent has been very thorough. The only deferred item is the global rebranding of seguro to cobertura, which was a conscious decision based on user priorities.</analysis>

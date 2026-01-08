@@ -462,7 +462,7 @@ No encontré coberturas registradas para el DNI *{dni_clean}*.
 Encontré *{len(coberturas)}* cobertura(s):
 
 """
-        backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://autocare-12.preview.emergentagent.com')
+        backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://estonia-cover.preview.emergentagent.com')
         
         for i, cob in enumerate(coberturas, 1):
             estado = cob.get('estado', 'desconocido')
@@ -540,7 +540,7 @@ async def admin_confirm_payment(recibo: str, admin_phone: str):
         # Get updated coverage
         coverage = await db.seguros.find_one({"_id": coverage['_id']})
         
-        backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://autocare-12.preview.emergentagent.com')
+        backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://estonia-cover.preview.emergentagent.com')
         
         # Try to send confirmation to client if we have contact info
         client_notified = False
@@ -970,7 +970,7 @@ async def process_bot_commands(phone_number: str, ai_response: str):
                 actions_taken.append('coverage_created')
                 
                 # Get backend URL for links
-                backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://autocare-12.preview.emergentagent.com')
+                backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://estonia-cover.preview.emergentagent.com')
                 
                 # Replace the command with success message
                 success_msg = f"""✅ *¡COBERTURA CREADA!*
@@ -1061,7 +1061,7 @@ Si tenés alguna duda, podés escribirnos."""
                     else:
                         # No admin number configured - auto confirm (fallback)
                         await mark_coverage_paid(coverage_id)
-                        backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://autocare-12.preview.emergentagent.com')
+                        backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://estonia-cover.preview.emergentagent.com')
                         
                         success_msg = f"""✅ *¡PAGO CONFIRMADO!*
 
