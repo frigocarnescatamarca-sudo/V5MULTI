@@ -517,6 +517,16 @@ export default function WhatsAppBotPanel() {
                           className="font-mono"
                         />
                       </div>
+                      <div>
+                        <Label className="text-xs text-gray-500">RC+Pasajeros ($)</Label>
+                        <Input 
+                          type="number"
+                          value={precio.rc_pasajeros || 0}
+                          onChange={(e) => updatePrecio(index, 'rc_pasajeros', e.target.value)}
+                          className="font-mono"
+                          placeholder="0 = No aplica"
+                        />
+                      </div>
                       <div className="flex items-center gap-2">
                         <Switch 
                           checked={precio.activo}
@@ -531,7 +541,7 @@ export default function WhatsAppBotPanel() {
                           onClick={() => removeTipoVehiculo(index)}
                           className="text-red-500 hover:text-red-700 hover:bg-red-50"
                         >
-                          🗑️ Eliminar
+                          🗑️
                         </Button>
                       </div>
                     </div>
@@ -539,10 +549,25 @@ export default function WhatsAppBotPanel() {
                 ))}
               </div>
 
+              {/* Info sobre cobertura pasajeros */}
+              <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                <h4 className="font-semibold text-purple-800 mb-2">🩺 Cobertura Solidaria Pasajeros</h4>
+                <p className="text-sm text-purple-700 mb-2">
+                  La columna "RC+Pasajeros" es para Taxi/Remis y Apps. Incluye:
+                </p>
+                <ul className="text-sm text-purple-600 list-disc list-inside space-y-1">
+                  <li>Medicamentos y atención médica: reintegro hasta $80,000</li>
+                  <li>Lesiones mayores (fracturas, estudios): reintegro hasta $200,000</li>
+                </ul>
+                <p className="text-xs text-purple-500 mt-2">
+                  💡 Dejá en 0 para vehículos que no aplican (Auto, Moto)
+                </p>
+              </div>
+
               {/* Agregar nuevo tipo */}
               <div className="p-4 bg-green-50 rounded-lg border-2 border-dashed border-green-300">
                 <h4 className="font-semibold text-green-800 mb-4">➕ Agregar Nuevo Tipo de Vehículo</h4>
-                <div className="grid grid-cols-6 gap-4 items-end">
+                <div className="grid grid-cols-7 gap-4 items-end">
                   <div className="col-span-2">
                     <Label className="text-xs text-gray-500">Emoji y Nombre</Label>
                     <div className="flex items-center gap-2">
