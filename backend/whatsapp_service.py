@@ -860,12 +860,14 @@ Te reconozco como administrador.
 
 📋 *Comandos disponibles:*
 • *CONFIRMAR [RECIBO]* - Confirma un pago
+• *RECHAZAR [RECIBO]* - Pago no llegó (notifica al cliente)
 • *ESTADO* - Ver coberturas pendientes
 • *PAUSAR [NÚMERO]* - Pausar bot para atender manualmente
 • *REANUDAR [NÚMERO]* - Reactivar bot para un cliente
 • *PAUSADOS* - Ver chats pausados
 
-Ejemplo: CONFIRMAR ABC123"""
+Ejemplo: CONFIRMAR ABC123
+Ejemplo: RECHAZAR ABC123 No veo el pago"""
         
         if message_lower == 'estado':
             # Show pending coverages
