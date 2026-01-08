@@ -259,6 +259,241 @@ async def format_menu_for_bot():
     return formatted
 
 
+# ============ USER MANAGEMENT SYSTEM ============
+
+async def create_bot_user(username: str, password: str, role: str, created_by: str):
+    """Create a new bot user (admin or delivery)"""
+    existing = await db.sandwich_bot_users.find_one({"username": username.lower()})
+    if existing:
+        return None, f"El usuario '{username}' ya existe"
+    
+    user_doc = {
+        "username": username.lower(),
+        "password": password,  # In production, hash this
+        "role": role,  # "admin" or "delivery"
+        "activo": True,
+        "created_by": created_by,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.sandwich_bot_users.insert_one(user_doc)
+    return user_doc, f"✅ Usuario *{username}* creado como *{role.upper()}*"
+
+
+async def delete_bot_user(username: str):
+    """Delete a bot user and close their sessions"""
+    user = await db.sandwich_bot_users.find_one({"username": username.lower()})
+    if not user:
+        return False, f"❌ Usuario '{username}' no encontrado"
+    
+    # Close all sessions for this user
+    await db.sandwich_bot_sessions.delete_many({"username": username.lower()})
+    
+    # Delete user
+    await db.sandwich_bot_users.delete_one({"username": username.lower()})
+    return True, f"✅ Usuario *{username}* eliminado"
+
+
+async def get_all_bot_users():
+    """Get all bot users"""
+    users = await db.sandwich_bot_users.find({}, {"_id": 0, "password": 0}).to_list(100)
+    return users
+
+
+async def authenticate_user(username: str, password: str):
+    """Authenticate a user by username and password"""
+    user = await db.sandwich_bot_users.find_one({
+        "username": username.lower(),
+        "password": password,
+        "activo": True
+    })
+    return user
+
+
+async def create_session(phone_number: str, username: str, role: str):
+    """Create a login session for a phone number"""
+    await db.sandwich_bot_sessions.update_one(
+        {"phone_number": phone_number},
+        {"$set": {
+            "phone_number": phone_number,
+            "username": username.lower(),
+            "role": role,
+            "logged_in_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+
+
+async def close_session(phone_number: str):
+    """Close session for a phone number"""
+    result = await db.sandwich_bot_sessions.delete_one({"phone_number": phone_number})
+    return result.deleted_count > 0
+
+
+async def close_session_by_username(username: str):
+    """Close all sessions for a username (admin kicks user)"""
+    result = await db.sandwich_bot_sessions.delete_many({"username": username.lower()})
+    return result.deleted_count
+
+
+async def get_session(phone_number: str):
+    """Get active session for a phone number"""
+    session = await db.sandwich_bot_sessions.find_one({"phone_number": phone_number})
+    return session
+
+
+async def get_active_sessions_by_role(role: str):
+    """Get all active sessions for a role (admin or delivery)"""
+    sessions = await db.sandwich_bot_sessions.find({"role": role}).to_list(100)
+    return sessions
+
+
+async def is_master_admin(phone_number: str):
+    """Check if phone is the master admin (from config)"""
+    config = await get_sandwich_config()
+    admin_phone = config.get('admin_phone', '')
+    admin_lid = config.get('admin_lid', '')
+    
+    phone_digits = ''.join(filter(str.isdigit, str(phone_number)))[-10:]
+    
+    if admin_lid:
+        lid_digits = ''.join(filter(str.isdigit, str(admin_lid)))[-10:]
+        if phone_digits == lid_digits or phone_digits.endswith(lid_digits) or lid_digits.endswith(phone_digits):
+            return True
+    
+    if admin_phone:
+        admin_digits = ''.join(filter(str.isdigit, str(admin_phone)))[-10:]
+        if phone_digits == admin_digits or phone_digits.endswith(admin_digits) or admin_digits.endswith(phone_digits):
+            return True
+    
+    return False
+
+
+async def get_user_role(phone_number: str):
+    """Get the role of a phone number (master_admin, admin, delivery, or None)"""
+    # Check if master admin
+    if await is_master_admin(phone_number):
+        return "master_admin"
+    
+    # Check active session
+    session = await get_session(phone_number)
+    if session:
+        return session.get("role")
+    
+    return None
+
+
+# ============ MULTI-ADMIN NOTIFICATIONS ============
+
+async def notify_all_admins(message: str, exclude_phone: str = None):
+    """Send notification to all active admins"""
+    # Get master admin
+    config = await get_sandwich_config()
+    admin_phone = config.get('admin_phone', '')
+    admin_lid = config.get('admin_lid', '')
+    
+    notified = []
+    
+    # Notify master admin
+    if admin_lid and admin_lid != exclude_phone:
+        try:
+            await send_sandwich_message_to_jid(f"{admin_lid}@lid", message)
+            notified.append(f"master:{admin_lid}")
+        except Exception as e:
+            print(f"[Sandwich Bot] Error notifying master admin: {e}")
+    elif admin_phone and admin_phone != exclude_phone:
+        try:
+            await send_sandwich_message(admin_phone, message)
+            notified.append(f"master:{admin_phone}")
+        except Exception as e:
+            print(f"[Sandwich Bot] Error notifying master admin: {e}")
+    
+    # Notify logged-in admins
+    admin_sessions = await get_active_sessions_by_role("admin")
+    for session in admin_sessions:
+        session_phone = session.get("phone_number")
+        if session_phone and session_phone != exclude_phone:
+            try:
+                await send_sandwich_message(session_phone, message)
+                notified.append(f"admin:{session.get('username')}")
+            except Exception as e:
+                print(f"[Sandwich Bot] Error notifying admin {session.get('username')}: {e}")
+    
+    print(f"[Sandwich Bot] Notified admins: {notified}")
+    return notified
+
+
+async def notify_all_deliveries(message: str):
+    """Send notification to all active deliveries"""
+    delivery_sessions = await get_active_sessions_by_role("delivery")
+    notified = []
+    
+    for session in delivery_sessions:
+        session_phone = session.get("phone_number")
+        if session_phone:
+            try:
+                await send_sandwich_message(session_phone, message)
+                notified.append(f"delivery:{session.get('username')}")
+            except Exception as e:
+                print(f"[Sandwich Bot] Error notifying delivery {session.get('username')}: {e}")
+    
+    print(f"[Sandwich Bot] Notified deliveries: {notified}")
+    return notified
+
+
+# ============ ORDER REMINDERS ============
+
+async def get_unconfirmed_orders_needing_reminder():
+    """Get orders pending for more than ORDER_REMINDER_MINUTES"""
+    cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=ORDER_REMINDER_MINUTES)
+    
+    orders = await db.sandwich_pedidos.find({
+        "estado": "pendiente",
+        "created_at": {"$lt": cutoff_time.isoformat()},
+        "$or": [
+            {"last_reminder_at": {"$exists": False}},
+            {"last_reminder_at": {"$lt": (datetime.now(timezone.utc) - timedelta(minutes=ORDER_REMINDER_MINUTES)).isoformat()}}
+        ]
+    }).to_list(50)
+    
+    return orders
+
+
+async def send_order_reminders():
+    """Send reminders for orders pending too long"""
+    orders = await get_unconfirmed_orders_needing_reminder()
+    
+    for order in orders:
+        minutes_waiting = 0
+        try:
+            created_at = datetime.fromisoformat(order['created_at'].replace('Z', '+00:00'))
+            minutes_waiting = int((datetime.now(timezone.utc) - created_at).total_seconds() / 60)
+        except Exception:
+            minutes_waiting = ORDER_REMINDER_MINUTES
+        
+        reminder_msg = f"""⚠️ *RECORDATORIO PEDIDO #{order['numero_pedido']}*
+
+Este pedido lleva *{minutes_waiting} minutos* sin confirmar!
+
+👤 {order.get('nombre', 'Sin nombre')}
+💰 ${order.get('total', 0):,}
+📍 {order.get('tipo_entrega', 'N/A').upper()}
+
+Para confirmar: *CONFIRMAR {order['numero_pedido']}*
+Para rechazar: *RECHAZAR {order['numero_pedido']} [motivo]*"""
+        
+        # Notify all admins
+        await notify_all_admins(reminder_msg)
+        
+        # Update last reminder time
+        await db.sandwich_pedidos.update_one(
+            {"numero_pedido": order['numero_pedido']},
+            {"$set": {"last_reminder_at": datetime.now(timezone.utc).isoformat()}}
+        )
+    
+    return len(orders)
+
+
 # ============ SEQUENTIAL ORDER NUMBERS ============
 
 async def get_next_order_number():
