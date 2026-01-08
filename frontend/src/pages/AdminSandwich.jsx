@@ -136,8 +136,8 @@ export default function AdminSandwich() {
       <header className="bg-gradient-to-r from-amber-500 to-orange-500 text-white py-4 px-6 shadow-lg">
         <div className="flex justify-between items-center max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
-            <span className="text-3xl">🥪</span>
-            <h1 className="text-2xl font-bold">Panel Sandwichería</h1>
+            <span className="text-3xl">🍔</span>
+            <h1 className="text-2xl font-bold">Modo Cocina - Panel Admin</h1>
           </div>
           <div className="flex items-center gap-4">
             <div className="text-sm">
