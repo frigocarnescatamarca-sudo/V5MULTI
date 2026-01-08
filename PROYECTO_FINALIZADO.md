@@ -1,10 +1,45 @@
-# 🚗 Estonia Cobertura Colaborativa - Proyecto Finalizado
+# 🚗🥪 Sistema Multi-Negocio - Proyecto Finalizado
 
 ## 📋 Resumen del Proyecto
 
-Sistema completo de gestión de coberturas vehiculares con bot de WhatsApp integrado con IA.
+Sistema completo de gestión con dos negocios integrados:
+1. **Estonia Cobertura** - Coberturas vehiculares con bot de WhatsApp
+2. **Sandwichería** - Sistema de pedidos con bot de WhatsApp
 
 **URL de Producción:** https://estonia-cover.preview.emergentagent.com
+
+---
+
+## 🆕 NUEVO: Sistema Híbrido Multi-Negocio
+
+### Selector de Sistema (`/admin-selector`)
+Después del login, el admin puede elegir qué sistema gestionar:
+- 🚗 **Estonia Cobertura** → `/admin`
+- 🥪 **Sandwichería** → `/admin-sandwich`
+
+### Panel Sandwichería (`/admin-sandwich`)
+- **📋 Pedidos:** Lista de pedidos con estados (pendiente, confirmado, preparando, listo, entregado)
+- **🍽️ Menú:** Visualización de categorías y productos
+- **💬 WhatsApp Bot:** Conexión QR independiente para el número de la sandwichería
+- **⚙️ Configuración:** Horarios, delivery, mensaje de bienvenida
+
+### Bot de WhatsApp para Sandwichería
+- **Puerto:** 3003 (independiente del bot de coberturas en puerto 3002)
+- **Funcionalidades:**
+  - Muestra menú completo con precios
+  - Toma pedidos paso a paso
+  - Pregunta delivery o retiro
+  - Recopila datos del cliente
+  - Notifica al admin con cada pedido nuevo
+  - Comandos del admin: `PEDIDOS`, `CONFIRMAR`, `RECHAZAR`, `LISTO`, `PAUSAR`, `REANUDAR`
+
+### Menú por Defecto
+| Categoría | Productos |
+|-----------|-----------|
+| 🥪 Sándwiches | Milanesa ($2,500), Milanesa Completo ($3,000), Lomito ($3,500), Lomito Completo ($4,000) |
+| 🍔 Hamburguesas | Simple ($2,000), Completa ($2,800), Doble ($3,500) |
+| 🥤 Bebidas | Coca/Sprite ($800), Agua ($500), Cerveza ($1,500) |
+| ➕ Extras | Papas ($1,000), Huevo ($300), Queso ($400), Panceta ($500) |
 
 ---
 
