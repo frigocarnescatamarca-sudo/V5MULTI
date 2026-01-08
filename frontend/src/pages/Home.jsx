@@ -187,6 +187,11 @@ export default function Home() {
       {/* CTA Intermedio */}
       <section className="py-12 bg-[#064E3B]">
         <div className="container mx-auto px-6 text-center">
+          {/* Prueba social */}
+          <p className="text-[#D9F99D] text-sm mb-4 flex items-center justify-center gap-2">
+            <Users className="w-4 h-4" />
+            Más de 500 conductores ya circulan con Estonia Cobertura
+          </p>
           <p className="text-xl text-white mb-6">¿Necesitás circular hoy?</p>
           <Button
             onClick={handleWhatsAppClick}
