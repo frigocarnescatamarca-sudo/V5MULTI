@@ -1988,12 +1988,13 @@ from whatsapp_sandwich_service import (
 async def sandwich_whatsapp_message(data: dict):
     """Process incoming WhatsApp message for sandwich bot"""
     phone_number = data.get("phone_number")
-    message = data.get("message")
+    message = data.get("message", "")
     push_name = data.get("push_name", "")
     reply_jid = data.get("reply_jid", "")
+    location = data.get("location")  # {latitude, longitude} if location message
     
-    if not phone_number or not message:
-        raise HTTPException(status_code=400, detail="phone_number and message required")
+    if not phone_number:
+        raise HTTPException(status_code=400, detail="phone_number required")
     
     # Store JID mapping
     if reply_jid:
@@ -2003,10 +2004,32 @@ async def sandwich_whatsapp_message(data: dict):
             upsert=True
         )
     
+    # Handle location message
+    if location:
+        lat = location.get('latitude') or location.get('degreesLatitude')
+        lng = location.get('longitude') or location.get('degreesLongitude')
+        if lat and lng:
+            await save_client_location(phone_number, float(lat), float(lng))
+            reply = "¡Perfecto! Ya guardé tu ubicación 📍 Así el delivery te encuentra más fácil."
+            return {"success": True, "reply": reply}
+    
+    if not message:
+        raise HTTPException(status_code=400, detail="message required")
+    
+    # Try to extract WhatsApp number from message (for pending requests)
+    await save_client_phone_from_message(phone_number, message)
+    
     # Process with AI
-    reply = await process_sandwich_message_with_ai(phone_number, message, push_name)
+    reply = await process_sandwich_message_with_ai(phone_number, message, push_name, location)
     
     return {"success": True, "reply": reply}
+
+
+@api_router.post("/sandwich/reset-order-counter")
+async def sandwich_reset_counter():
+    """Reset the daily order counter (admin only)"""
+    await reset_daily_order_counter()
+    return {"success": True, "message": "Order counter reset to 0"}
 
 
 @api_router.get("/sandwich/whatsapp/status")
