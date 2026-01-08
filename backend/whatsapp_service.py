@@ -160,6 +160,99 @@ async def update_bot_config(config_data: dict):
     return await get_bot_config()
 
 
+async def get_client_memory(phone_number: str):
+    """Get stored client information from memory"""
+    client = await db.whatsapp_clients.find_one({"phone_number": phone_number}, {"_id": 0})
+    return client
+
+
+async def save_client_memory(phone_number: str, data: dict):
+    """Save or update client information in memory"""
+    await db.whatsapp_clients.update_one(
+        {"phone_number": phone_number},
+        {"$set": {**data, "phone_number": phone_number, "updated_at": datetime.now(timezone.utc).isoformat()}},
+        upsert=True
+    )
+
+
+async def update_conversation_activity(phone_number: str, has_client_response: bool = True):
+    """Update last activity timestamp for a conversation"""
+    update_data = {
+        "last_activity": datetime.now(timezone.utc).isoformat(),
+        "status": "active"
+    }
+    if has_client_response:
+        update_data["last_client_message"] = datetime.now(timezone.utc).isoformat()
+        update_data["followup_sent"] = False
+    
+    await db.whatsapp_conversations.update_one(
+        {"phone_number": phone_number},
+        {"$set": update_data},
+        upsert=True
+    )
+
+
+async def get_inactive_conversations(minutes: int = 10):
+    """Get conversations that have been inactive for X minutes"""
+    cutoff_time = (datetime.now(timezone.utc) - timedelta(minutes=minutes)).isoformat()
+    
+    inactive = await db.whatsapp_conversations.find({
+        "status": "active",
+        "followup_sent": {"$ne": True},
+        "last_client_message": {"$lt": cutoff_time}
+    }).to_list(100)
+    
+    return inactive
+
+
+async def send_followup_messages():
+    """Send followup messages to inactive conversations"""
+    from whatsapp_service import send_whatsapp_message, send_whatsapp_message_to_jid
+    
+    inactive = await get_inactive_conversations(minutes=10)
+    
+    for conv in inactive:
+        phone = conv.get('phone_number')
+        
+        # Get client memory to personalize
+        client = await get_client_memory(phone)
+        client_name = client.get('nombre', '') if client else ''
+        
+        if client_name:
+            farewell_msg = f"""👋 ¡Hola {client_name}! 
+
+Noté que no pudimos terminar. Si tenés alguna duda o querés continuar con tu cobertura, escribime cuando puedas.
+
+¡Te espero! 🚗"""
+        else:
+            farewell_msg = """👋 ¡Hola! 
+
+Noté que no pudimos terminar la conversación. Si tenés alguna duda o querés continuar con tu cobertura, escribime cuando puedas.
+
+¡Te espero! 🚗"""
+        
+        try:
+            # Try to get JID
+            jid_mapping = await db.whatsapp_jid_mapping.find_one({"phone_number": phone})
+            if jid_mapping and jid_mapping.get('jid'):
+                await send_whatsapp_message_to_jid(jid_mapping['jid'], farewell_msg)
+            else:
+                await send_whatsapp_message(phone, farewell_msg)
+            
+            # Mark as followup sent and conversation ended
+            await db.whatsapp_conversations.update_one(
+                {"phone_number": phone},
+                {"$set": {"followup_sent": True, "status": "ended"}}
+            )
+            
+            # Save the farewell message
+            await save_message(phone, farewell_msg, "assistant")
+            
+            print(f"[WhatsApp Bot] Sent followup to {phone}")
+        except Exception as e:
+            print(f"[WhatsApp Bot] Error sending followup to {phone}: {e}")
+
+
 async def get_conversation_history(phone_number: str, limit: int = 10):
     """Get recent conversation history for a phone number"""
     messages = await db.whatsapp_messages.find(
