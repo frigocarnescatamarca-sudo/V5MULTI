@@ -1889,6 +1889,18 @@ async def admin_update_whatsapp_config(data: WhatsAppConfigUpdate):
     update_data = {k: v for k, v in data.dict().items() if v is not None}
     return await update_bot_config(update_data)
 
+@api_router.get("/admin/whatsapp/precios")
+async def admin_get_precios():
+    """Get pricing configuration"""
+    config = await get_bot_config()
+    return {"precios": config.get("precios", [])}
+
+@api_router.put("/admin/whatsapp/precios")
+async def admin_update_precios(data: PreciosUpdate):
+    """Update pricing configuration"""
+    precios_dict = [p.dict() for p in data.precios]
+    return await update_bot_config({"precios": precios_dict})
+
 @api_router.get("/admin/whatsapp/conversations")
 async def admin_get_conversations():
     """Get all conversations"""
