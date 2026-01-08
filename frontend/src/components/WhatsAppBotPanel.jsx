@@ -482,14 +482,14 @@ export default function WhatsAppBotPanel() {
               <div className="space-y-4">
                 {precios.map((precio, index) => (
                   <div key={index} className={`p-4 rounded-lg border ${precio.activo ? 'bg-white border-gray-200' : 'bg-gray-100 border-gray-300 opacity-60'}`}>
-                    <div className="grid grid-cols-6 gap-4 items-center">
+                    <div className="grid grid-cols-7 gap-3 items-center">
                       <div className="col-span-2">
                         <Label className="text-xs text-gray-500">Tipo de Vehículo</Label>
                         <div className="flex items-center gap-2">
                           <Input 
                             value={precio.emoji}
                             onChange={(e) => updatePrecio(index, 'emoji', e.target.value)}
-                            className="w-16 text-center text-xl"
+                            className="w-14 text-center text-xl"
                             maxLength={2}
                           />
                           <Input 
