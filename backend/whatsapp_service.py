@@ -707,6 +707,21 @@ async def process_bot_commands(phone_number: str, ai_response: str):
             
             print(f"[WhatsApp Bot] Creating coverage with data: {data}")
             
+            # Save client data to memory for future conversations
+            client_data = {}
+            if data.get('nombre'):
+                client_data['nombre'] = data['nombre']
+            if data.get('dni'):
+                client_data['dni'] = data['dni']
+            if data.get('email'):
+                client_data['email'] = data['email']
+            if data.get('marca') and data.get('modelo'):
+                client_data['vehiculo'] = f"{data.get('marca')} {data.get('modelo')}"
+            
+            if client_data:
+                await save_client_memory(phone_number, client_data)
+                print(f"[WhatsApp Bot] Saved client memory: {client_data}")
+            
             # Create the coverage
             coverage = await create_coverage_from_whatsapp(phone_number, data)
             
