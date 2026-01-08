@@ -578,12 +578,8 @@ Ejemplo: CONFIRMAR ABC123"""
     await update_conversation_activity(phone_number, has_client_response=True)
     
     # Get client memory (stored name, previous interactions)
+    # NOTE: Do NOT use push_name as client name - always ask for real name
     client_memory = await get_client_memory(phone_number)
-    
-    # Save push_name as client name if we don't have one
-    if push_name and (not client_memory or not client_memory.get('nombre')):
-        await save_client_memory(phone_number, {"nombre": push_name, "push_name": push_name})
-        client_memory = await get_client_memory(phone_number)
     
     # Check if user explicitly wants to check existing coverages
     message_lower = message.lower().strip()
