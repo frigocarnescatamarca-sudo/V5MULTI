@@ -256,6 +256,17 @@ export const whatsappAPI = {
     return response.data;
   },
   
+  // Precios
+  getPrecios: async () => {
+    const response = await api.get('/admin/whatsapp/precios');
+    return response.data;
+  },
+  
+  updatePrecios: async (precios) => {
+    const response = await api.put('/admin/whatsapp/precios', { precios });
+    return response.data;
+  },
+  
   // Conversations
   getConversations: async () => {
     const response = await api.get('/admin/whatsapp/conversations');
