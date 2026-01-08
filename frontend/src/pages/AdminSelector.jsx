@@ -131,23 +131,23 @@ export default function AdminSelector() {
             </CardContent>
           </Card>
 
-          {/* Sandwichería */}
+          {/* Modo Cocina */}
           <Card 
             className="cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-2 border-transparent hover:border-amber-500"
             onClick={() => goToSystem('sandwich')}
           >
             <CardHeader className="text-center">
               <div className="mx-auto w-20 h-20 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center mb-4">
-                <span className="text-4xl">🥪</span>
+                <span className="text-4xl">🍔</span>
               </div>
-              <CardTitle className="text-xl">Sandwichería</CardTitle>
+              <CardTitle className="text-xl">Modo Cocina</CardTitle>
               <CardDescription>Gestión de pedidos, menú y bot de WhatsApp para delivery</CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="text-sm text-gray-600 space-y-2">
                 <li>✅ Pedidos y entregas</li>
                 <li>✅ Menú y precios</li>
-                <li>✅ Bot WhatsApp de pedidos</li>
+                <li>✅ Bot WhatsApp (Cocibot)</li>
                 <li>✅ Estadísticas de ventas</li>
               </ul>
               <Button className="w-full mt-4 bg-amber-500 hover:bg-amber-600">
