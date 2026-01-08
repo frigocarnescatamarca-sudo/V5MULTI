@@ -1,6 +1,7 @@
 """
-WhatsApp AI Bot Service for Sandwichería
+WhatsApp AI Bot Service for Sandwichería "Modo Cocina"
 Handles message processing with ChatGPT integration for food orders
+Version 2.0 - Enhanced with sequential orders, delivery role, human handover, etc.
 """
 
 import os
@@ -8,7 +9,6 @@ import httpx
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from dotenv import load_dotenv
-from uuid import uuid4
 
 # Load environment variables
 ROOT_DIR = Path(__file__).parent
@@ -27,12 +27,15 @@ db = client[db_name]
 # WhatsApp Sandwich Service URL
 WHATSAPP_SANDWICH_URL = os.environ.get('WHATSAPP_SANDWICH_URL', 'http://localhost:3003')
 
+# Timeout for human handover auto-resume (2 hours)
+HANDOVER_TIMEOUT_HOURS = 2
+
 # Default bot configuration for Sandwich
 DEFAULT_SANDWICH_CONFIG = {
-    "nombre_negocio": "Sandwichería",
-    "mensaje_bienvenida": """¡Hola! 👋 Bienvenido a *Sandwichería*
+    "nombre_negocio": "Modo Cocina",
+    "mensaje_bienvenida": """¡Hola! 👋 Bienvenido a *Modo Cocina*
 
-🥪 Hacemos los mejores sándwiches de la zona
+🥪 Preparamos los mejores sándwiches de la zona
 
 ¿Querés ver nuestro menú? Escribí *MENÚ*
 
@@ -46,20 +49,23 @@ DEFAULT_SANDWICH_CONFIG = {
     "costo_delivery": 500,
     "pedido_minimo_delivery": 2000,
     "tiempo_preparacion": "20-30 minutos",
+    "zona_restringida": "Valle Viejo",
     "admin_phone": "",
     "admin_lid": "",
+    "delivery_phones": [],  # List of delivery person phone numbers
     "bot_activo": True,
     
-    "instrucciones_bot": """Sos el asistente de pedidos de {nombre_negocio}. Tu objetivo es tomar pedidos de comida de forma amable y eficiente.
+    "instrucciones_bot": """Sos "Cocibot", el asistente de pedidos de {nombre_negocio}. Tu objetivo es tomar pedidos de comida de forma amable, eficiente y con personalidad humana.
 
 === MENÚ DISPONIBLE ===
 {menu_formateado}
 
 === TU PERSONALIDAD ===
 - Sos argentino, usá "vos" en lugar de "tú"
-- Sé amable y servicial
+- Sé amable y servicial, pero también un poco gracioso
 - Usá emojis con moderación (1-2 por mensaje)
 - Respuestas cortas y claras
+- Variá tus respuestas para sonar más humano
 
 === FLUJO DE PEDIDO ===
 
@@ -72,24 +78,32 @@ Cuando el cliente elija, confirmá:
 - Cantidad
 - Si quiere agregar extras/adicionales
 
-PASO 3 - DELIVERY O RETIRO:
+PASO 3 - PREGUNTAR MODIFICACIONES:
+IMPORTANTE: Antes de confirmar el pedido, SIEMPRE preguntá:
+"¿Querés alguna modificación? Por ejemplo: sin mayonesa, extra queso, bien cocido, etc. 🍔"
+
+PASO 4 - DELIVERY O RETIRO:
 Preguntá: "¿Lo querés para delivery o lo retirás por el local?"
 
-PASO 4 - DATOS DEL CLIENTE:
+PASO 5 - DATOS DEL CLIENTE:
 Si es DELIVERY, pedí:
 - Nombre
 - Dirección completa
 - Referencias (opcional)
+- Si comparte ubicación, agradecele y guardala
+
+ZONA RESTRINGIDA: Si la dirección incluye "{zona_restringida}", informá amablemente que no hacemos delivery a esa zona pero puede retirar en el local.
 
 Si es RETIRO, pedí:
 - Nombre (para el pedido)
 
-PASO 5 - CONFIRMAR PEDIDO:
+PASO 6 - CONFIRMAR PEDIDO:
 Mostrá un resumen completo:
 "📋 *RESUMEN DE TU PEDIDO*
 👤 Nombre: [nombre]
 📍 Entrega: [delivery/retiro]
 [Dirección si es delivery]
+[Modificaciones si las hay]
 
 🛒 *Pedido:*
 [lista de items con precios]
@@ -98,9 +112,9 @@ Mostrá un resumen completo:
 🛵 Delivery: $[costo_delivery o GRATIS]
 💵 *TOTAL: $[total]*
 
-¿Confirmás el pedido? Respondé *SÍ* para confirmar."
+¿Confirmás el pedido? Respondé *SÍ* para confirmar o *MODIFICAR* si querés cambiar algo."
 
-PASO 6 - CREAR PEDIDO:
+PASO 7 - CREAR PEDIDO:
 Cuando confirme, respondé con:
 
 [CREAR_PEDIDO]
@@ -110,12 +124,20 @@ direccion: [dirección o "Retira en local"]
 tipo_entrega: [delivery/retiro]
 items: [lista de items separados por coma]
 cantidades: [cantidades separadas por coma]
+modificaciones: [modificaciones solicitadas o "ninguna"]
 subtotal: [subtotal sin delivery]
 delivery: [costo delivery o 0]
 total: [total final]
 [/CREAR_PEDIDO]
 
 Procesando tu pedido... ⏳
+
+=== COMANDOS DEL CLIENTE ===
+Si el cliente dice:
+- "CANCELAR" o quiere cancelar su pedido → Preguntá si está seguro y luego usa [CANCELAR_PEDIDO]
+- "MODIFICAR" o quiere modificar → Preguntá qué quiere cambiar
+- "HABLAR CON ALGUIEN" / "ENCARGADO" / "HUMANO" → Respondé: "Un momento, te comunico con el encargado 👤" y usá [PAUSAR_BOT]
+- "¿Cómo va mi pedido?" / "Estado de mi pedido" → Respondé: "Déjame consultar con el equipo... 🔍" y usá [CONSULTAR_ESTADO]
 
 === REGLAS ===
 - NUNCA inventes productos que no están en el menú
@@ -130,9 +152,13 @@ Abierto: {horario_apertura} a {horario_cierre}
 Días: {dias_abierto}
 Dirección: {direccion_local}
 
-=== DERIVACIÓN A HUMANO ===
-Si el cliente tiene un problema o quiere hablar con alguien:
-- Respondé: "Un momento, te comunico con el encargado 👤"
+=== PROMOCIONES ===
+- Si el cliente pide 3 o más items del mismo producto, ofrecé un 10% de descuento
+- Mencioná las promos de forma natural
+
+=== UBICACIÓN COMPARTIDA ===
+Si el cliente comparte su ubicación (verás un mensaje con coordenadas), agradecele y confirma que la guardaste:
+"¡Perfecto! Ya guardé tu ubicación 📍 Así el delivery te encuentra más fácil."
 """
 }
 
@@ -227,20 +253,62 @@ async def format_menu_for_bot():
     return formatted
 
 
+# ============ SEQUENTIAL ORDER NUMBERS ============
+
+async def get_next_order_number():
+    """Get the next sequential order number (1, 2, 3...)"""
+    counter = await db.sandwich_order_counter.find_one_and_update(
+        {"_id": "order_counter"},
+        {"$inc": {"sequence": 1}},
+        upsert=True,
+        return_document=True
+    )
+    return counter.get("sequence", 1)
+
+
+async def reset_daily_order_counter():
+    """Reset order counter daily (optional - can be called via cron or manually)"""
+    await db.sandwich_order_counter.update_one(
+        {"_id": "order_counter"},
+        {"$set": {"sequence": 0, "reset_at": datetime.now(timezone.utc).isoformat()}},
+        upsert=True
+    )
+
+
+# ============ PAUSE/RESUME WITH AUTO-RESUME ============
+
 async def is_sandwich_chat_paused(phone_number: str) -> bool:
     """Check if a chat is paused for human attention"""
     paused = await db.sandwich_paused.find_one({"phone_number": phone_number})
-    return paused is not None
+    if not paused:
+        return False
+    
+    # Check if auto-resume time has passed
+    paused_at = paused.get("paused_at", "")
+    if paused_at:
+        try:
+            paused_time = datetime.fromisoformat(paused_at.replace('Z', '+00:00'))
+            if datetime.now(timezone.utc) > paused_time + timedelta(hours=HANDOVER_TIMEOUT_HOURS):
+                # Auto-resume after timeout
+                await resume_sandwich_chat(phone_number)
+                print(f"[Sandwich Bot] Auto-resumed chat {phone_number} after {HANDOVER_TIMEOUT_HOURS}h timeout")
+                return False
+        except:
+            pass
+    
+    return True
 
 
-async def pause_sandwich_chat(phone_number: str, admin_phone: str):
+async def pause_sandwich_chat(phone_number: str, admin_phone: str, reason: str = "human_handover"):
     """Pause bot for a specific chat"""
     await db.sandwich_paused.update_one(
         {"phone_number": phone_number},
         {"$set": {
             "phone_number": phone_number,
             "paused_by": admin_phone,
-            "paused_at": datetime.now(timezone.utc).isoformat()
+            "reason": reason,
+            "paused_at": datetime.now(timezone.utc).isoformat(),
+            "auto_resume_at": (datetime.now(timezone.utc) + timedelta(hours=HANDOVER_TIMEOUT_HOURS)).isoformat()
         }},
         upsert=True
     )
@@ -257,6 +325,129 @@ async def get_sandwich_paused_chats():
     return paused
 
 
+# ============ CLIENT LOCATION HANDLING ============
+
+async def save_client_location(phone_number: str, latitude: float, longitude: float):
+    """Save client's shared location"""
+    await db.sandwich_client_data.update_one(
+        {"phone_number": phone_number},
+        {"$set": {
+            "phone_number": phone_number,
+            "location": {
+                "latitude": latitude,
+                "longitude": longitude,
+                "shared_at": datetime.now(timezone.utc).isoformat()
+            },
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+    print(f"[Sandwich Bot] Saved location for {phone_number}: {latitude}, {longitude}")
+
+
+async def get_client_location(phone_number: str):
+    """Get client's saved location"""
+    client_data = await db.sandwich_client_data.find_one({"phone_number": phone_number})
+    if client_data and "location" in client_data:
+        return client_data["location"]
+    return None
+
+
+async def save_client_whatsapp_number(phone_number: str, whatsapp_number: str):
+    """Save client's actual WhatsApp number for delivery contact"""
+    await db.sandwich_client_data.update_one(
+        {"phone_number": phone_number},
+        {"$set": {
+            "phone_number": phone_number,
+            "whatsapp_contact": whatsapp_number,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+
+
+async def get_client_whatsapp_number(phone_number: str):
+    """Get client's WhatsApp contact number"""
+    client_data = await db.sandwich_client_data.find_one({"phone_number": phone_number})
+    if client_data:
+        return client_data.get("whatsapp_contact")
+    return None
+
+
+# ============ STATUS QUERY HANDLING ============
+
+async def create_status_query(phone_number: str, numero_pedido: str):
+    """Create a status query from client to admin"""
+    await db.sandwich_status_queries.insert_one({
+        "phone_number": phone_number,
+        "numero_pedido": numero_pedido,
+        "status": "pending",  # pending, answered
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    # Notify admin
+    config = await get_sandwich_config()
+    admin_msg = f"""🔔 *CONSULTA DE ESTADO*
+
+Un cliente pregunta por su pedido:
+📋 Pedido: #{numero_pedido}
+📱 Cliente: {phone_number}
+
+Para responder, escribí:
+*ESTADO {numero_pedido} [tu respuesta]*
+
+Ejemplo: ESTADO {numero_pedido} Ya casi sale, 5 minutos más"""
+    
+    admin_lid = config.get('admin_lid', '')
+    admin_phone = config.get('admin_phone', '')
+    
+    try:
+        if admin_lid:
+            await send_sandwich_message_to_jid(f"{admin_lid}@lid", admin_msg)
+        elif admin_phone:
+            await send_sandwich_message(admin_phone, admin_msg)
+    except Exception as e:
+        print(f"[Sandwich Bot] Error notifying admin about status query: {e}")
+
+
+async def answer_status_query(numero_pedido: str, response: str, phone_number: str):
+    """Admin answers a status query"""
+    # Find pending query
+    query = await db.sandwich_status_queries.find_one({
+        "numero_pedido": numero_pedido,
+        "status": "pending"
+    })
+    
+    if not query:
+        # Try to find the order directly
+        order = await db.sandwich_pedidos.find_one({"numero_pedido": numero_pedido})
+        if order:
+            client_phone = order.get("telefono") or order.get("whatsapp_phone")
+            if client_phone:
+                client_msg = f"""📋 *Estado de tu pedido #{numero_pedido}*
+
+{response}"""
+                await send_sandwich_message(client_phone, client_msg)
+                return f"✅ Respuesta enviada al cliente"
+        return f"❌ No encontré consulta pendiente para el pedido #{numero_pedido}"
+    
+    # Mark as answered
+    await db.sandwich_status_queries.update_one(
+        {"_id": query["_id"]},
+        {"$set": {"status": "answered", "response": response, "answered_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    # Send response to client
+    client_msg = f"""📋 *Estado de tu pedido #{numero_pedido}*
+
+{response}"""
+    
+    await send_sandwich_message(query["phone_number"], client_msg)
+    return f"✅ Respuesta enviada al cliente"
+
+
+# ============ ORDER MANAGEMENT ============
+
 async def notify_sandwich_admin(order_data: dict):
     """Notify admin about new order"""
     config = await get_sandwich_config()
@@ -267,12 +458,22 @@ async def notify_sandwich_admin(order_data: dict):
         print("[Sandwich Bot] No admin configured for notifications")
         return
     
+    location_info = ""
+    if order_data.get('has_location'):
+        location_info = "\n📍 *Ubicación compartida:* ✅ Disponible"
+    
+    modificaciones = order_data.get('modificaciones', 'Ninguna')
+    if modificaciones and modificaciones.lower() != 'ninguna':
+        modificaciones_text = f"\n✏️ *Modificaciones:* {modificaciones}"
+    else:
+        modificaciones_text = ""
+    
     notification = f"""🔔 *NUEVO PEDIDO #{order_data['numero_pedido']}*
 
 👤 *Cliente:* {order_data['nombre']}
-📱 *Tel:* {order_data['telefono']}
+📱 *WhatsApp:* {order_data.get('whatsapp_contact', 'Pendiente')}
 📍 *Entrega:* {order_data['tipo_entrega'].upper()}
-{f"🏠 *Dirección:* {order_data['direccion']}" if order_data['tipo_entrega'] == 'delivery' else '🏪 *Retira en local*'}
+{f"🏠 *Dirección:* {order_data['direccion']}" if order_data['tipo_entrega'] == 'delivery' else '🏪 *Retira en local*'}{location_info}{modificaciones_text}
 
 🛒 *PEDIDO:*
 {order_data['items_formatted']}
@@ -319,30 +520,43 @@ async def save_sandwich_message(phone_number: str, message: str, role: str, push
 
 
 async def create_sandwich_order(phone_number: str, data: dict):
-    """Create a new order from WhatsApp"""
-    order_id = str(uuid4())
-    numero_pedido = str(uuid4())[:6].upper()
+    """Create a new order from WhatsApp with sequential number"""
+    # Get sequential order number
+    seq_number = await get_next_order_number()
+    numero_pedido = str(seq_number)  # Just the number: 1, 2, 3...
+    
+    # Check if client has location saved
+    location = await get_client_location(phone_number)
+    has_location = location is not None
+    
+    # Get client's WhatsApp contact if saved
+    whatsapp_contact = await get_client_whatsapp_number(phone_number)
     
     order_doc = {
-        "_id": order_id,
         "numero_pedido": numero_pedido,
+        "sequence_number": seq_number,
         "nombre": data.get('nombre', ''),
         "telefono": phone_number,
+        "whatsapp_contact": whatsapp_contact,  # Actual contact number
         "direccion": data.get('direccion', ''),
         "tipo_entrega": data.get('tipo_entrega', 'retiro'),
         "items": data.get('items', ''),
         "cantidades": data.get('cantidades', ''),
         "items_formatted": data.get('items_formatted', ''),
+        "modificaciones": data.get('modificaciones', ''),
         "subtotal": int(data.get('subtotal', 0)),
         "costo_delivery": int(data.get('delivery', 0)),
         "total": int(data.get('total', 0)),
-        "estado": "pendiente",  # pendiente, confirmado, preparando, listo, entregado, cancelado
-        "whatsapp_phone": phone_number,
-        "created_at": datetime.now(timezone.utc).isoformat()
+        "estado": "pendiente",  # pendiente, confirmado, preparando, listo, en_camino, entregado, cancelado
+        "whatsapp_phone": phone_number,  # LID or phone for bot communication
+        "has_location": has_location,
+        "location": location,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "pending_whatsapp_request": not whatsapp_contact  # Flag to request WhatsApp number
     }
     
     await db.sandwich_pedidos.insert_one(order_doc)
-    print(f"[Sandwich Bot] Order created: {numero_pedido}")
+    print(f"[Sandwich Bot] Order created: #{numero_pedido}")
     return order_doc
 
 
@@ -351,10 +565,10 @@ async def admin_confirm_order(numero_pedido: str, admin_phone: str):
     order = await db.sandwich_pedidos.find_one({"numero_pedido": numero_pedido})
     
     if not order:
-        return f"❌ No encontré el pedido {numero_pedido}"
+        return f"❌ No encontré el pedido #{numero_pedido}"
     
     if order.get('estado') != 'pendiente':
-        return f"⚠️ El pedido {numero_pedido} ya está en estado: {order.get('estado')}"
+        return f"⚠️ El pedido #{numero_pedido} ya está en estado: {order.get('estado')}"
     
     await db.sandwich_pedidos.update_one(
         {"numero_pedido": numero_pedido},
@@ -383,13 +597,13 @@ async def admin_confirm_order(numero_pedido: str, admin_phone: str):
     except Exception as e:
         print(f"[Sandwich Bot] Error notifying client: {e}")
     
-    return f"""✅ *PEDIDO CONFIRMADO*
-
-Pedido #{numero_pedido} confirmado.
-Se notificó al cliente.
+    # Admin confirmation message (without "needs approval" - they ARE the approver)
+    return f"""✅ *PEDIDO #{numero_pedido} CONFIRMADO*
 
 👤 {order['nombre']}
 💰 ${order['total']:,}
+
+Cliente notificado ✓
 
 Para marcar como LISTO: *LISTO {numero_pedido}*"""
 
@@ -399,7 +613,7 @@ async def admin_reject_order(numero_pedido: str, admin_phone: str, motivo: str =
     order = await db.sandwich_pedidos.find_one({"numero_pedido": numero_pedido})
     
     if not order:
-        return f"❌ No encontré el pedido {numero_pedido}"
+        return f"❌ No encontré el pedido #{numero_pedido}"
     
     await db.sandwich_pedidos.update_one(
         {"numero_pedido": numero_pedido},
@@ -431,7 +645,7 @@ async def admin_order_ready(numero_pedido: str, admin_phone: str):
     order = await db.sandwich_pedidos.find_one({"numero_pedido": numero_pedido})
     
     if not order:
-        return f"❌ No encontré el pedido {numero_pedido}"
+        return f"❌ No encontré el pedido #{numero_pedido}"
     
     await db.sandwich_pedidos.update_one(
         {"numero_pedido": numero_pedido},
@@ -464,7 +678,182 @@ Ya podés pasar a retirarlo.
     return f"✅ Pedido #{numero_pedido} marcado como LISTO. Se notificó al cliente."
 
 
-async def process_sandwich_message_with_ai(phone_number: str, message: str, push_name: str = ""):
+async def client_cancel_order(phone_number: str):
+    """Client cancels their pending order"""
+    # Find the most recent pending or confirmed order for this client
+    order = await db.sandwich_pedidos.find_one(
+        {"telefono": phone_number, "estado": {"$in": ["pendiente", "confirmado"]}},
+        sort=[("created_at", -1)]
+    )
+    
+    if not order:
+        return None, "No tenés pedidos activos para cancelar."
+    
+    await db.sandwich_pedidos.update_one(
+        {"numero_pedido": order['numero_pedido']},
+        {"$set": {
+            "estado": "cancelado",
+            "cancelado_por": "cliente",
+            "cancelado_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Notify admin
+    config = await get_sandwich_config()
+    admin_msg = f"""⚠️ *PEDIDO CANCELADO POR CLIENTE*
+
+📋 Pedido #{order['numero_pedido']}
+👤 {order['nombre']}
+💰 ${order['total']:,}
+
+El cliente canceló su pedido."""
+    
+    admin_lid = config.get('admin_lid', '')
+    admin_phone = config.get('admin_phone', '')
+    
+    try:
+        if admin_lid:
+            await send_sandwich_message_to_jid(f"{admin_lid}@lid", admin_msg)
+        elif admin_phone:
+            await send_sandwich_message(admin_phone, admin_msg)
+    except Exception as e:
+        print(f"[Sandwich Bot] Error notifying admin: {e}")
+    
+    return order, f"✅ Tu pedido #{order['numero_pedido']} ha sido cancelado."
+
+
+async def get_client_active_order(phone_number: str):
+    """Get client's active order if any"""
+    order = await db.sandwich_pedidos.find_one(
+        {"telefono": phone_number, "estado": {"$in": ["pendiente", "confirmado", "preparando", "listo"]}},
+        sort=[("created_at", -1)]
+    )
+    return order
+
+
+# ============ DELIVERY ROLE ============
+
+async def is_delivery_person(phone_number: str) -> bool:
+    """Check if phone number belongs to a delivery person"""
+    config = await get_sandwich_config()
+    delivery_phones = config.get('delivery_phones', [])
+    
+    # Normalize phone number for comparison
+    phone_digits = ''.join(filter(str.isdigit, str(phone_number)))[-10:]
+    
+    for dp in delivery_phones:
+        dp_digits = ''.join(filter(str.isdigit, str(dp)))[-10:]
+        if phone_digits == dp_digits or phone_digits.endswith(dp_digits) or dp_digits.endswith(phone_digits):
+            return True
+    
+    return False
+
+
+async def get_order_for_delivery(numero_pedido: str):
+    """Get order details for delivery person"""
+    order = await db.sandwich_pedidos.find_one({"numero_pedido": numero_pedido})
+    
+    if not order:
+        return None, f"❌ No encontré el pedido #{numero_pedido}"
+    
+    # Get client location if available
+    location_info = ""
+    if order.get('has_location') and order.get('location'):
+        lat = order['location'].get('latitude')
+        lng = order['location'].get('longitude')
+        location_info = f"\n📍 *Ubicación:* https://maps.google.com/?q={lat},{lng}"
+    
+    whatsapp_contact = order.get('whatsapp_contact', 'No disponible')
+    
+    response = f"""🛵 *DETALLES PEDIDO #{numero_pedido}*
+
+👤 *Cliente:* {order['nombre']}
+📱 *WhatsApp:* {whatsapp_contact}
+🏠 *Dirección:* {order['direccion']}{location_info}
+
+🛒 *Pedido:*
+{order['items_formatted']}
+
+{'✏️ *Modificaciones:* ' + order.get('modificaciones', '') if order.get('modificaciones') and order.get('modificaciones').lower() != 'ninguna' else ''}
+
+💰 *Total:* ${order['total']:,}
+📊 *Estado:* {order['estado'].upper()}
+
+---
+Para marcar en camino: *ENCAMINO {numero_pedido}*
+Para marcar entregado: *ENTREGADO {numero_pedido}*"""
+    
+    return order, response
+
+
+async def delivery_mark_on_way(numero_pedido: str, delivery_phone: str):
+    """Delivery marks order as on the way"""
+    order = await db.sandwich_pedidos.find_one({"numero_pedido": numero_pedido})
+    
+    if not order:
+        return f"❌ No encontré el pedido #{numero_pedido}"
+    
+    await db.sandwich_pedidos.update_one(
+        {"numero_pedido": numero_pedido},
+        {"$set": {
+            "estado": "en_camino",
+            "delivery_phone": delivery_phone,
+            "en_camino_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Notify client
+    client_msg = f"""🛵 *¡TU PEDIDO ESTÁ EN CAMINO!*
+
+Pedido #{numero_pedido}
+
+El delivery ya salió a entregarte.
+¡En unos minutos llega! 🙌"""
+    
+    try:
+        await send_sandwich_message(order['telefono'], client_msg)
+    except Exception as e:
+        print(f"[Sandwich Bot] Error notifying client: {e}")
+    
+    return f"✅ Pedido #{numero_pedido} marcado EN CAMINO. Cliente notificado."
+
+
+async def delivery_mark_delivered(numero_pedido: str, delivery_phone: str):
+    """Delivery marks order as delivered"""
+    order = await db.sandwich_pedidos.find_one({"numero_pedido": numero_pedido})
+    
+    if not order:
+        return f"❌ No encontré el pedido #{numero_pedido}"
+    
+    await db.sandwich_pedidos.update_one(
+        {"numero_pedido": numero_pedido},
+        {"$set": {
+            "estado": "entregado",
+            "entregado_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Notify client
+    client_msg = f"""✅ *¡PEDIDO ENTREGADO!*
+
+Pedido #{numero_pedido}
+
+¡Gracias por elegirnos! 🙌
+Esperamos que lo disfrutes.
+
+¿Qué tal estuvo? Tu opinión nos ayuda a mejorar."""
+    
+    try:
+        await send_sandwich_message(order['telefono'], client_msg)
+    except Exception as e:
+        print(f"[Sandwich Bot] Error notifying client: {e}")
+    
+    return f"✅ Pedido #{numero_pedido} marcado como ENTREGADO."
+
+
+# ============ MAIN MESSAGE PROCESSOR ============
+
+async def process_sandwich_message_with_ai(phone_number: str, message: str, push_name: str = "", location: dict = None):
     """Process incoming message with ChatGPT and return response"""
     import re
     
@@ -473,7 +862,28 @@ async def process_sandwich_message_with_ai(phone_number: str, message: str, push
     if not config.get("bot_activo", True):
         return None
     
-    # Check if admin
+    # Handle location message
+    if location:
+        lat = location.get('latitude') or location.get('degreesLatitude')
+        lng = location.get('longitude') or location.get('degreesLongitude')
+        if lat and lng:
+            await save_client_location(phone_number, lat, lng)
+            return "¡Perfecto! Ya guardé tu ubicación 📍 Así el delivery te encuentra más fácil."
+    
+    # Check if message contains location data (some formats)
+    if 'latitude' in message.lower() or 'degreeslatitude' in message.lower():
+        try:
+            import json
+            loc_data = json.loads(message)
+            lat = loc_data.get('latitude') or loc_data.get('degreesLatitude')
+            lng = loc_data.get('longitude') or loc_data.get('degreesLongitude')
+            if lat and lng:
+                await save_client_location(phone_number, lat, lng)
+                return "¡Perfecto! Ya guardé tu ubicación 📍 Así el delivery te encuentra más fácil."
+        except:
+            pass
+    
+    # Normalize phone for comparison
     def normalize_phone(phone):
         if not phone:
             return ""
@@ -483,6 +893,7 @@ async def process_sandwich_message_with_ai(phone_number: str, message: str, push
     admin_lid = config.get('admin_lid', '')
     phone_digits = ''.join(filter(str.isdigit, str(phone_number)))
     
+    # Check if admin
     is_admin = False
     if admin_lid and (phone_digits == admin_lid or phone_number == admin_lid):
         is_admin = True
@@ -497,34 +908,45 @@ async def process_sandwich_message_with_ai(phone_number: str, message: str, push
                     {"$set": {"admin_lid": phone_digits}}
                 )
     
+    # Check if delivery person
+    is_delivery = await is_delivery_person(phone_number)
+    
+    # ============ ADMIN COMMANDS ============
     if is_admin:
         print(f"[Sandwich Bot] ✅ ADMIN DETECTED! Message: {message[:50]}")
         
         # CONFIRMAR command
-        confirm_match = re.match(r'(?:CONFIRMAR|confirmar|Confirmar)\s+([A-Za-z0-9]+)', message.strip())
+        confirm_match = re.match(r'(?:CONFIRMAR|confirmar|Confirmar)\s+(\d+)', message.strip())
         if confirm_match:
-            numero = confirm_match.group(1).upper()
+            numero = confirm_match.group(1)
             return await admin_confirm_order(numero, phone_number)
         
         # RECHAZAR command
-        reject_match = re.match(r'(?:RECHAZAR|rechazar|Rechazar)\s+([A-Za-z0-9]+)\s*(.*)?', message.strip())
+        reject_match = re.match(r'(?:RECHAZAR|rechazar|Rechazar)\s+(\d+)\s*(.*)?', message.strip())
         if reject_match:
-            numero = reject_match.group(1).upper()
+            numero = reject_match.group(1)
             motivo = reject_match.group(2) or ""
             return await admin_reject_order(numero, phone_number, motivo)
         
         # LISTO command
-        listo_match = re.match(r'(?:LISTO|listo|Listo)\s+([A-Za-z0-9]+)', message.strip())
+        listo_match = re.match(r'(?:LISTO|listo|Listo)\s+(\d+)', message.strip())
         if listo_match:
-            numero = listo_match.group(1).upper()
+            numero = listo_match.group(1)
             return await admin_order_ready(numero, phone_number)
+        
+        # ESTADO command (answer status query)
+        estado_match = re.match(r'(?:ESTADO|estado|Estado)\s+(\d+)\s+(.+)', message.strip())
+        if estado_match:
+            numero = estado_match.group(1)
+            respuesta = estado_match.group(2)
+            return await answer_status_query(numero, respuesta, phone_number)
         
         # PAUSAR command
         pausar_match = re.match(r'(?:PAUSAR|pausar|Pausar)\s+(\d+)', message.strip())
         if pausar_match:
             client_phone = pausar_match.group(1)
             await pause_sandwich_chat(client_phone, phone_number)
-            return f"✅ Chat pausado para {client_phone}. Ahora podés atenderlo manualmente.\n\nPara reanudar: *REANUDAR {client_phone}*"
+            return f"✅ Chat pausado para {client_phone}. Ahora podés atenderlo manualmente.\n\nPara reanudar: *REANUDAR {client_phone}*\n\n⚠️ El bot se reanudará automáticamente en {HANDOVER_TIMEOUT_HOURS} horas."
         
         # REANUDAR command
         reanudar_match = re.match(r'(?:REANUDAR|reanudar|Reanudar)\s+(\d+)', message.strip())
@@ -533,16 +955,45 @@ async def process_sandwich_message_with_ai(phone_number: str, message: str, push
             await resume_sandwich_chat(client_phone)
             return f"✅ Bot reanudado para {client_phone}."
         
+        # ENCAMINO command (admin can also use)
+        encamino_match = re.match(r'(?:ENCAMINO|encamino|Encamino|EN CAMINO|en camino)\s+(\d+)', message.strip())
+        if encamino_match:
+            numero = encamino_match.group(1)
+            return await delivery_mark_on_way(numero, phone_number)
+        
+        # ENTREGADO command
+        entregado_match = re.match(r'(?:ENTREGADO|entregado|Entregado)\s+(\d+)', message.strip())
+        if entregado_match:
+            numero = entregado_match.group(1)
+            return await delivery_mark_delivered(numero, phone_number)
+        
+        # DELIVERY command - register delivery person
+        delivery_add_match = re.match(r'(?:DELIVERY|delivery)\s+(\d+)', message.strip())
+        if delivery_add_match:
+            new_delivery_phone = delivery_add_match.group(1)
+            current_deliveries = config.get('delivery_phones', [])
+            if new_delivery_phone not in current_deliveries:
+                current_deliveries.append(new_delivery_phone)
+                await update_sandwich_config({"delivery_phones": current_deliveries})
+            return f"✅ {new_delivery_phone} agregado como delivery.\n\nDeliveries registrados: {', '.join(current_deliveries)}"
+        
         # PEDIDOS command
         if message.lower().strip() == 'pedidos':
             pending = await db.sandwich_pedidos.find({"estado": "pendiente"}).to_list(10)
             if pending:
                 msg = "📋 *PEDIDOS PENDIENTES:*\n\n"
                 for p in pending:
-                    msg += f"• *{p['numero_pedido']}* - {p['nombre']} - ${p['total']:,}\n"
-                msg += "\nPara confirmar: *CONFIRMAR [NÚMERO]*"
+                    msg += f"• *#{p['numero_pedido']}* - {p['nombre']} - ${p['total']:,}\n"
+                msg += "\nPara confirmar: *CONFIRMAR [N°]*"
                 return msg
             return "✅ No hay pedidos pendientes"
+        
+        # PEDIDO #X command - view order details
+        pedido_match = re.match(r'(?:PEDIDO|pedido|Pedido)\s*#?(\d+)', message.strip())
+        if pedido_match:
+            numero = pedido_match.group(1)
+            order, response = await get_order_for_delivery(numero)
+            return response
         
         # Admin greeting
         message_lower = message.lower().strip()
@@ -554,28 +1005,135 @@ async def process_sandwich_message_with_ai(phone_number: str, message: str, push
 
 📋 *Comandos:*
 • *PEDIDOS* - Ver pendientes
-• *CONFIRMAR [N°]* - Confirmar pedido
-• *RECHAZAR [N°]* - Rechazar pedido
-• *LISTO [N°]* - Marcar como listo
-• *PAUSAR [TEL]* - Atender manualmente
-• *REANUDAR [TEL]* - Reactivar bot"""
+• *PEDIDO #X* - Ver detalles
+• *CONFIRMAR X* - Confirmar pedido
+• *RECHAZAR X* - Rechazar pedido
+• *LISTO X* - Marcar como listo
+• *ENCAMINO X* - Marcar en camino
+• *ENTREGADO X* - Marcar entregado
+• *ESTADO X [resp]* - Responder consulta
+• *PAUSAR TEL* - Atender manualmente
+• *REANUDAR TEL* - Reactivar bot
+• *DELIVERY TEL* - Agregar delivery"""
         
         return f"""👋 Comandos disponibles:
 
 • *PEDIDOS* - Ver pendientes
-• *CONFIRMAR [N°]* - Confirmar
-• *RECHAZAR [N°]* - Rechazar
-• *LISTO [N°]* - Listo para entrega
-• *PAUSAR [TEL]* - Atender manual
-• *REANUDAR [TEL]* - Reactivar bot"""
+• *PEDIDO #X* - Ver detalles
+• *CONFIRMAR X* - Confirmar
+• *RECHAZAR X* - Rechazar
+• *LISTO X* - Listo para entrega
+• *ENCAMINO X* - En camino
+• *ENTREGADO X* - Entregado
+• *ESTADO X [resp]* - Responder cliente
+• *PAUSAR TEL* - Atender manual
+• *REANUDAR TEL* - Reactivar bot"""
     
-    # Check if paused
+    # ============ DELIVERY COMMANDS ============
+    if is_delivery:
+        print(f"[Sandwich Bot] 🛵 DELIVERY DETECTED! Message: {message[:50]}")
+        
+        # PEDIDO #X command
+        pedido_match = re.match(r'(?:PEDIDO|pedido|Pedido)\s*#?(\d+)', message.strip())
+        if pedido_match:
+            numero = pedido_match.group(1)
+            order, response = await get_order_for_delivery(numero)
+            return response
+        
+        # ENCAMINO command
+        encamino_match = re.match(r'(?:ENCAMINO|encamino|Encamino|EN CAMINO|en camino)\s+(\d+)', message.strip())
+        if encamino_match:
+            numero = encamino_match.group(1)
+            return await delivery_mark_on_way(numero, phone_number)
+        
+        # ENTREGADO command
+        entregado_match = re.match(r'(?:ENTREGADO|entregado|Entregado)\s+(\d+)', message.strip())
+        if entregado_match:
+            numero = entregado_match.group(1)
+            return await delivery_mark_delivered(numero, phone_number)
+        
+        # Delivery greeting
+        message_lower = message.lower().strip()
+        if message_lower in ['hola', 'hi', 'hey', 'buenas']:
+            # Show pending deliveries
+            ready_orders = await db.sandwich_pedidos.find(
+                {"estado": {"$in": ["listo", "en_camino"]}, "tipo_entrega": "delivery"}
+            ).to_list(10)
+            
+            if ready_orders:
+                msg = "🛵 *¡Hola Delivery!*\n\n📦 *Pedidos listos:*\n\n"
+                for o in ready_orders:
+                    msg += f"• *#{o['numero_pedido']}* - {o['nombre']} - {o['estado'].upper()}\n"
+                msg += "\nPara ver detalles: *PEDIDO #X*"
+                return msg
+            return "🛵 *¡Hola Delivery!*\n\nNo hay pedidos listos para entrega.\n\nPara ver un pedido: *PEDIDO #X*"
+        
+        return """🛵 *Comandos Delivery:*
+
+• *PEDIDO #X* - Ver detalles del pedido
+• *ENCAMINO X* - Marcar en camino
+• *ENTREGADO X* - Marcar entregado"""
+    
+    # ============ CLIENT FLOW ============
+    
+    # Check if paused (human handover)
     if await is_sandwich_chat_paused(phone_number):
         print(f"[Sandwich Bot] Chat {phone_number} is paused")
         return None
     
     # Save incoming message
     await save_sandwich_message(phone_number, message, "user", push_name)
+    
+    # Check for client commands first
+    message_lower = message.lower().strip()
+    
+    # CANCELAR command
+    if 'cancelar' in message_lower or message_lower == 'cancelo':
+        order, response = await client_cancel_order(phone_number)
+        if order:
+            await save_sandwich_message(phone_number, response, "assistant")
+            return response
+    
+    # Status query - "cómo va mi pedido"
+    if any(phrase in message_lower for phrase in ['cómo va', 'como va', 'estado de mi pedido', 'mi pedido', 'dónde está', 'donde esta']):
+        active_order = await get_client_active_order(phone_number)
+        if active_order:
+            await create_status_query(phone_number, active_order['numero_pedido'])
+            response = f"🔍 Dejame consultar el estado de tu pedido #{active_order['numero_pedido']}...\n\nTe respondo en un momento."
+            await save_sandwich_message(phone_number, response, "assistant")
+            return response
+    
+    # Human handover request
+    if any(phrase in message_lower for phrase in ['hablar con', 'encargado', 'humano', 'persona', 'gerente', 'manager', 'alguien']):
+        await pause_sandwich_chat(phone_number, "client_request", "human_handover")
+        
+        # Notify admin
+        config = await get_sandwich_config()
+        admin_msg = f"""👤 *SOLICITUD DE ATENCIÓN HUMANA*
+
+Un cliente quiere hablar con alguien:
+📱 {phone_number}
+💬 Mensaje: "{message}"
+
+Para atenderlo manualmente y luego reanudar el bot:
+*REANUDAR {phone_number}*
+
+⚠️ El bot se reanudará automáticamente en {HANDOVER_TIMEOUT_HOURS} horas."""
+        
+        admin_lid = config.get('admin_lid', '')
+        admin_phone_conf = config.get('admin_phone', '')
+        
+        try:
+            if admin_lid:
+                await send_sandwich_message_to_jid(f"{admin_lid}@lid", admin_msg)
+            elif admin_phone_conf:
+                await send_sandwich_message(admin_phone_conf, admin_msg)
+        except Exception as e:
+            print(f"[Sandwich Bot] Error notifying admin: {e}")
+        
+        response = "Un momento, te comunico con el encargado 👤\n\nAlguien te va a atender en breve."
+        await save_sandwich_message(phone_number, response, "assistant")
+        return response
     
     # Get conversation history
     history = await get_sandwich_conversation_history(phone_number, limit=10)
@@ -585,7 +1143,7 @@ async def process_sandwich_message_with_ai(phone_number: str, message: str, push
     menu_formateado = await format_menu_for_bot()
     
     system_prompt = instrucciones.format(
-        nombre_negocio=config.get('nombre_negocio', 'Sandwichería'),
+        nombre_negocio=config.get('nombre_negocio', 'Modo Cocina'),
         menu_formateado=menu_formateado,
         costo_delivery=config.get('costo_delivery', 500),
         pedido_minimo=config.get('pedido_minimo_delivery', 2000),
@@ -593,7 +1151,8 @@ async def process_sandwich_message_with_ai(phone_number: str, message: str, push
         horario_apertura=config.get('horario_apertura', '10:00'),
         horario_cierre=config.get('horario_cierre', '22:00'),
         dias_abierto=', '.join(config.get('dias_abierto', ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'])),
-        direccion_local=config.get('direccion_local', 'Av. Principal 123')
+        direccion_local=config.get('direccion_local', 'Av. Principal 123'),
+        zona_restringida=config.get('zona_restringida', 'Valle Viejo')
     )
     
     is_new_conversation = len(history) <= 1
@@ -671,14 +1230,19 @@ async def process_sandwich_bot_commands(phone_number: str, ai_response: str):
             # Notify admin
             await notify_sandwich_admin(order)
             
+            # Ask for WhatsApp number after order creation
+            whatsapp_request = ""
+            if order.get('pending_whatsapp_request'):
+                whatsapp_request = "\n\n📱 Por último, ¿me pasás tu número de WhatsApp para que el delivery pueda contactarte si es necesario? (Ej: 3834123456)"
+            
             success_msg = f"""✅ *¡PEDIDO REGISTRADO!*
 
-📋 *N° de Pedido:* {order['numero_pedido']}
+📋 *N° de Pedido:* #{order['numero_pedido']}
 
 Tu pedido fue enviado al local.
 Te avisamos cuando esté confirmado. 🙌
 
-_Tiempo estimado de preparación: 20-30 min_"""
+_Tiempo estimado de preparación: 20-30 min_{whatsapp_request}"""
             
             ai_response = re.sub(r'\[CREAR_PEDIDO\].*?\[/CREAR_PEDIDO\]', '', ai_response, flags=re.DOTALL)
             ai_response = ai_response.replace('Procesando tu pedido... ⏳', success_msg)
@@ -690,11 +1254,113 @@ _Tiempo estimado de preparación: 20-30 min_"""
             ai_response = re.sub(r'\[CREAR_PEDIDO\].*?\[/CREAR_PEDIDO\]', '', ai_response, flags=re.DOTALL)
             ai_response = ai_response.replace('Procesando tu pedido... ⏳', '❌ Hubo un error al crear el pedido. Por favor, intentá de nuevo.')
     
+    # Check for PAUSAR_BOT command
+    if '[PAUSAR_BOT]' in ai_response:
+        await pause_sandwich_chat(phone_number, "bot_request", "human_handover")
+        ai_response = ai_response.replace('[PAUSAR_BOT]', '')
+        
+        # Notify admin
+        config = await get_sandwich_config()
+        admin_msg = f"""👤 *SOLICITUD DE ATENCIÓN HUMANA*
+
+📱 Cliente: {phone_number}
+
+Para atenderlo y luego reanudar:
+*REANUDAR {phone_number}*"""
+        
+        admin_lid = config.get('admin_lid', '')
+        admin_phone = config.get('admin_phone', '')
+        
+        try:
+            if admin_lid:
+                await send_sandwich_message_to_jid(f"{admin_lid}@lid", admin_msg)
+            elif admin_phone:
+                await send_sandwich_message(admin_phone, admin_msg)
+        except:
+            pass
+    
+    # Check for CONSULTAR_ESTADO command
+    if '[CONSULTAR_ESTADO]' in ai_response:
+        ai_response = ai_response.replace('[CONSULTAR_ESTADO]', '')
+        active_order = await get_client_active_order(phone_number)
+        if active_order:
+            await create_status_query(phone_number, active_order['numero_pedido'])
+    
+    # Check for CANCELAR_PEDIDO command
+    if '[CANCELAR_PEDIDO]' in ai_response:
+        ai_response = ai_response.replace('[CANCELAR_PEDIDO]', '')
+        order, msg = await client_cancel_order(phone_number)
+        if order:
+            ai_response += f"\n\n{msg}"
+    
+    # Check if client provided WhatsApp number after order
+    # Look for phone number pattern in recent orders
+    recent_order = await db.sandwich_pedidos.find_one(
+        {"telefono": phone_number, "pending_whatsapp_request": True},
+        sort=[("created_at", -1)]
+    )
+    if recent_order:
+        # Try to extract phone number from message
+        phone_match = re.search(r'\b(\d{10,12})\b', ai_response)
+        if not phone_match:
+            # Check original message (we don't have it here, but the bot might echo it)
+            pass
+    
     ai_response = re.sub(r'\[/?CREAR_PEDIDO\]', '', ai_response)
     ai_response = ai_response.strip()
     
     return ai_response
 
+
+async def save_client_phone_from_message(phone_number: str, message: str):
+    """Try to extract and save WhatsApp number from client message"""
+    import re
+    
+    # Check if there's a pending request
+    order = await db.sandwich_pedidos.find_one(
+        {"telefono": phone_number, "pending_whatsapp_request": True},
+        sort=[("created_at", -1)]
+    )
+    
+    if not order:
+        return None
+    
+    # Try to extract phone number
+    phone_match = re.search(r'\b(\d{10,12})\b', message)
+    if phone_match:
+        whatsapp_number = phone_match.group(1)
+        await save_client_whatsapp_number(phone_number, whatsapp_number)
+        
+        # Update order
+        await db.sandwich_pedidos.update_one(
+            {"numero_pedido": order['numero_pedido']},
+            {"$set": {
+                "whatsapp_contact": whatsapp_number,
+                "pending_whatsapp_request": False
+            }}
+        )
+        
+        # Notify admin about updated contact
+        config = await get_sandwich_config()
+        admin_msg = f"📱 Pedido #{order['numero_pedido']} - WhatsApp del cliente: {whatsapp_number}"
+        
+        admin_lid = config.get('admin_lid', '')
+        admin_phone = config.get('admin_phone', '')
+        
+        try:
+            if admin_lid:
+                await send_sandwich_message_to_jid(f"{admin_lid}@lid", admin_msg)
+            elif admin_phone:
+                await send_sandwich_message(admin_phone, admin_msg)
+        except:
+            pass
+        
+        return whatsapp_number
+    
+    return None
+
+
+# ============ WHATSAPP COMMUNICATION ============
 
 async def send_sandwich_message(phone_number: str, message: str):
     """Send a message via WhatsApp sandwich service"""
