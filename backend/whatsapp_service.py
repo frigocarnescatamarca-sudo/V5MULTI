@@ -751,6 +751,22 @@ Ejemplo: CONFIRMAR ABC123"""
     
     # Check if user explicitly wants to check existing coverages
     message_lower = message.lower().strip()
+    
+    # Check if client wants to talk to a human
+    human_keywords = ['hablar con una persona', 'hablar con alguien', 'agente humano', 'persona real', 
+                      'hablar con un humano', 'quiero un asesor', 'necesito un asesor', 'atencion humana',
+                      'operador', 'hablar con operador', 'persona de verdad']
+    wants_human = any(keyword in message_lower for keyword in human_keywords)
+    
+    if wants_human:
+        # Notify admin
+        client_name = client_memory.get('nombre', '') if client_memory else ''
+        await notify_admin_human_request(phone_number, client_name)
+        
+        response = "Un momento, te comunico con un asesor 👤"
+        await save_message(phone_number, response, "assistant")
+        return response
+    
     check_keywords = ['consultar cobertura', 'ver mi cobertura', 'mis coberturas', 'tengo cobertura', 'estado de mi cobertura', 'verificar cobertura']
     wants_to_check = any(keyword in message_lower for keyword in check_keywords)
     
