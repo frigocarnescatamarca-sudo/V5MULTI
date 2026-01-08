@@ -1960,6 +1960,275 @@ async def admin_simulate_conversation(data: dict):
     result = await simulate_conversation_flow(phone_number, client_data)
     return result
 
+
+# ============ SANDWICH BOT ENDPOINTS ============
+
+from whatsapp_sandwich_service import (
+    process_sandwich_message_with_ai,
+    get_sandwich_config,
+    update_sandwich_config,
+    get_sandwich_whatsapp_status,
+    get_sandwich_whatsapp_qr,
+    connect_sandwich_whatsapp,
+    disconnect_sandwich_whatsapp,
+    get_sandwich_conversations,
+    get_sandwich_chat_history,
+    get_menu,
+    send_sandwich_message,
+    pause_sandwich_chat,
+    resume_sandwich_chat,
+    get_sandwich_paused_chats
+)
+
+
+@api_router.post("/sandwich/whatsapp/message")
+async def sandwich_whatsapp_message(data: dict):
+    """Process incoming WhatsApp message for sandwich bot"""
+    phone_number = data.get("phone_number")
+    message = data.get("message")
+    push_name = data.get("push_name", "")
+    reply_jid = data.get("reply_jid", "")
+    
+    if not phone_number or not message:
+        raise HTTPException(status_code=400, detail="phone_number and message required")
+    
+    # Store JID mapping
+    if reply_jid:
+        await db.sandwich_jid_mapping.update_one(
+            {"phone_number": phone_number},
+            {"$set": {"phone_number": phone_number, "jid": reply_jid}},
+            upsert=True
+        )
+    
+    # Process with AI
+    reply = await process_sandwich_message_with_ai(phone_number, message, push_name)
+    
+    return {"success": True, "reply": reply}
+
+
+@api_router.get("/sandwich/whatsapp/status")
+async def sandwich_get_whatsapp_status():
+    """Get WhatsApp connection status for sandwich bot"""
+    return await get_sandwich_whatsapp_status()
+
+
+@api_router.get("/sandwich/whatsapp/qr")
+async def sandwich_get_whatsapp_qr():
+    """Get WhatsApp QR code for sandwich bot"""
+    return await get_sandwich_whatsapp_qr()
+
+
+@api_router.post("/sandwich/whatsapp/connect")
+async def sandwich_connect_whatsapp():
+    """Initiate WhatsApp connection for sandwich bot"""
+    return await connect_sandwich_whatsapp()
+
+
+@api_router.post("/sandwich/whatsapp/disconnect")
+async def sandwich_disconnect_whatsapp():
+    """Disconnect WhatsApp for sandwich bot"""
+    return await disconnect_sandwich_whatsapp()
+
+
+@api_router.get("/sandwich/whatsapp/config")
+async def sandwich_get_config():
+    """Get sandwich bot configuration"""
+    return await get_sandwich_config()
+
+
+@api_router.post("/sandwich/whatsapp/config")
+async def sandwich_update_config(data: dict):
+    """Update sandwich bot configuration"""
+    return await update_sandwich_config(data)
+
+
+@api_router.get("/sandwich/whatsapp/conversations")
+async def sandwich_get_conversations():
+    """Get all conversations for sandwich bot"""
+    return await get_sandwich_conversations()
+
+
+@api_router.get("/sandwich/whatsapp/chat/{phone_number}")
+async def sandwich_get_chat_history_endpoint(phone_number: str, limit: int = 50):
+    """Get chat history for a specific number"""
+    messages = await get_sandwich_chat_history(phone_number, limit)
+    return {"messages": messages, "phone_number": phone_number}
+
+
+@api_router.post("/sandwich/whatsapp/send")
+async def sandwich_send_message(data: dict):
+    """Send a message manually from sandwich bot"""
+    phone_number = data.get("phone_number")
+    message = data.get("message")
+    if not phone_number or not message:
+        raise HTTPException(status_code=400, detail="phone_number and message required")
+    return await send_sandwich_message(phone_number, message)
+
+
+@api_router.post("/sandwich/whatsapp/pause-chat")
+async def sandwich_pause_chat_endpoint(data: dict):
+    """Pause sandwich bot for a specific chat"""
+    phone_number = data.get("phone_number")
+    if not phone_number:
+        raise HTTPException(status_code=400, detail="phone_number required")
+    await pause_sandwich_chat(phone_number, "admin")
+    return {"success": True, "paused": True}
+
+
+@api_router.post("/sandwich/whatsapp/resume-chat")
+async def sandwich_resume_chat_endpoint(data: dict):
+    """Resume sandwich bot for a specific chat"""
+    phone_number = data.get("phone_number")
+    if not phone_number:
+        raise HTTPException(status_code=400, detail="phone_number required")
+    await resume_sandwich_chat(phone_number)
+    return {"success": True, "paused": False}
+
+
+# ============ SANDWICH MENU ENDPOINTS ============
+
+@api_router.get("/sandwich/menu")
+async def sandwich_get_menu():
+    """Get sandwich menu"""
+    menu = await get_menu()
+    return {"menu": menu}
+
+
+@api_router.post("/sandwich/menu/categoria")
+async def sandwich_add_categoria(data: dict):
+    """Add a new category to menu"""
+    categoria = {
+        "categoria": data.get("categoria"),
+        "emoji": data.get("emoji", "🍽️"),
+        "productos": []
+    }
+    await db.sandwich_menu.insert_one(categoria)
+    return {"success": True, "categoria": categoria}
+
+
+@api_router.put("/sandwich/menu/categoria/{categoria_nombre}")
+async def sandwich_update_categoria(categoria_nombre: str, data: dict):
+    """Update a category"""
+    await db.sandwich_menu.update_one(
+        {"categoria": categoria_nombre},
+        {"$set": data}
+    )
+    return {"success": True}
+
+
+@api_router.delete("/sandwich/menu/categoria/{categoria_nombre}")
+async def sandwich_delete_categoria(categoria_nombre: str):
+    """Delete a category"""
+    await db.sandwich_menu.delete_one({"categoria": categoria_nombre})
+    return {"success": True}
+
+
+@api_router.post("/sandwich/menu/producto")
+async def sandwich_add_producto(data: dict):
+    """Add a product to a category"""
+    categoria_nombre = data.get("categoria")
+    producto = {
+        "nombre": data.get("nombre"),
+        "precio": int(data.get("precio", 0)),
+        "descripcion": data.get("descripcion", ""),
+        "activo": data.get("activo", True)
+    }
+    await db.sandwich_menu.update_one(
+        {"categoria": categoria_nombre},
+        {"$push": {"productos": producto}}
+    )
+    return {"success": True, "producto": producto}
+
+
+@api_router.put("/sandwich/menu/producto")
+async def sandwich_update_producto(data: dict):
+    """Update a product in a category"""
+    categoria_nombre = data.get("categoria")
+    producto_nombre = data.get("nombre_original")
+    updates = {
+        "productos.$.nombre": data.get("nombre"),
+        "productos.$.precio": int(data.get("precio", 0)),
+        "productos.$.descripcion": data.get("descripcion", ""),
+        "productos.$.activo": data.get("activo", True)
+    }
+    await db.sandwich_menu.update_one(
+        {"categoria": categoria_nombre, "productos.nombre": producto_nombre},
+        {"$set": updates}
+    )
+    return {"success": True}
+
+
+@api_router.delete("/sandwich/menu/producto")
+async def sandwich_delete_producto(data: dict):
+    """Delete a product from a category"""
+    categoria_nombre = data.get("categoria")
+    producto_nombre = data.get("nombre")
+    await db.sandwich_menu.update_one(
+        {"categoria": categoria_nombre},
+        {"$pull": {"productos": {"nombre": producto_nombre}}}
+    )
+    return {"success": True}
+
+
+# ============ SANDWICH ORDERS ENDPOINTS ============
+
+@api_router.get("/sandwich/pedidos")
+async def sandwich_get_pedidos(estado: Optional[str] = None):
+    """Get all orders, optionally filtered by status"""
+    query = {}
+    if estado:
+        query["estado"] = estado
+    
+    pedidos = await db.sandwich_pedidos.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return {"pedidos": pedidos}
+
+
+@api_router.get("/sandwich/pedidos/{numero_pedido}")
+async def sandwich_get_pedido(numero_pedido: str):
+    """Get a specific order"""
+    pedido = await db.sandwich_pedidos.find_one({"numero_pedido": numero_pedido}, {"_id": 0})
+    if not pedido:
+        raise HTTPException(status_code=404, detail="Pedido no encontrado")
+    return pedido
+
+
+@api_router.put("/sandwich/pedidos/{numero_pedido}/estado")
+async def sandwich_update_pedido_estado(numero_pedido: str, data: dict):
+    """Update order status"""
+    nuevo_estado = data.get("estado")
+    if nuevo_estado not in ["pendiente", "confirmado", "preparando", "listo", "entregado", "cancelado"]:
+        raise HTTPException(status_code=400, detail="Estado inválido")
+    
+    await db.sandwich_pedidos.update_one(
+        {"numero_pedido": numero_pedido},
+        {"$set": {"estado": nuevo_estado, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"success": True, "estado": nuevo_estado}
+
+
+@api_router.get("/sandwich/estadisticas")
+async def sandwich_get_estadisticas():
+    """Get sandwich shop statistics"""
+    hoy = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    total_pedidos = await db.sandwich_pedidos.count_documents({})
+    pedidos_hoy = await db.sandwich_pedidos.count_documents({"created_at": {"$gte": hoy.isoformat()}})
+    pedidos_pendientes = await db.sandwich_pedidos.count_documents({"estado": "pendiente"})
+    pedidos_confirmados = await db.sandwich_pedidos.count_documents({"estado": "confirmado"})
+    
+    # Total ventas (solo entregados)
+    entregados = await db.sandwich_pedidos.find({"estado": "entregado"}).to_list(1000)
+    total_ventas = sum([p.get('total', 0) for p in entregados])
+    
+    return {
+        "total_pedidos": total_pedidos,
+        "pedidos_hoy": pedidos_hoy,
+        "pedidos_pendientes": pedidos_pendientes,
+        "pedidos_confirmados": pedidos_confirmados,
+        "total_ventas": total_ventas
+    }
+
+
 # Include router
 app.include_router(api_router)
 
