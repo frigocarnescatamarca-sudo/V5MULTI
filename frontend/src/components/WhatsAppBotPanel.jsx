@@ -686,6 +686,290 @@ export default function WhatsAppBotPanel() {
             </div>
           </div>
         </TabsContent>
+
+        {/* GUÍA TAB */}
+        <TabsContent value="guia" className="space-y-6">
+          {/* Comandos de Admin */}
+          <Card>
+            <CardHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-t-lg">
+              <CardTitle className="flex items-center gap-2">
+                <Command className="w-5 h-5" />
+                Comandos de Admin (vía WhatsApp)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                    <h4 className="font-bold text-green-800 mb-2">CONFIRMAR [RECIBO]</h4>
+                    <p className="text-sm text-green-700">Confirma el pago de una cobertura y envía comprobantes al cliente.</p>
+                    <code className="text-xs bg-green-100 px-2 py-1 rounded mt-2 block">Ejemplo: CONFIRMAR ABC123</code>
+                  </div>
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h4 className="font-bold text-blue-800 mb-2">ESTADO</h4>
+                    <p className="text-sm text-blue-700">Muestra lista de coberturas pendientes de pago.</p>
+                    <code className="text-xs bg-blue-100 px-2 py-1 rounded mt-2 block">Ejemplo: ESTADO</code>
+                  </div>
+                  <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                    <h4 className="font-bold text-orange-800 mb-2">PAUSAR [NÚMERO]</h4>
+                    <p className="text-sm text-orange-700">Pausa el bot para ese cliente. Vos lo atendés manualmente.</p>
+                    <code className="text-xs bg-orange-100 px-2 py-1 rounded mt-2 block">Ejemplo: PAUSAR 5491112345678</code>
+                  </div>
+                  <div className="p-4 bg-teal-50 rounded-lg border border-teal-200">
+                    <h4 className="font-bold text-teal-800 mb-2">REANUDAR [NÚMERO]</h4>
+                    <p className="text-sm text-teal-700">Reactiva el bot para ese cliente.</p>
+                    <code className="text-xs bg-teal-100 px-2 py-1 rounded mt-2 block">Ejemplo: REANUDAR 5491112345678</code>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 md:col-span-2">
+                    <h4 className="font-bold text-gray-800 mb-2">PAUSADOS</h4>
+                    <p className="text-sm text-gray-700">Muestra lista de todos los chats que están en atención humana.</p>
+                    <code className="text-xs bg-gray-100 px-2 py-1 rounded mt-2 block">Ejemplo: PAUSADOS</code>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Funcionalidades del Bot */}
+          <Card>
+            <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="w-5 h-5" />
+                Funcionalidades del Bot
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-white rounded-lg border shadow-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Zap className="w-5 h-5 text-yellow-500" />
+                      <h4 className="font-bold">Venta Automática</h4>
+                    </div>
+                    <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
+                      <li>Identifica tipo de vehículo</li>
+                      <li>Ofrece coberturas con precios</li>
+                      <li>Recopila datos del cliente</li>
+                      <li>Crea cobertura en el sistema</li>
+                      <li>Envía instrucciones de pago</li>
+                    </ul>
+                  </div>
+                  <div className="p-4 bg-white rounded-lg border shadow-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Users className="w-5 h-5 text-blue-500" />
+                      <h4 className="font-bold">Memoria de Clientes</h4>
+                    </div>
+                    <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
+                      <li>Recuerda nombre del cliente</li>
+                      <li>Guarda DNI, email, vehículo</li>
+                      <li>Personaliza conversaciones</li>
+                      <li>No repite preguntas de datos</li>
+                    </ul>
+                  </div>
+                  <div className="p-4 bg-white rounded-lg border shadow-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Clock className="w-5 h-5 text-orange-500" />
+                      <h4 className="font-bold">Seguimiento Automático</h4>
+                    </div>
+                    <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
+                      <li>Si el cliente no responde en 10 min</li>
+                      <li>Envía mensaje de despedida cordial</li>
+                      <li>Invita a retomar la conversación</li>
+                    </ul>
+                  </div>
+                  <div className="p-4 bg-white rounded-lg border shadow-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <User className="w-5 h-5 text-purple-500" />
+                      <h4 className="font-bold">Derivación a Humano</h4>
+                    </div>
+                    <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
+                      <li>Detecta cuando piden hablar con persona</li>
+                      <li>Te notifica por WhatsApp</li>
+                      <li>Podés pausar el bot para atender</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Precios */}
+          <Card>
+            <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg">
+              <CardTitle className="flex items-center gap-2">
+                💰 Precios de Coberturas (30 días)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 px-4">Vehículo</th>
+                      <th className="text-center py-2 px-4">RC (Resp. Civil)</th>
+                      <th className="text-center py-2 px-4">Completo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b">
+                      <td className="py-2 px-4 font-medium">🚗 Auto</td>
+                      <td className="text-center py-2 px-4">$6,000</td>
+                      <td className="text-center py-2 px-4">$9,000</td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="py-2 px-4 font-medium">🏍️ Moto</td>
+                      <td className="text-center py-2 px-4">$3,500</td>
+                      <td className="text-center py-2 px-4">$5,500</td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="py-2 px-4 font-medium">🚕 Taxi/Remis</td>
+                      <td className="text-center py-2 px-4">$10,000</td>
+                      <td className="text-center py-2 px-4">$18,000</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 px-4 font-medium">📱 App (Uber/Didi)</td>
+                      <td className="text-center py-2 px-4">$6,000</td>
+                      <td className="text-center py-2 px-4">$9,000</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Técnicas de Venta */}
+          <Card>
+            <CardHeader className="bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-t-lg">
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" />
+                Técnicas de Venta Implementadas
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                  <h4 className="font-bold text-amber-800 mb-2">Estilo de Comunicación</h4>
+                  <ul className="text-sm text-amber-700 space-y-1 list-disc list-inside">
+                    <li>Mensajes cortos y directos</li>
+                    <li>Lenguaje simple, sin tecnicismos</li>
+                    <li>No educar, no justificar, no debatir</li>
+                    <li>Priorizar preguntas que avancen la venta</li>
+                  </ul>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-white rounded-lg border shadow-sm">
+                    <h4 className="font-bold text-gray-800 mb-2">✅ Confirmar Utilidad</h4>
+                    <p className="text-sm text-gray-600 italic">"Sirve sin problema para eso 👍"</p>
+                  </div>
+                  <div className="p-4 bg-white rounded-lg border shadow-sm">
+                    <h4 className="font-bold text-gray-800 mb-2">⏰ Urgencia Suave</h4>
+                    <p className="text-sm text-gray-600 italic">"¿Lo necesitás para activarlo hoy?"</p>
+                  </div>
+                  <div className="p-4 bg-white rounded-lg border shadow-sm">
+                    <h4 className="font-bold text-gray-800 mb-2">🎯 Reducción de Dudas</h4>
+                    <p className="text-sm text-gray-600 italic">"La mayoría lo contrata para circular tranquilo."</p>
+                  </div>
+                  <div className="p-4 bg-white rounded-lg border shadow-sm">
+                    <h4 className="font-bold text-gray-800 mb-2">📄 Frase de Refuerzo</h4>
+                    <p className="text-sm text-gray-600 italic">"Te queda el certificado listo para circular."</p>
+                  </div>
+                </div>
+                <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+                  <h4 className="font-bold text-red-800 mb-2">🚫 Palabras Prohibidas</h4>
+                  <p className="text-sm text-red-700">
+                    <span className="line-through">seguro, póliza, aseguradora, prima, indemnización</span>
+                  </p>
+                  <p className="text-sm text-green-700 mt-2">
+                    ✓ Usar: cobertura, certificado, activación, circular
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Flujo del Cliente */}
+          <Card>
+            <CardHeader className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-t-lg">
+              <CardTitle className="flex items-center gap-2">
+                📋 Flujo de Venta del Bot
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-sm shrink-0">1</div>
+                  <div>
+                    <h4 className="font-bold">Cliente saluda</h4>
+                    <p className="text-sm text-gray-600">Bot da bienvenida y pregunta tipo de vehículo</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-sm shrink-0">2</div>
+                  <div>
+                    <h4 className="font-bold">Ofrece opciones</h4>
+                    <p className="text-sm text-gray-600">Muestra RC y Completo con precios</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-sm shrink-0">3</div>
+                  <div>
+                    <h4 className="font-bold">Recopila datos</h4>
+                    <p className="text-sm text-gray-600">Pide TODOS los datos juntos: nombre, DNI, email, patente, marca/modelo, año</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-sm shrink-0">4</div>
+                  <div>
+                    <h4 className="font-bold">Confirma y crea</h4>
+                    <p className="text-sm text-gray-600">Muestra resumen, cliente confirma, se crea la cobertura</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-sm shrink-0">5</div>
+                  <div>
+                    <h4 className="font-bold">Pago</h4>
+                    <p className="text-sm text-gray-600">Envía datos bancarios, cliente paga y envía comprobante</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center font-bold text-sm shrink-0">✓</div>
+                  <div>
+                    <h4 className="font-bold">Admin confirma</h4>
+                    <p className="text-sm text-gray-600">Admin escribe CONFIRMAR [RECIBO], cliente recibe comprobantes</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Consulta de Coberturas */}
+          <Card>
+            <CardHeader className="bg-gradient-to-r from-cyan-500 to-cyan-600 text-white rounded-t-lg">
+              <CardTitle className="flex items-center gap-2">
+                🔍 Consulta de Coberturas por DNI
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="p-4 bg-cyan-50 rounded-lg border border-cyan-200">
+                  <h4 className="font-bold text-cyan-800 mb-2">Vía WhatsApp Bot</h4>
+                  <p className="text-sm text-cyan-700">El cliente puede escribir frases como:</p>
+                  <ul className="text-sm text-cyan-600 mt-2 space-y-1 list-disc list-inside">
+                    <li>"Consultar cobertura 12345678"</li>
+                    <li>"Ver mi cobertura"</li>
+                    <li>"Mis coberturas"</li>
+                  </ul>
+                </div>
+                <div className="p-4 bg-cyan-50 rounded-lg border border-cyan-200">
+                  <h4 className="font-bold text-cyan-800 mb-2">Vía Web</h4>
+                  <p className="text-sm text-cyan-700">Portal público en:</p>
+                  <code className="text-xs bg-cyan-100 px-2 py-1 rounded mt-2 block">/mis-coberturas</code>
+                  <p className="text-sm text-cyan-600 mt-2">Ingresa DNI y ve todas sus coberturas</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
