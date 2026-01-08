@@ -576,6 +576,17 @@ Ejemplo: CONFIRMAR ABC123"""
     # Save incoming message
     await save_message(phone_number, message, "user", push_name)
     
+    # Update conversation activity (client responded)
+    await update_conversation_activity(phone_number, has_client_response=True)
+    
+    # Get client memory (stored name, previous interactions)
+    client_memory = await get_client_memory(phone_number)
+    
+    # Save push_name as client name if we don't have one
+    if push_name and (not client_memory or not client_memory.get('nombre')):
+        await save_client_memory(phone_number, {"nombre": push_name, "push_name": push_name})
+        client_memory = await get_client_memory(phone_number)
+    
     # Check if user explicitly wants to check existing coverages
     message_lower = message.lower().strip()
     check_keywords = ['consultar cobertura', 'ver mi cobertura', 'mis coberturas', 'tengo cobertura', 'estado de mi cobertura', 'verificar cobertura']
@@ -600,6 +611,21 @@ Ejemplo: CONFIRMAR ABC123"""
     datos_bancarios = config.get("datos_bancarios", DEFAULT_BOT_CONFIG["datos_bancarios"])
     system_prompt = instrucciones.replace("{datos_bancarios}", datos_bancarios)
     
+    # Add client memory context to system prompt
+    if client_memory:
+        memory_context = "\n\n=== MEMORIA DEL CLIENTE ===\n"
+        memory_context += f"Este cliente ya te escribió antes. Información guardada:\n"
+        if client_memory.get('nombre'):
+            memory_context += f"- Nombre: {client_memory['nombre']}\n"
+        if client_memory.get('dni'):
+            memory_context += f"- DNI: {client_memory['dni']}\n"
+        if client_memory.get('email'):
+            memory_context += f"- Email: {client_memory['email']}\n"
+        if client_memory.get('vehiculo'):
+            memory_context += f"- Vehículo anterior: {client_memory['vehiculo']}\n"
+        memory_context += "\nSi el cliente ya dio su nombre, saludalo por su nombre. No le pidas datos que ya tenés."
+        system_prompt += memory_context
+    
     # Check if this is a new conversation (first message or no recent history)
     is_new_conversation = len(history) <= 1
     
@@ -618,6 +644,9 @@ Ejemplo: CONFIRMAR ABC123"""
         # Add welcome message for new conversations
         if is_new_conversation:
             welcome_msg = config.get("mensaje_bienvenida", DEFAULT_BOT_CONFIG["mensaje_bienvenida"])
+            # Personalize welcome if we know the client
+            if client_memory and client_memory.get('nombre'):
+                welcome_msg = f"¡Hola {client_memory['nombre']}! 👋 Qué gusto verte de nuevo.\n\n" + welcome_msg.split('\n\n', 1)[-1] if '\n\n' in welcome_msg else welcome_msg
             initial_messages.append({"role": "assistant", "content": welcome_msg})
         
         # Add conversation history
