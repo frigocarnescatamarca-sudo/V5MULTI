@@ -5,6 +5,8 @@ import PagoExitoso from '@/pages/PagoExitoso';
 import PagoFallido from '@/pages/PagoFallido';
 import PortalCliente from '@/pages/PortalCliente';
 import AdminPanel from '@/pages/AdminPanel';
+import AdminSelector from '@/pages/AdminSelector';
+import AdminSandwich from '@/pages/AdminSandwich';
 import PanelAgente from '@/pages/PanelAgente';
 import Verificar from '@/pages/Verificar';
 import MisCoberturas from '@/pages/MisCoberturas';
@@ -21,7 +23,9 @@ function App() {
           <Route path="/pago-exitoso" element={<PagoExitoso />} />
           <Route path="/pago-fallido" element={<PagoFallido />} />
           <Route path="/cliente" element={<PortalCliente />} />
+          <Route path="/admin-selector" element={<AdminSelector />} />
           <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/admin-sandwich" element={<AdminSandwich />} />
           <Route path="/agente" element={<PanelAgente />} />
           <Route path="/verificar/:numero_recibo" element={<Verificar />} />
           <Route path="/mis-coberturas" element={<MisCoberturas />} />
