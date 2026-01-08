@@ -470,14 +470,21 @@ Ejemplo: CONFIRMAR ABC123"""
     # Save incoming message
     await save_message(phone_number, message, "user", push_name)
     
-    # Check if message is a DNI query (only digits, 7-8 characters)
-    clean_message = message.strip().replace('.', '').replace(' ', '')
-    if clean_message.isdigit() and 7 <= len(clean_message) <= 8:
-        # This looks like a DNI - check for coverages
-        dni_response = await check_coverages_by_dni(clean_message)
-        if dni_response:
-            await save_message(phone_number, dni_response, "assistant")
-            return dni_response
+    # Check if user explicitly wants to check existing coverages
+    message_lower = message.lower().strip()
+    check_keywords = ['consultar cobertura', 'ver mi cobertura', 'mis coberturas', 'tengo cobertura', 'estado de mi cobertura', 'verificar cobertura']
+    wants_to_check = any(keyword in message_lower for keyword in check_keywords)
+    
+    # Only check DNI for coverages if user explicitly asks to check
+    if wants_to_check:
+        # Extract DNI from message if present
+        clean_message = message.strip().replace('.', '').replace(' ', '')
+        dni_match = ''.join(filter(str.isdigit, message))
+        if dni_match and 7 <= len(dni_match) <= 8:
+            dni_response = await check_coverages_by_dni(dni_match)
+            if dni_response:
+                await save_message(phone_number, dni_response, "assistant")
+                return dni_response
     
     # Get conversation history
     history = await get_conversation_history(phone_number, limit=10)
