@@ -869,7 +869,7 @@ Disculpá las molestias. ¿Querés hacer otro pedido?"""
 
 
 async def admin_order_ready(numero_pedido: str, admin_phone: str):
-    """Admin marks order as ready"""
+    """Admin or delivery marks order as ready"""
     order = await db.sandwich_pedidos.find_one({"numero_pedido": numero_pedido})
     
     if not order:
@@ -879,17 +879,31 @@ async def admin_order_ready(numero_pedido: str, admin_phone: str):
         {"numero_pedido": numero_pedido},
         {"$set": {
             "estado": "listo",
-            "listo_at": datetime.now(timezone.utc).isoformat()
+            "listo_at": datetime.now(timezone.utc).isoformat(),
+            "listo_por": admin_phone
         }}
     )
     
     if order['tipo_entrega'] == 'delivery':
-        client_msg = f"""🛵 *¡TU PEDIDO ESTÁ EN CAMINO!*
+        client_msg = f"""🛵 *¡TU PEDIDO ESTÁ LISTO!*
 
 Pedido #{numero_pedido}
 
-Nuestro delivery ya salió con tu pedido.
+Ya está preparado y pronto saldrá para entrega.
 ¡En unos minutos lo tenés! 🙌"""
+        
+        # Notify all deliveries about ready order
+        delivery_msg = f"""📦 *PEDIDO LISTO PARA ENTREGA*
+
+📋 Pedido #{numero_pedido}
+👤 {order.get('nombre', 'Cliente')}
+📍 {order.get('direccion', 'Sin dirección')}
+💰 ${order.get('total', 0):,}
+
+Para ver detalles: *PEDIDO {numero_pedido}*
+Para marcar en camino: *ENCAMINO {numero_pedido}*"""
+        
+        await notify_all_deliveries(delivery_msg)
     else:
         client_msg = f"""🏪 *¡TU PEDIDO ESTÁ LISTO!*
 
@@ -903,7 +917,7 @@ Ya podés pasar a retirarlo.
     except Exception as e:
         print(f"[Sandwich Bot] Error notifying client: {e}")
     
-    return f"✅ Pedido #{numero_pedido} marcado como LISTO. Se notificó al cliente."
+    return f"✅ Pedido #{numero_pedido} marcado como LISTO. Se notificó al cliente{' y deliveries' if order['tipo_entrega'] == 'delivery' else ''}."
 
 
 async def client_cancel_order(phone_number: str):
