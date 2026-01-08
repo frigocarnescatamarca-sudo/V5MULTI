@@ -382,15 +382,66 @@ export default function AdminSandwich() {
                   {/* Admin Commands */}
                   <div className="p-4 rounded-lg bg-amber-50">
                     <h3 className="font-bold mb-2">📋 Comandos del Admin (vía WhatsApp)</h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="font-medium text-sm text-gray-600 mb-1">Gestión de Pedidos</h4>
+                        <ul className="text-sm space-y-1">
+                          <li><code className="bg-gray-200 px-1">PEDIDOS</code> - Ver pedidos pendientes</li>
+                          <li><code className="bg-gray-200 px-1">PEDIDO #X</code> - Ver detalles del pedido</li>
+                          <li><code className="bg-gray-200 px-1">CONFIRMAR X</code> - Confirmar un pedido</li>
+                          <li><code className="bg-gray-200 px-1">RECHAZAR X</code> - Rechazar un pedido</li>
+                          <li><code className="bg-gray-200 px-1">LISTO X</code> - Marcar pedido como listo</li>
+                          <li><code className="bg-gray-200 px-1">ENCAMINO X</code> - Marcar en camino</li>
+                          <li><code className="bg-gray-200 px-1">ENTREGADO X</code> - Marcar entregado</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-sm text-gray-600 mb-1">Atención al Cliente</h4>
+                        <ul className="text-sm space-y-1">
+                          <li><code className="bg-gray-200 px-1">ESTADO X [resp]</code> - Responder consulta de cliente</li>
+                          <li><code className="bg-gray-200 px-1">PAUSAR TEL</code> - Atender cliente manualmente</li>
+                          <li><code className="bg-gray-200 px-1">REANUDAR TEL</code> - Reactivar bot para cliente</li>
+                          <li><code className="bg-gray-200 px-1">DELIVERY TEL</code> - Agregar número de delivery</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Delivery Commands */}
+                  <div className="p-4 rounded-lg bg-blue-50">
+                    <h3 className="font-bold mb-2">🛵 Comandos del Delivery (vía WhatsApp)</h3>
                     <ul className="text-sm space-y-1">
-                      <li><code className="bg-gray-200 px-1">PEDIDOS</code> - Ver pedidos pendientes</li>
-                      <li><code className="bg-gray-200 px-1">CONFIRMAR [N°]</code> - Confirmar un pedido</li>
-                      <li><code className="bg-gray-200 px-1">RECHAZAR [N°]</code> - Rechazar un pedido</li>
-                      <li><code className="bg-gray-200 px-1">LISTO [N°]</code> - Marcar pedido como listo</li>
-                      <li><code className="bg-gray-200 px-1">PAUSAR [TEL]</code> - Atender cliente manualmente</li>
-                      <li><code className="bg-gray-200 px-1">REANUDAR [TEL]</code> - Reactivar bot para cliente</li>
+                      <li><code className="bg-gray-200 px-1">PEDIDO #X</code> - Ver detalles del pedido (dirección, WhatsApp, ubicación)</li>
+                      <li><code className="bg-gray-200 px-1">ENCAMINO X</code> - Marcar pedido en camino (notifica al cliente)</li>
+                      <li><code className="bg-gray-200 px-1">ENTREGADO X</code> - Marcar pedido entregado</li>
+                    </ul>
+                    <p className="text-xs text-gray-500 mt-2">
+                      💡 Para agregar un delivery, el admin debe enviar: <code className="bg-gray-200 px-1">DELIVERY 3834123456</code>
+                    </p>
+                  </div>
+
+                  {/* Client Features */}
+                  <div className="p-4 rounded-lg bg-green-50">
+                    <h3 className="font-bold mb-2">👤 Funciones del Cliente</h3>
+                    <ul className="text-sm space-y-1">
+                      <li>📍 <strong>Compartir ubicación:</strong> El cliente puede enviar su ubicación para facilitar la entrega</li>
+                      <li>❓ <strong>Consultar estado:</strong> "¿Cómo va mi pedido?" - Se consulta al admin y se responde</li>
+                      <li>👤 <strong>Hablar con humano:</strong> "Quiero hablar con alguien" - Pausa el bot 2 horas</li>
+                      <li>❌ <strong>Cancelar pedido:</strong> "Cancelar" - Cancela el pedido activo</li>
                     </ul>
                   </div>
+
+                  {/* Registered Deliveries */}
+                  {config.delivery_phones && config.delivery_phones.length > 0 && (
+                    <div className="p-4 rounded-lg bg-gray-50">
+                      <h3 className="font-bold mb-2">🛵 Deliveries Registrados</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {config.delivery_phones.map((phone, idx) => (
+                          <Badge key={idx} variant="outline">{phone}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
