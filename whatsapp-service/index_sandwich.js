@@ -153,7 +153,30 @@ async function handleIncomingMessage(message) {
         console.log(`[Sandwich] Processing message from: ${phoneNumber}`);
 
         let messageText = '';
-        if (message.message.conversation) {
+        let location = null;
+        
+        // Check for location message first
+        if (message.message.locationMessage) {
+            const loc = message.message.locationMessage;
+            location = {
+                latitude: loc.degreesLatitude,
+                longitude: loc.degreesLongitude,
+                name: loc.name || '',
+                address: loc.address || ''
+            };
+            messageText = `📍 Ubicación compartida`;
+            console.log(`[Sandwich] Location received from ${phoneNumber}: ${location.latitude}, ${location.longitude}`);
+        } else if (message.message.liveLocationMessage) {
+            const loc = message.message.liveLocationMessage;
+            location = {
+                latitude: loc.degreesLatitude,
+                longitude: loc.degreesLongitude,
+                name: 'Ubicación en vivo',
+                address: ''
+            };
+            messageText = `📍 Ubicación en vivo compartida`;
+            console.log(`[Sandwich] Live location received from ${phoneNumber}: ${location.latitude}, ${location.longitude}`);
+        } else if (message.message.conversation) {
             messageText = message.message.conversation;
         } else if (message.message.extendedTextMessage?.text) {
             messageText = message.message.extendedTextMessage.text;
@@ -161,8 +184,8 @@ async function handleIncomingMessage(message) {
             messageText = message.message.imageMessage.caption;
         }
 
-        if (!messageText) {
-            console.log('[Sandwich] Message without text, skipping');
+        if (!messageText && !location) {
+            console.log('[Sandwich] Message without text or location, skipping');
             return;
         }
 
@@ -173,6 +196,7 @@ async function handleIncomingMessage(message) {
             phone_number: phoneNumber,
             remote_jid: remoteJid,
             message: messageText,
+            location: location,
             timestamp: message.messageTimestamp,
             push_name: message.pushName || '',
             processed: false,
@@ -191,14 +215,21 @@ async function handleIncomingMessage(message) {
 
         // Forward to FastAPI - SANDWICH endpoint
         try {
-            const response = await axios.post(`${FASTAPI_URL}/api/sandwich/whatsapp/message`, {
+            const payload = {
                 phone_number: phoneNumber,
                 message: messageText,
                 message_id: message.key.id,
                 timestamp: message.messageTimestamp,
                 push_name: message.pushName || '',
                 reply_jid: replyJid
-            }, { timeout: 30000 });
+            };
+            
+            // Include location if present
+            if (location) {
+                payload.location = location;
+            }
+            
+            const response = await axios.post(`${FASTAPI_URL}/api/sandwich/whatsapp/message`, payload, { timeout: 30000 });
 
             if (response.data.reply) {
                 const delay = 2000 + Math.random() * 3000;
