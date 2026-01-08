@@ -20,6 +20,8 @@ export default function AdminSandwich() {
   const [whatsappStatus, setWhatsappStatus] = useState({ connected: false });
   const [qrCode, setQrCode] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [botUsers, setBotUsers] = useState([]);
+  const [botSessions, setBotSessions] = useState({ admin_sessions: [], delivery_sessions: [] });
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
@@ -34,16 +36,20 @@ export default function AdminSandwich() {
 
   const loadData = async () => {
     try {
-      const [pedidosRes, menuRes, configRes, statsRes] = await Promise.all([
+      const [pedidosRes, menuRes, configRes, statsRes, usersRes, sessionsRes] = await Promise.all([
         api.get('/sandwich/pedidos'),
         api.get('/sandwich/menu'),
         api.get('/sandwich/whatsapp/config'),
-        api.get('/sandwich/estadisticas')
+        api.get('/sandwich/estadisticas'),
+        api.get('/sandwich/users').catch(() => ({ data: { users: [] } })),
+        api.get('/sandwich/sessions').catch(() => ({ data: { admin_sessions: [], delivery_sessions: [] } }))
       ]);
       setPedidos(pedidosRes.data.pedidos || []);
       setMenu(menuRes.data.menu || []);
       setConfig(configRes.data || {});
       setStats(statsRes.data || {});
+      setBotUsers(usersRes.data.users || []);
+      setBotSessions(sessionsRes.data || { admin_sessions: [], delivery_sessions: [] });
       await loadWhatsAppStatus();
     } catch (error) {
       console.error('Error loading data:', error);
