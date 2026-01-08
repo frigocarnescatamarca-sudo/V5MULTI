@@ -206,6 +206,16 @@ async def get_bot_config():
     
     # Remove _id for clean return
     del config["_id"]
+    
+    # Ensure precios exists (for backwards compatibility)
+    if "precios" not in config:
+        config["precios"] = DEFAULT_BOT_CONFIG["precios"]
+        # Save to DB
+        await db.whatsapp_config.update_one(
+            {"_id": "bot_config"},
+            {"$set": {"precios": config["precios"]}}
+        )
+    
     return config
 
 
