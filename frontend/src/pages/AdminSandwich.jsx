@@ -208,26 +208,50 @@ export default function AdminSandwich() {
                       <Card key={pedido.numero_pedido} className="border-l-4 border-l-amber-500">
                         <CardContent className="p-4">
                           <div className="flex justify-between items-start">
-                            <div>
+                            <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
                                 <span className="font-bold text-lg">#{pedido.numero_pedido}</span>
                                 {getEstadoBadge(pedido.estado)}
                                 <Badge variant="outline">
                                   {pedido.tipo_entrega === 'delivery' ? '🛵 Delivery' : '🏪 Retiro'}
                                 </Badge>
+                                {pedido.has_location && (
+                                  <Badge className="bg-blue-100 text-blue-800">📍 Ubicación</Badge>
+                                )}
                               </div>
                               <p className="text-gray-600">👤 {pedido.nombre}</p>
-                              <p className="text-gray-600">📱 {pedido.telefono}</p>
+                              <p className="text-gray-600">📱 LID: {pedido.telefono}</p>
+                              {pedido.whatsapp_contact && (
+                                <p className="text-green-600 font-medium">📞 WhatsApp: {pedido.whatsapp_contact}</p>
+                              )}
                               {pedido.tipo_entrega === 'delivery' && (
-                                <p className="text-gray-600">📍 {pedido.direccion}</p>
+                                <>
+                                  <p className="text-gray-600">📍 {pedido.direccion}</p>
+                                  {pedido.has_location && pedido.location && (
+                                    <a 
+                                      href={`https://maps.google.com/?q=${pedido.location.latitude},${pedido.location.longitude}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-500 hover:underline text-sm"
+                                    >
+                                      🗺️ Ver en Google Maps
+                                    </a>
+                                  )}
+                                </>
+                              )}
+                              {pedido.modificaciones && pedido.modificaciones.toLowerCase() !== 'ninguna' && (
+                                <p className="text-orange-600 mt-1">✏️ Modificaciones: {pedido.modificaciones}</p>
                               )}
                               <div className="mt-2 text-sm">
                                 <p className="font-medium">Pedido:</p>
                                 <p className="whitespace-pre-line text-gray-700">{pedido.items_formatted || pedido.items}</p>
                               </div>
                               <p className="mt-2 font-bold text-lg text-amber-600">Total: ${pedido.total?.toLocaleString()}</p>
+                              <p className="text-xs text-gray-400 mt-1">
+                                {new Date(pedido.created_at).toLocaleString('es-AR')}
+                              </p>
                             </div>
-                            <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-2 ml-4">
                               {pedido.estado === 'pendiente' && (
                                 <>
                                   <Button size="sm" className="bg-green-500 hover:bg-green-600" onClick={() => updatePedidoEstado(pedido.numero_pedido, 'confirmado')}>
@@ -248,7 +272,12 @@ export default function AdminSandwich() {
                                   ✅ Listo
                                 </Button>
                               )}
-                              {pedido.estado === 'listo' && (
+                              {pedido.estado === 'listo' && pedido.tipo_entrega === 'delivery' && (
+                                <Button size="sm" className="bg-cyan-500 hover:bg-cyan-600" onClick={() => updatePedidoEstado(pedido.numero_pedido, 'en_camino')}>
+                                  🛵 En Camino
+                                </Button>
+                              )}
+                              {(pedido.estado === 'listo' || pedido.estado === 'en_camino') && (
                                 <Button size="sm" className="bg-gray-500 hover:bg-gray-600" onClick={() => updatePedidoEstado(pedido.numero_pedido, 'entregado')}>
                                   📦 Entregado
                                 </Button>
