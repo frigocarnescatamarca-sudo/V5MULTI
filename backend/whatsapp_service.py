@@ -217,6 +217,69 @@ async def update_bot_config(config_data: dict):
     return await get_bot_config()
 
 
+async def is_chat_paused(phone_number: str) -> bool:
+    """Check if a chat is paused for human attention"""
+    paused = await db.whatsapp_paused.find_one({"phone_number": phone_number})
+    return paused is not None
+
+
+async def pause_chat(phone_number: str, admin_phone: str):
+    """Pause bot for a specific chat - human will attend"""
+    await db.whatsapp_paused.update_one(
+        {"phone_number": phone_number},
+        {"$set": {
+            "phone_number": phone_number,
+            "paused_by": admin_phone,
+            "paused_at": datetime.now(timezone.utc).isoformat()
+        }},
+        upsert=True
+    )
+
+
+async def resume_chat(phone_number: str):
+    """Resume bot for a specific chat"""
+    await db.whatsapp_paused.delete_one({"phone_number": phone_number})
+
+
+async def get_paused_chats():
+    """Get list of all paused chats"""
+    paused = await db.whatsapp_paused.find({}, {"_id": 0}).to_list(100)
+    return paused
+
+
+async def notify_admin_human_request(client_phone: str, client_name: str = ""):
+    """Notify admin that a client wants human attention"""
+    config = await get_bot_config()
+    admin_number = config.get('numero_admin', '')
+    admin_lid = config.get('admin_lid', '')
+    
+    if not admin_number and not admin_lid:
+        print("[WhatsApp Bot] No admin configured for human request notification")
+        return
+    
+    # Build notification message
+    name_text = f"👤 Nombre: {client_name}\n" if client_name else ""
+    notification = f"""🔔 *CLIENTE SOLICITA ATENCIÓN HUMANA*
+
+📱 Número: {client_phone}
+{name_text}
+Para atenderlo manualmente, escribí:
+*PAUSAR {client_phone}*
+
+Cuando termines, escribí:
+*REANUDAR {client_phone}*"""
+    
+    try:
+        # Try to send to admin
+        if admin_lid:
+            await send_whatsapp_message_to_jid(f"{admin_lid}@lid", notification)
+        elif admin_number:
+            await send_whatsapp_message(admin_number, notification)
+        print(f"[WhatsApp Bot] Notified admin about human request from {client_phone}")
+    except Exception as e:
+        print(f"[WhatsApp Bot] Error notifying admin: {e}")
+
+
 async def get_client_memory(phone_number: str):
     """Get stored client information from memory"""
     client = await db.whatsapp_clients.find_one({"phone_number": phone_number}, {"_id": 0})
