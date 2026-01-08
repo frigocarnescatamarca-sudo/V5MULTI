@@ -1012,32 +1012,34 @@ export default function WhatsAppBotPanel() {
                       <th className="text-left py-2 px-4">Vehículo</th>
                       <th className="text-center py-2 px-4">RC (Resp. Civil)</th>
                       <th className="text-center py-2 px-4">Completo</th>
+                      <th className="text-center py-2 px-4">Estado</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-b">
-                      <td className="py-2 px-4 font-medium">🚗 Auto</td>
-                      <td className="text-center py-2 px-4">$6,000</td>
-                      <td className="text-center py-2 px-4">$9,000</td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2 px-4 font-medium">🏍️ Moto</td>
-                      <td className="text-center py-2 px-4">$3,500</td>
-                      <td className="text-center py-2 px-4">$5,500</td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2 px-4 font-medium">🚕 Taxi/Remis</td>
-                      <td className="text-center py-2 px-4">$10,000</td>
-                      <td className="text-center py-2 px-4">$18,000</td>
-                    </tr>
-                    <tr>
-                      <td className="py-2 px-4 font-medium">📱 App (Uber/Didi)</td>
-                      <td className="text-center py-2 px-4">$6,000</td>
-                      <td className="text-center py-2 px-4">$9,000</td>
-                    </tr>
+                    {precios.length > 0 ? precios.map((p, idx) => (
+                      <tr key={idx} className={`border-b ${!p.activo ? 'opacity-50' : ''}`}>
+                        <td className="py-2 px-4 font-medium">{p.emoji} {p.tipo}</td>
+                        <td className="text-center py-2 px-4">${p.rc?.toLocaleString('es-AR')}</td>
+                        <td className="text-center py-2 px-4">${p.completo?.toLocaleString('es-AR')}</td>
+                        <td className="text-center py-2 px-4">
+                          <span className={`px-2 py-1 rounded text-xs ${p.activo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                            {p.activo ? 'Activo' : 'Inactivo'}
+                          </span>
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan={4} className="text-center py-4 text-gray-500">
+                          No hay precios configurados. Ve a la pestaña "Precios" para agregarlos.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
+              <p className="text-xs text-gray-500 mt-4">
+                💡 Estos precios se cargan dinámicamente desde la configuración. Editálos en la pestaña "Precios".
+              </p>
             </CardContent>
           </Card>
 
