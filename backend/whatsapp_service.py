@@ -50,7 +50,7 @@ PRECIOS FIJOS (NO NEGOCIABLES):
 | Vehículo     | RC      | Completo |
 |--------------|---------|----------|
 | Auto         | $6,000  | $9,000   |
-| Moto         | $5,000  | $7,500   |
+| Moto         | $3,500  | $5,500   |
 | Taxi/Remis   | $10,000 | $18,000  |
 | App (Uber)   | $6,000  | $9,000   |
 
