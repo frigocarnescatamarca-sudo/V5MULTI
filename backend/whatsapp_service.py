@@ -802,6 +802,15 @@ async def process_message_with_ai(phone_number: str, message: str, push_name: st
             result = await admin_confirm_payment(recibo, phone_number)
             return result
         
+        # Check for RECHAZAR command from admin
+        rechazar_match = re.match(r'(?:RECHAZAR|rechazar|Rechazar)\s+([A-Za-z0-9]+)\s*(.*)?', message.strip())
+        if rechazar_match:
+            recibo = rechazar_match.group(1).upper()
+            motivo = rechazar_match.group(2) or ""
+            print(f"[WhatsApp Bot] Admin rejecting payment for recibo: {recibo}, motivo: {motivo}")
+            result = await admin_reject_payment(recibo, phone_number, motivo)
+            return result
+        
         # Check for PAUSAR command
         pausar_match = re.match(r'(?:PAUSAR|pausar|Pausar)\s+(\d+)', message.strip())
         if pausar_match:
