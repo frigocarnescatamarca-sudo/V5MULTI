@@ -293,7 +293,7 @@ async def is_sandwich_chat_paused(phone_number: str) -> bool:
                 await resume_sandwich_chat(phone_number)
                 print(f"[Sandwich Bot] Auto-resumed chat {phone_number} after {HANDOVER_TIMEOUT_HOURS}h timeout")
                 return False
-        except:
+        except Exception:
             pass
     
     return True
@@ -880,7 +880,7 @@ async def process_sandwich_message_with_ai(phone_number: str, message: str, push
             if lat and lng:
                 await save_client_location(phone_number, lat, lng)
                 return "¡Perfecto! Ya guardé tu ubicación 📍 Así el delivery te encuentra más fácil."
-        except:
+        except Exception:
             pass
     
     # Normalize phone for comparison
@@ -1276,7 +1276,7 @@ Para atenderlo y luego reanudar:
                 await send_sandwich_message_to_jid(f"{admin_lid}@lid", admin_msg)
             elif admin_phone:
                 await send_sandwich_message(admin_phone, admin_msg)
-        except:
+        except Exception:
             pass
     
     # Check for CONSULTAR_ESTADO command
@@ -1352,7 +1352,7 @@ async def save_client_phone_from_message(phone_number: str, message: str):
                 await send_sandwich_message_to_jid(f"{admin_lid}@lid", admin_msg)
             elif admin_phone:
                 await send_sandwich_message(admin_phone, admin_msg)
-        except:
+        except Exception:
             pass
         
         return whatsapp_number
