@@ -2035,6 +2035,31 @@ async def sandwich_reset_counter():
     return {"success": True, "message": "Order counter reset to 0"}
 
 
+@api_router.post("/sandwich/send-reminders")
+async def sandwich_send_reminders():
+    """Send reminders for orders pending more than 5 minutes"""
+    count = await send_order_reminders()
+    return {"success": True, "reminders_sent": count}
+
+
+@api_router.get("/sandwich/users")
+async def sandwich_get_users():
+    """Get all bot users"""
+    users = await get_all_bot_users()
+    return {"users": users}
+
+
+@api_router.get("/sandwich/sessions")
+async def sandwich_get_sessions():
+    """Get all active sessions"""
+    admin_sessions = await get_active_sessions_by_role("admin")
+    delivery_sessions = await get_active_sessions_by_role("delivery")
+    return {
+        "admin_sessions": admin_sessions,
+        "delivery_sessions": delivery_sessions
+    }
+
+
 @api_router.get("/sandwich/whatsapp/status")
 async def sandwich_get_whatsapp_status():
     """Get WhatsApp connection status for sandwich bot"""
