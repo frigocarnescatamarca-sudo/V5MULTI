@@ -32,6 +32,11 @@ export default function WhatsAppBotPanel() {
   });
   const [configDirty, setConfigDirty] = useState(false);
   
+  // Precios state
+  const [precios, setPrecios] = useState([]);
+  const [preciosDirty, setPreciosDirty] = useState(false);
+  const [newTipoVehiculo, setNewTipoVehiculo] = useState({ tipo: '', emoji: '🚗', rc: 0, completo: 0, activo: true });
+  
   // Conversations state
   const [conversations, setConversations] = useState([]);
   const [pausedChats, setPausedChats] = useState([]);
