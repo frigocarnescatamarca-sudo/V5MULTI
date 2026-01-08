@@ -30,6 +30,12 @@ WHATSAPP_SANDWICH_URL = os.environ.get('WHATSAPP_SANDWICH_URL', 'http://localhos
 # Timeout for human handover auto-resume (2 hours)
 HANDOVER_TIMEOUT_HOURS = 2
 
+# Reminder interval for unconfirmed orders (minutes)
+ORDER_REMINDER_MINUTES = 5
+
+# Master admin password (for initial setup)
+MASTER_ADMIN_PASSWORD = os.environ.get('SANDWICH_MASTER_PASSWORD', 'ModoAdmin2025!')
+
 # Default bot configuration for Sandwich
 DEFAULT_SANDWICH_CONFIG = {
     "nombre_negocio": "Modo Cocina",
