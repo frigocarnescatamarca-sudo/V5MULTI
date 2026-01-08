@@ -833,10 +833,11 @@ Ejemplo: CONFIRMAR ABC123"""
     
     # Build dynamic price table from config
     precios = config.get("precios", DEFAULT_BOT_CONFIG["precios"])
-    tabla_precios = "| Vehículo     | RC      | Completo |\n|--------------|---------|----------|\n"
+    tabla_precios = "| Vehículo     | RC      | Completo | RC+Pasajeros |\n|--------------|---------|----------|---------------|\n"
     for p in precios:
         if p.get("activo", True):
-            tabla_precios += f"| {p['emoji']} {p['tipo']:<10} | ${p['rc']:,}  | ${p['completo']:,}   |\n"
+            rc_pas = f"${p.get('rc_pasajeros', 0):,}" if p.get('rc_pasajeros', 0) > 0 else "-"
+            tabla_precios += f"| {p['emoji']} {p['tipo']:<10} | ${p['rc']:,}  | ${p['completo']:,}   | {rc_pas} |\n"
     
     # Replace placeholders if they exist
     system_prompt = instrucciones.replace("{datos_bancarios}", datos_bancarios).replace("{tabla_precios}", tabla_precios)
