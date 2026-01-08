@@ -940,8 +940,7 @@ async def client_cancel_order(phone_number: str):
         }}
     )
     
-    # Notify admin
-    config = await get_sandwich_config()
+    # Notify all admins
     admin_msg = f"""⚠️ *PEDIDO CANCELADO POR CLIENTE*
 
 📋 Pedido #{order['numero_pedido']}
@@ -950,16 +949,7 @@ async def client_cancel_order(phone_number: str):
 
 El cliente canceló su pedido."""
     
-    admin_lid = config.get('admin_lid', '')
-    admin_phone = config.get('admin_phone', '')
-    
-    try:
-        if admin_lid:
-            await send_sandwich_message_to_jid(f"{admin_lid}@lid", admin_msg)
-        elif admin_phone:
-            await send_sandwich_message(admin_phone, admin_msg)
-    except Exception as e:
-        print(f"[Sandwich Bot] Error notifying admin: {e}")
+    await notify_all_admins(admin_msg)
     
     return order, f"✅ Tu pedido #{order['numero_pedido']} ha sido cancelado."
 
