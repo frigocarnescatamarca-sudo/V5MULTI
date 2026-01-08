@@ -459,6 +459,149 @@ export default function WhatsAppBotPanel() {
           </div>
         </TabsContent>
 
+        {/* Tab Precios */}
+        <TabsContent value="precios" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  💰 Precios de Coberturas
+                </span>
+                <Button 
+                  onClick={savePrecios} 
+                  disabled={!preciosDirty || loading}
+                  className="bg-[#25D366] hover:bg-[#128C7E]"
+                >
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                  Guardar Precios
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Lista de precios existentes */}
+              <div className="space-y-4">
+                {precios.map((precio, index) => (
+                  <div key={index} className={`p-4 rounded-lg border ${precio.activo ? 'bg-white border-gray-200' : 'bg-gray-100 border-gray-300 opacity-60'}`}>
+                    <div className="grid grid-cols-6 gap-4 items-center">
+                      <div className="col-span-2">
+                        <Label className="text-xs text-gray-500">Tipo de Vehículo</Label>
+                        <div className="flex items-center gap-2">
+                          <Input 
+                            value={precio.emoji}
+                            onChange={(e) => updatePrecio(index, 'emoji', e.target.value)}
+                            className="w-16 text-center text-xl"
+                            maxLength={2}
+                          />
+                          <Input 
+                            value={precio.tipo}
+                            onChange={(e) => updatePrecio(index, 'tipo', e.target.value)}
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-500">RC ($)</Label>
+                        <Input 
+                          type="number"
+                          value={precio.rc}
+                          onChange={(e) => updatePrecio(index, 'rc', e.target.value)}
+                          className="font-mono"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-gray-500">Completo ($)</Label>
+                        <Input 
+                          type="number"
+                          value={precio.completo}
+                          onChange={(e) => updatePrecio(index, 'completo', e.target.value)}
+                          className="font-mono"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Switch 
+                          checked={precio.activo}
+                          onCheckedChange={(checked) => updatePrecio(index, 'activo', checked)}
+                        />
+                        <Label className="text-xs">{precio.activo ? 'Activo' : 'Inactivo'}</Label>
+                      </div>
+                      <div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => removeTipoVehiculo(index)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          🗑️ Eliminar
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Agregar nuevo tipo */}
+              <div className="p-4 bg-green-50 rounded-lg border-2 border-dashed border-green-300">
+                <h4 className="font-semibold text-green-800 mb-4">➕ Agregar Nuevo Tipo de Vehículo</h4>
+                <div className="grid grid-cols-6 gap-4 items-end">
+                  <div className="col-span-2">
+                    <Label className="text-xs text-gray-500">Emoji y Nombre</Label>
+                    <div className="flex items-center gap-2">
+                      <Input 
+                        value={newTipoVehiculo.emoji}
+                        onChange={(e) => setNewTipoVehiculo({...newTipoVehiculo, emoji: e.target.value})}
+                        className="w-16 text-center text-xl"
+                        placeholder="🚗"
+                        maxLength={2}
+                      />
+                      <Input 
+                        value={newTipoVehiculo.tipo}
+                        onChange={(e) => setNewTipoVehiculo({...newTipoVehiculo, tipo: e.target.value})}
+                        placeholder="Ej: Camioneta"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">RC ($)</Label>
+                    <Input 
+                      type="number"
+                      value={newTipoVehiculo.rc || ''}
+                      onChange={(e) => setNewTipoVehiculo({...newTipoVehiculo, rc: parseInt(e.target.value) || 0})}
+                      placeholder="6000"
+                      className="font-mono"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Completo ($)</Label>
+                    <Input 
+                      type="number"
+                      value={newTipoVehiculo.completo || ''}
+                      onChange={(e) => setNewTipoVehiculo({...newTipoVehiculo, completo: parseInt(e.target.value) || 0})}
+                      placeholder="9000"
+                      className="font-mono"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Button 
+                      onClick={addTipoVehiculo}
+                      className="w-full bg-green-600 hover:bg-green-700"
+                    >
+                      ➕ Agregar
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-800">
+                  💡 <strong>Tip:</strong> Los precios se actualizan automáticamente en el bot y en la sección Guía.
+                  Podés desactivar un tipo de vehículo sin eliminarlo usando el switch.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Tab Configuración */}
         <TabsContent value="configuracion" className="space-y-6">
           <Card>
