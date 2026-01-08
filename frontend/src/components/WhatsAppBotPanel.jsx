@@ -111,9 +111,61 @@ export default function WhatsAppBotPanel() {
       const data = await whatsappAPI.getConfig();
       setConfig(data);
       setConfigDirty(false);
+      // Also load precios
+      if (data.precios) {
+        setPrecios(data.precios);
+      }
     } catch (error) {
       console.error('Error loading config:', error);
     }
+  };
+
+  const loadPrecios = async () => {
+    try {
+      const data = await whatsappAPI.getPrecios();
+      setPrecios(data.precios || []);
+      setPreciosDirty(false);
+    } catch (error) {
+      console.error('Error loading precios:', error);
+    }
+  };
+
+  const savePrecios = async () => {
+    setLoading(true);
+    try {
+      await whatsappAPI.updatePrecios(precios);
+      setPreciosDirty(false);
+      toast.success('Precios guardados correctamente');
+    } catch (error) {
+      console.error('Error saving precios:', error);
+      toast.error('Error al guardar precios');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updatePrecio = (index, field, value) => {
+    const updated = [...precios];
+    updated[index] = { ...updated[index], [field]: field === 'rc' || field === 'completo' ? parseInt(value) || 0 : value };
+    setPrecios(updated);
+    setPreciosDirty(true);
+  };
+
+  const addTipoVehiculo = () => {
+    if (!newTipoVehiculo.tipo) {
+      toast.error('Ingresá el nombre del tipo de vehículo');
+      return;
+    }
+    setPrecios([...precios, { ...newTipoVehiculo }]);
+    setNewTipoVehiculo({ tipo: '', emoji: '🚗', rc: 0, completo: 0, activo: true });
+    setPreciosDirty(true);
+    toast.success('Tipo de vehículo agregado');
+  };
+
+  const removeTipoVehiculo = (index) => {
+    const updated = precios.filter((_, i) => i !== index);
+    setPrecios(updated);
+    setPreciosDirty(true);
   };
 
   const loadConversations = async () => {
