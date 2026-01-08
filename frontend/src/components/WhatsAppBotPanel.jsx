@@ -35,7 +35,7 @@ export default function WhatsAppBotPanel() {
   // Precios state
   const [precios, setPrecios] = useState([]);
   const [preciosDirty, setPreciosDirty] = useState(false);
-  const [newTipoVehiculo, setNewTipoVehiculo] = useState({ tipo: '', emoji: '🚗', rc: 0, completo: 0, activo: true });
+  const [newTipoVehiculo, setNewTipoVehiculo] = useState({ tipo: '', emoji: '🚗', rc: 0, completo: 0, rc_pasajeros: 0, activo: true });
   
   // Conversations state
   const [conversations, setConversations] = useState([]);
