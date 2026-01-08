@@ -620,6 +620,111 @@ Cobertura {recibo} activada.
         return f"❌ Error al confirmar pago: {str(e)}"
 
 
+async def admin_reject_payment(recibo: str, admin_phone: str, motivo: str = ""):
+    """Admin rejects a payment - notifies client that payment hasn't arrived yet"""
+    try:
+        # Find the coverage by recibo
+        coverage = await db.seguros.find_one({"numero_recibo": recibo})
+        
+        if not coverage:
+            return f"❌ No encontré la cobertura con recibo {recibo}"
+        
+        if coverage.get('estado') == 'pagado':
+            return f"⚠️ La cobertura {recibo} ya está marcada como PAGADA. No se puede rechazar."
+        
+        # Find pending record to get client phone
+        pending = await db.whatsapp_pending.find_one({"coverage_id": coverage['_id']})
+        client_phone = pending.get('client_phone') if pending else coverage.get('whatsapp_phone')
+        
+        if not client_phone:
+            client_phone = coverage.get('telefono')
+        
+        client_jid = coverage.get('whatsapp_jid')
+        
+        # Update coverage status to indicate payment issue
+        await db.seguros.update_one(
+            {"_id": coverage['_id']},
+            {"$set": {
+                "estado": "pago_rechazado",
+                "motivo_rechazo": motivo or "Pago no acreditado",
+                "rechazado_at": datetime.now(timezone.utc).isoformat(),
+                "rechazado_por": admin_phone
+            }}
+        )
+        
+        # Prepare message for client
+        motivo_texto = f"\n📝 *Motivo:* {motivo}" if motivo else ""
+        
+        client_msg = f"""⏳ *PAGO AÚN NO ACREDITADO*
+
+Hola! Te informamos que tu pago para la cobertura *{recibo}* aún no se ha acreditado en nuestro sistema.{motivo_texto}
+
+📋 *Tu cobertura:*
+👤 {coverage['nombre']}
+🚗 {coverage['marca']} {coverage['modelo']}
+🔢 Patente: {coverage['patente']}
+💰 Monto: ${coverage.get('precio_final', 0):,}
+
+🔄 *¿Qué podés hacer?*
+1. Verificá que la transferencia se haya completado
+2. Envianos nuevamente el comprobante de pago
+3. Si usaste MercadoPago, esperá unos minutos e intentá de nuevo
+
+Una vez que confirmemos la acreditación, te enviaremos todos los comprobantes de tu cobertura.
+
+¿Tenés alguna duda? Respondé este mensaje y te ayudamos. 🙏"""
+        
+        # Try to send to client
+        client_notified = False
+        
+        if client_phone or client_jid:
+            if not client_jid and client_phone:
+                jid_mapping = await db.whatsapp_jid_mapping.find_one({"phone_number": client_phone})
+                client_jid = jid_mapping.get('jid') if jid_mapping else None
+            
+            try:
+                if client_jid:
+                    await send_whatsapp_message_to_jid(client_jid, client_msg)
+                    client_notified = True
+                elif client_phone:
+                    await send_whatsapp_message(client_phone, client_msg)
+                    client_notified = True
+            except Exception as send_error:
+                print(f"[WhatsApp Bot] Error sending rejection to client: {send_error}")
+        
+        print(f"[WhatsApp Bot] Payment rejected by admin for {recibo}, client_notified={client_notified}")
+        
+        # Confirm to admin
+        if client_notified:
+            return f"""⏳ *PAGO RECHAZADO*
+
+Se notificó al cliente que el pago de la cobertura {recibo} aún no llegó.
+
+👤 {coverage['nombre']}
+🚗 {coverage['marca']} {coverage['modelo']}
+💰 ${coverage.get('precio_final', 0):,}
+
+Cuando el pago llegue, usá:
+*CONFIRMAR {recibo}*"""
+        else:
+            return f"""⏳ *PAGO RECHAZADO*
+
+Cobertura {recibo} marcada como pago no acreditado.
+⚠️ No se pudo notificar al cliente (sin WhatsApp registrado).
+
+👤 {coverage['nombre']}
+💰 ${coverage.get('precio_final', 0):,}
+
+Cuando el pago llegue, usá:
+*CONFIRMAR {recibo}*"""
+        
+    except Exception as e:
+        print(f"[WhatsApp Bot] Error in admin_reject_payment: {e}")
+        import traceback
+        traceback.print_exc()
+        return f"❌ Error al rechazar pago: {str(e)}"
+
+
 async def process_message_with_ai(phone_number: str, message: str, push_name: str = ""):
     """Process incoming message with ChatGPT and return response"""
     import re
