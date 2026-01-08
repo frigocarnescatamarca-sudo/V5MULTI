@@ -1084,6 +1084,43 @@ async def process_sandwich_message_with_ai(phone_number: str, message: str, push
     # Save incoming message
     await save_sandwich_message(phone_number, message, "user", push_name)
     
+    # Check if client is providing their WhatsApp number after order
+    import re as regex_module
+    phone_in_message = regex_module.search(r'\b(\d{10,12})\b', message)
+    if phone_in_message:
+        # Check if there's a pending WhatsApp request for this client
+        pending_order = await db.sandwich_pedidos.find_one(
+            {"telefono": phone_number, "pending_whatsapp_request": True},
+            sort=[("created_at", -1)]
+        )
+        if pending_order:
+            whatsapp_number = phone_in_message.group(1)
+            await save_client_whatsapp_number(phone_number, whatsapp_number)
+            await db.sandwich_pedidos.update_one(
+                {"numero_pedido": pending_order['numero_pedido']},
+                {"$set": {
+                    "whatsapp_contact": whatsapp_number,
+                    "pending_whatsapp_request": False
+                }}
+            )
+            
+            # Notify admin
+            config = await get_sandwich_config()
+            admin_msg = f"📱 Pedido #{pending_order['numero_pedido']} - WhatsApp del cliente: {whatsapp_number}"
+            admin_lid = config.get('admin_lid', '')
+            admin_phone_cfg = config.get('admin_phone', '')
+            try:
+                if admin_lid:
+                    await send_sandwich_message_to_jid(f"{admin_lid}@lid", admin_msg)
+                elif admin_phone_cfg:
+                    await send_sandwich_message(admin_phone_cfg, admin_msg)
+            except Exception:
+                pass
+            
+            response = f"✅ ¡Perfecto! Guardé tu número {whatsapp_number}. El delivery podrá contactarte si es necesario. 👍"
+            await save_sandwich_message(phone_number, response, "assistant")
+            return response
+    
     # Check for client commands first
     message_lower = message.lower().strip()
     
