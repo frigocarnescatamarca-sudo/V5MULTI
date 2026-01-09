@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://dualbot-hub.preview.emergentagent.com/api"
+BACKEND_URL = "https://brand-hub-app.preview.emergentagent.com/api"
 ADMIN_CREDENTIALS = {"username": "admin", "password": "Estonia2025!"}
 
 class TestRunner:

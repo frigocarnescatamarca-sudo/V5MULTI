@@ -6,7 +6,7 @@ Sistema completo de gestión con dos negocios integrados:
 1. **Estonia Cobertura** - Coberturas vehiculares con bot de WhatsApp
 2. **Sandwichería** - Sistema de pedidos con bot de WhatsApp
 
-**URL de Producción:** https://dualbot-hub.preview.emergentagent.com
+**URL de Producción:** https://brand-hub-app.preview.emergentagent.com
 
 ---
 

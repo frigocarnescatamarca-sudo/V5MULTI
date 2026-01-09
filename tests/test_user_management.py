@@ -11,7 +11,7 @@ import os
 import time
 import random
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://dualbot-hub.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://brand-hub-app.preview.emergentagent.com').rstrip('/')
 
 # Test phone numbers - Master admin must be configured first
 MASTER_ADMIN_PHONE = "1111111111"
