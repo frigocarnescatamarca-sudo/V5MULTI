@@ -1230,13 +1230,17 @@ async def process_sandwich_message_with_ai(phone_number: str, message: str, push
     if not config.get("bot_activo", True):
         return None
     
-    # Handle location message
+    # Handle location message - ask for name and WhatsApp number immediately
     if location:
         lat = location.get('latitude') or location.get('degreesLatitude')
         lng = location.get('longitude') or location.get('degreesLongitude')
         if lat and lng:
             await save_client_location(phone_number, lat, lng)
-            return "¡Perfecto! Ya guardé tu ubicación 📍 Así el delivery te encuentra más fácil."
+            return """¡Perfecto! Ya guardé tu ubicación 📍
+
+Ahora solo necesito tus datos para completar el pedido:
+📝 *Nombre y apellido*
+📱 *Número de WhatsApp* (para que el delivery te contacte)"""
     
     # Check if message contains location data (some formats)
     if 'latitude' in message.lower() or 'degreeslatitude' in message.lower():
@@ -1247,7 +1251,11 @@ async def process_sandwich_message_with_ai(phone_number: str, message: str, push
             lng = loc_data.get('longitude') or loc_data.get('degreesLongitude')
             if lat and lng:
                 await save_client_location(phone_number, lat, lng)
-                return "¡Perfecto! Ya guardé tu ubicación 📍 Así el delivery te encuentra más fácil."
+                return """¡Perfecto! Ya guardé tu ubicación 📍
+
+Ahora solo necesito tus datos para completar el pedido:
+📝 *Nombre y apellido*
+📱 *Número de WhatsApp* (para que el delivery te contacte)"""
         except Exception:
             pass
     
