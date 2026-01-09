@@ -2062,6 +2062,27 @@ async def sandwich_get_sessions():
     }
 
 
+@api_router.post("/sandwich/process-reservations")
+async def sandwich_process_reservations():
+    """Process pending reservations when store opens"""
+    count = await send_pending_reservations()
+    return {"success": True, "reservations_processed": count}
+
+
+@api_router.get("/sandwich/is-open")
+async def sandwich_is_open():
+    """Check if store is currently open"""
+    config = await db.sandwich_config.find_one({"_id": "bot_config"})
+    hora_apertura = config.get('horario_apertura', '20:00') if config else '20:00'
+    hora_cierre = config.get('horario_cierre', '01:00') if config else '01:00'
+    is_open = is_within_operating_hours(hora_apertura, hora_cierre)
+    return {
+        "is_open": is_open,
+        "horario_apertura": hora_apertura,
+        "horario_cierre": hora_cierre
+    }
+
+
 @api_router.get("/sandwich/whatsapp/status")
 async def sandwich_get_whatsapp_status():
     """Get WhatsApp connection status for sandwich bot"""
