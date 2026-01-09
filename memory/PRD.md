@@ -57,7 +57,7 @@ Sistema multi-negocio para gestión de:
 
 ## Implementado
 
-### 2025-01-09 - GastroBot SaaS V2 (Fase 1)
+### 2025-01-09 - GastroBot SaaS V2 (Fase 1 + Fase 2)
 
 **Backend:**
 - ✅ Servicio `gastrobot_service.py` con arquitectura multi-tenant
@@ -66,6 +66,7 @@ Sistema multi-negocio para gestión de:
 - ✅ Sistema de pedidos por tenant
 - ✅ Autenticación separada (super admin + tenant admin)
 - ✅ Estadísticas por tenant y globales
+- ✅ Endpoints proxy para WhatsApp multi-tenant
 
 **Frontend:**
 - ✅ Página de login con tabs (Mi Negocio / Super Admin)
@@ -78,7 +79,16 @@ Sistema multi-negocio para gestión de:
   - Vista de pedidos con gestión de estados
   - Gestión de menú por categorías
   - Chat con clientes
+  - **📱 Tab WhatsApp con conexión QR**
   - Configuración del bot
+
+**WhatsApp Multi-Tenant (Fase 2):**
+- ✅ Servicio Node.js `index_gastrobot.js` multi-tenant
+- ✅ Sistema de QR codes individuales por tenant
+- ✅ Conexión/desconexión dinámica
+- ✅ Auto-reconexión de tenants activos al iniciar
+- ✅ Polling de estado desde el frontend
+- ✅ Supervisor config para servicio en puerto 3004
 
 **Colecciones MongoDB GastroBot:**
 - `gb_tenants` - Negocios clientes
