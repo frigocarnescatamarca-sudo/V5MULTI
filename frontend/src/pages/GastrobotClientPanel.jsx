@@ -132,6 +132,33 @@ export default function GastrobotClientPanel() {
     }
   };
 
+  // WhatsApp functions
+  const connectWhatsApp = async () => {
+    setConnectingWhatsApp(true);
+    try {
+      await api.post(`/gastrobot/tenant/${tenantId}/whatsapp/connect`);
+      toast.success('Iniciando conexión... Esperá el código QR');
+      // Start polling for QR
+      setTimeout(checkWhatsAppStatus, 2000);
+    } catch (error) {
+      toast.error('Error al iniciar conexión');
+    } finally {
+      setConnectingWhatsApp(false);
+    }
+  };
+
+  const disconnectWhatsApp = async () => {
+    if (!confirm('¿Desconectar WhatsApp?')) return;
+    try {
+      await api.post(`/gastrobot/tenant/${tenantId}/whatsapp/disconnect`);
+      toast.success('WhatsApp desconectado');
+      setWhatsappStatus({ status: 'disconnected' });
+      setQrData(null);
+    } catch (error) {
+      toast.error('Error al desconectar');
+    }
+  };
+
   const updatePedidoEstado = async (numeroPedido, nuevoEstado) => {
     try {
       await api.put(`/gastrobot/tenant/${tenantId}/pedidos/${numeroPedido}/estado`, {
