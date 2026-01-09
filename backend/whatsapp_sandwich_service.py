@@ -1333,8 +1333,8 @@ Para cerrar sesión: *cerrar sesión*"""
     
     # ============ MASTER ADMIN ONLY COMMANDS ============
     if is_master_admin_user:
-        # CREAR ADMIN/DELIVERY command
-        crear_match = re.match(r'(?:CREAR|crear)\s+(ADMIN|admin|DELIVERY|delivery)\s+(\w+)\s+(\S+)', message.strip())
+        # CREAR ADMIN/DELIVERY command (case insensitive)
+        crear_match = re.match(r'crear\s+(admin|delivery)\s+(\w+)\s+(\S+)', message.strip(), re.IGNORECASE)
         if crear_match:
             role = crear_match.group(1).lower()
             username = crear_match.group(2)
