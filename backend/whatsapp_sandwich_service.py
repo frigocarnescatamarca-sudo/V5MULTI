@@ -558,9 +558,9 @@ async def create_reservation(phone_number: str, data: dict):
         "cantidades": data.get('cantidades', ''),
         "items_formatted": data.get('items_formatted', ''),
         "modificaciones": data.get('modificaciones', ''),
-        "subtotal": int(data.get('subtotal', 0)),
-        "costo_delivery": int(data.get('delivery', 0)),
-        "total": int(data.get('total', 0)),
+        "subtotal": parse_price(data.get('subtotal', 0)),
+        "costo_delivery": parse_price(data.get('delivery', 0)),
+        "total": parse_price(data.get('total', 0)),
         "estado": "reserva",  # Special status for reservations
         "whatsapp_phone": phone_number,
         "has_location": has_location,
