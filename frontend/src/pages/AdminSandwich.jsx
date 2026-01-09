@@ -383,6 +383,121 @@ export default function AdminSandwich() {
             </Card>
           </TabsContent>
 
+          {/* CHAT TAB */}
+          <TabsContent value="chat">
+            <div className="grid md:grid-cols-3 gap-4">
+              {/* Conversations List */}
+              <Card className="md:col-span-1">
+                <CardHeader>
+                  <CardTitle className="flex justify-between items-center text-lg">
+                    <span>Conversaciones</span>
+                    <Button onClick={loadConversations} variant="outline" size="sm">🔄</Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="max-h-[500px] overflow-y-auto">
+                    {conversations.length === 0 ? (
+                      <p className="text-center text-gray-500 py-8">No hay conversaciones</p>
+                    ) : (
+                      conversations.map((conv) => (
+                        <div
+                          key={conv.phone_number}
+                          onClick={() => loadChatMessages(conv.phone_number)}
+                          className={`p-3 border-b cursor-pointer hover:bg-gray-50 ${selectedChat === conv.phone_number ? 'bg-amber-50' : ''}`}
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-medium">{conv.push_name || 'Sin nombre'}</p>
+                              <p className="text-xs text-gray-500 font-mono">{conv.phone_number}</p>
+                            </div>
+                            <span className="text-xs text-gray-400">
+                              {conv.message_count} msgs
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 truncate mt-1">{conv.last_message}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Chat Messages */}
+              <Card className="md:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex justify-between items-center text-lg">
+                    <span>
+                      {selectedChat ? (
+                        <>
+                          Chat: <span className="font-mono text-sm">{selectedChat}</span>
+                        </>
+                      ) : 'Selecciona una conversación'}
+                    </span>
+                    {selectedChat && (
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => setAsAdminLID(selectedChat)}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                        >
+                          👑 Usar como Admin LID
+                        </Button>
+                      </div>
+                    )}
+                  </CardTitle>
+                  {selectedChat && config.admin_lid === selectedChat && (
+                    <Badge className="bg-green-100 text-green-800 w-fit">✅ Este es el Admin LID configurado</Badge>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  {loadingChat ? (
+                    <p className="text-center py-8">Cargando...</p>
+                  ) : !selectedChat ? (
+                    <p className="text-center text-gray-500 py-8">Selecciona una conversación para ver los mensajes</p>
+                  ) : (
+                    <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                      {chatMessages.map((msg, idx) => (
+                        <div
+                          key={idx}
+                          className={`p-3 rounded-lg max-w-[80%] ${
+                            msg.role === 'assistant'
+                              ? 'bg-amber-100 ml-auto'
+                              : 'bg-gray-100'
+                          }`}
+                        >
+                          <p className="text-xs text-gray-500 mb-1">
+                            {msg.role === 'assistant' ? '🤖 Bot' : `👤 ${msg.push_name || 'Cliente'}`}
+                            <span className="ml-2">{new Date(msg.timestamp).toLocaleTimeString('es-AR')}</span>
+                          </p>
+                          <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* LID Info Box */}
+            <Card className="mt-4">
+              <CardContent className="p-4">
+                <h3 className="font-bold mb-2">📱 ¿Qué es el LID?</h3>
+                <p className="text-sm text-gray-600 mb-2">
+                  WhatsApp ahora usa identificadores LID en lugar de números de teléfono para algunos usuarios.
+                  Si tu número de admin no es reconocido, necesitás configurar el LID.
+                </p>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-sm"><strong>Admin Phone:</strong> {config.admin_phone || 'No configurado'}</p>
+                  <p className="text-sm"><strong>Admin LID:</strong> {config.admin_lid || 'No configurado'}</p>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  💡 Envía un mensaje desde tu WhatsApp de admin, búscalo en las conversaciones, y hacé click en "Usar como Admin LID"
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* WHATSAPP TAB */}
           <TabsContent value="whatsapp">
             <Card>
