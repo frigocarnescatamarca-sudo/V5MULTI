@@ -504,6 +504,106 @@ Para rechazar: *RECHAZAR {order['numero_pedido']} [motivo]*"""
     return len(orders)
 
 
+# ============ HORARIO Y RESERVAS ============
+
+def is_within_operating_hours(hora_apertura: str = "20:00", hora_cierre: str = "01:00") -> bool:
+    """Check if current time is within operating hours (Argentina timezone)"""
+    from datetime import datetime
+    import pytz
+    
+    # Argentina timezone
+    argentina_tz = pytz.timezone('America/Argentina/Buenos_Aires')
+    now = datetime.now(argentina_tz)
+    current_hour = now.hour
+    current_minute = now.minute
+    current_time = current_hour * 60 + current_minute  # Convert to minutes
+    
+    # Parse opening and closing times
+    open_hour, open_min = map(int, hora_apertura.split(':'))
+    close_hour, close_min = map(int, hora_cierre.split(':'))
+    
+    open_time = open_hour * 60 + open_min
+    close_time = close_hour * 60 + close_min
+    
+    # Handle overnight hours (e.g., 20:00 to 01:00)
+    if close_time < open_time:
+        # Operating hours span midnight
+        # Open from 20:00 to 23:59 OR from 00:00 to 01:00
+        return current_time >= open_time or current_time <= close_time
+    else:
+        # Normal hours (e.g., 10:00 to 22:00)
+        return open_time <= current_time <= close_time
+
+
+async def create_reservation(phone_number: str, data: dict):
+    """Create a reservation for when the store opens"""
+    seq_number = await get_next_order_number()
+    numero_reserva = f"R{seq_number}"  # R1, R2, R3...
+    
+    location = await get_client_location(phone_number)
+    has_location = location is not None
+    whatsapp_contact = await get_client_whatsapp_number(phone_number)
+    
+    reserva_doc = {
+        "numero_pedido": numero_reserva,
+        "es_reserva": True,
+        "sequence_number": seq_number,
+        "nombre": data.get('nombre', ''),
+        "telefono": phone_number,
+        "whatsapp_contact": whatsapp_contact,
+        "direccion": data.get('direccion', ''),
+        "tipo_entrega": data.get('tipo_entrega', 'retiro'),
+        "items": data.get('items', ''),
+        "cantidades": data.get('cantidades', ''),
+        "items_formatted": data.get('items_formatted', ''),
+        "modificaciones": data.get('modificaciones', ''),
+        "subtotal": int(data.get('subtotal', 0)),
+        "costo_delivery": int(data.get('delivery', 0)),
+        "total": int(data.get('total', 0)),
+        "estado": "reserva",  # Special status for reservations
+        "whatsapp_phone": phone_number,
+        "has_location": has_location,
+        "location": location,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "pending_whatsapp_request": not whatsapp_contact
+    }
+    
+    await db.sandwich_pedidos.insert_one(reserva_doc)
+    print(f"[Sandwich Bot] Reservation created: #{numero_reserva}")
+    return reserva_doc
+
+
+async def send_pending_reservations():
+    """Send notifications for reservations when store opens"""
+    reservations = await db.sandwich_pedidos.find({"es_reserva": True, "estado": "reserva"}).to_list(100)
+    
+    for reserva in reservations:
+        # Convert reservation to pending order
+        await db.sandwich_pedidos.update_one(
+            {"numero_pedido": reserva['numero_pedido']},
+            {"$set": {"estado": "pendiente", "converted_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        
+        # Notify client
+        client_msg = f"""🔔 *¡Ya abrimos!*
+
+Tu reserva #{reserva['numero_pedido']} ya fue enviada al local.
+Te avisamos cuando la confirmen.
+
+🛒 {reserva.get('items_formatted', reserva.get('items', ''))}
+💰 Total: ${reserva.get('total', 0):,}"""
+        
+        try:
+            await send_sandwich_message(reserva['telefono'], client_msg)
+        except Exception as e:
+            print(f"[Sandwich Bot] Error notifying client about reservation: {e}")
+        
+        # Notify admins
+        await notify_sandwich_admin(reserva)
+    
+    return len(reservations)
+
+
 # ============ SEQUENTIAL ORDER NUMBERS ============
 
 async def get_next_order_number():
