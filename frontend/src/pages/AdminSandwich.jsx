@@ -132,7 +132,7 @@ export default function AdminSandwich() {
     setLoadingChat(true);
     try {
       const res = await api.get(`/sandwich/whatsapp/chat/${phoneNumber}`);
-      setChatMessages(res.data || []);
+      setChatMessages(res.data.messages || res.data || []);
       setSelectedChat(phoneNumber);
     } catch (error) {
       console.error('Error loading chat:', error);
