@@ -118,8 +118,8 @@ Si es RETIRO:
 PASO 6 - CONFIRMAR PEDIDO:
 Mostrá resumen:
 "📋 *Tu pedido:*
-👤 {nombre}
-📍 {delivery/retiro}
+👤 [nombre del cliente]
+📍 [delivery o retiro]
 🛒 [items]
 💰 Total: $[total]
 ¿Confirmo?"
