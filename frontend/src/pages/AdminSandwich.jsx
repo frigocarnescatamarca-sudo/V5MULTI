@@ -492,7 +492,7 @@ export default function AdminSandwich() {
                   <p className="text-sm"><strong>Admin LID:</strong> {config.admin_lid || 'No configurado'}</p>
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  💡 Envía un mensaje desde tu WhatsApp de admin, búscalo en las conversaciones, y hacé click en "Usar como Admin LID"
+                  💡 Envía un mensaje desde tu WhatsApp de admin, búscalo en las conversaciones, y hacé click en &quot;Usar como Admin LID&quot;
                 </p>
               </CardContent>
             </Card>
