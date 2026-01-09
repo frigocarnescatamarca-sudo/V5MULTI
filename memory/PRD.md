@@ -1,9 +1,10 @@
-# Estonia Cobertura + Modo Cocina - Multi-Business Platform
+# Estonia Cobertura + Modo Cocina + GastroBot SaaS - Multi-Business Platform
 
 ## Problema Original
 Sistema multi-negocio para gestión de:
 1. **Estonia Cobertura Colaborativa** - Sistema de coberturas de vehículos con bot de WhatsApp para ventas
-2. **Modo Cocina** - Sandwichería con bot de WhatsApp para toma de pedidos
+2. **Modo Cocina (V1)** - Sandwichería con bot de WhatsApp para toma de pedidos
+3. **GastroBot SaaS (V2)** - Sistema multi-tenant para múltiples restaurantes con WhatsApp bots
 
 ## Arquitectura
 
@@ -11,29 +12,88 @@ Sistema multi-negocio para gestión de:
 - **Frontend:** React + TailwindCSS + Shadcn/UI
 - **Backend:** FastAPI (Python)
 - **Database:** MongoDB
-- **WhatsApp:** 2x servicios Baileys (Node.js) - uno por cada negocio
+- **WhatsApp:** Servicios Baileys (Node.js)
 - **AI:** OpenAI GPT-4o via Emergent LLM Key
 
 ### Estructura de Archivos Clave
 ```
 /app/
 ├── backend/
-│   ├── server.py                   # API principal FastAPI
-│   ├── whatsapp_service.py         # Bot de seguros
-│   └── whatsapp_sandwich_service.py # Bot de sandwiches
+│   ├── server.py                    # API principal FastAPI
+│   ├── whatsapp_service.py          # Bot de seguros
+│   ├── whatsapp_sandwich_service.py # Bot V1 Modo Cocina
+│   └── gastrobot_service.py         # 🆕 Servicio SaaS multi-tenant
 ├── frontend/
 │   └── src/
 │       ├── pages/
-│       │   ├── AdminSelector.jsx   # Selector de negocio
-│       │   ├── AdminSandwich.jsx   # Panel admin sandwiches
-│       │   └── AdminPanel.jsx      # Panel admin seguros
+│       │   ├── AdminSelector.jsx    # Selector de negocio
+│       │   ├── AdminSandwich.jsx    # Panel admin V1
+│       │   ├── AdminPanel.jsx       # Panel admin seguros
+│       │   ├── GastrobotLogin.jsx   # 🆕 Login GastroBot
+│       │   ├── GastrobotSuperAdmin.jsx # 🆕 Panel Super Admin
+│       │   └── GastrobotClientPanel.jsx # 🆕 Panel clientes
 │       └── components/
 └── whatsapp-service/
-    ├── index.js                    # WhatsApp seguros
-    └── index_sandwich.js           # WhatsApp sandwiches
+    ├── index.js                     # WhatsApp seguros
+    └── index_sandwich.js            # WhatsApp V1
 ```
 
+## URLs de la Aplicación
+| URL | Descripción |
+|-----|-------------|
+| `/` | Landing Estonia Cobertura |
+| `/admin-selector` | Selector negocio (Estonia/Modo Cocina) |
+| `/admin-sandwich` | Panel V1 Modo Cocina |
+| `/admin` | Panel Estonia Seguros |
+| `/gastrobot` | 🆕 Login GastroBot SaaS |
+| `/gastrobot/super` | 🆕 Super Admin Panel |
+| `/gastrobot/panel` | 🆕 Panel del Cliente |
+
+## Credenciales
+| Sistema | Usuario | Contraseña |
+|---------|---------|------------|
+| Admin V1 | admin | Estonia2025! |
+| GastroBot Super | superadmin | GastroBot2025! |
+
 ## Implementado
+
+### 2025-01-09 - GastroBot SaaS V2 (Fase 1)
+
+**Backend:**
+- ✅ Servicio `gastrobot_service.py` con arquitectura multi-tenant
+- ✅ Modelo de tenants con planes (básico, pro, enterprise)
+- ✅ CRUD completo para negocios
+- ✅ Sistema de pedidos por tenant
+- ✅ Autenticación separada (super admin + tenant admin)
+- ✅ Estadísticas por tenant y globales
+
+**Frontend:**
+- ✅ Página de login con tabs (Mi Negocio / Super Admin)
+- ✅ Super Admin Panel con:
+  - Dashboard de estadísticas
+  - Lista de negocios con gestión
+  - Crear/editar/eliminar negocios
+  - Activar/pausar suscripciones
+- ✅ Panel del Cliente con:
+  - Vista de pedidos con gestión de estados
+  - Gestión de menú por categorías
+  - Chat con clientes
+  - Configuración del bot
+
+**Colecciones MongoDB GastroBot:**
+- `gb_tenants` - Negocios clientes
+- `gb_pedidos` - Pedidos por tenant
+- `gb_menu` - Menú por tenant
+- `gb_config` - Configuración bot por tenant
+- `gb_messages` - Historial de conversaciones
+- `gb_order_counters` - Numeración secuencial
+
+### 2025-01-09 - Optimización Flujo Bot V1
+
+- ✅ Prompt del bot simplificado (máximo 5 mensajes)
+- ✅ Flujo directo: Saludo → Pedido → ¿Delivery/Retiro? → Datos → "Dame un minuto..."
+- ✅ Campo `link_ubicacion_local` para retiros
+- ✅ Campo `mensaje_retiro_local` personalizable
 
 ### 2025-01-08 - Sistema de Usuarios y Recordatorios
 
@@ -46,8 +106,8 @@ Sistema multi-negocio para gestión de:
 - ✅ **Listar usuarios:** `USUARIOS` (muestra usuarios y sesiones activas)
 
 **Notificaciones Múltiples:**
-- ✅ Todos los admins activos (master + logueados) reciben notificaciones de nuevos pedidos
-- ✅ Todos los deliveries reciben notificación cuando un pedido está listo para entrega
+- ✅ Todos los admins activos reciben notificaciones de nuevos pedidos
+- ✅ Todos los deliveries reciben notificación cuando pedido está listo
 
 **Recordatorios Automáticos:**
 - ✅ Cada 5 minutos se verifican pedidos pendientes sin confirmar
