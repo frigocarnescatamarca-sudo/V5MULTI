@@ -2306,6 +2306,207 @@ async def sandwich_get_estadisticas():
     }
 
 
+# ============ GASTROBOT SAAS ROUTES ============
+
+import gastrobot_service as gb
+
+# Super Admin authentication
+GASTROBOT_SUPER_USERNAME = os.environ.get("GASTROBOT_SUPER_USERNAME", "superadmin")
+GASTROBOT_SUPER_PASSWORD = os.environ.get("GASTROBOT_SUPER_PASSWORD", "GastroBot2025!")
+
+@api_router.post("/gastrobot/super/login")
+async def gastrobot_super_login(data: dict):
+    """Super admin login"""
+    username = data.get("username")
+    password = data.get("password")
+    
+    if username == GASTROBOT_SUPER_USERNAME and password == GASTROBOT_SUPER_PASSWORD:
+        import secrets
+        token = secrets.token_urlsafe(32)
+        
+        await db.gastrobot_super_sessions.insert_one({
+            "token": token,
+            "username": username,
+            "type": "super_admin",
+            "created_at": datetime.now(timezone.utc),
+            "expires_at": datetime.now(timezone.utc) + timedelta(hours=24)
+        })
+        
+        return {"success": True, "token": token, "type": "super_admin"}
+    
+    raise HTTPException(status_code=401, detail="Credenciales inválidas")
+
+@api_router.get("/gastrobot/super/verify")
+async def gastrobot_verify_super(token: str):
+    """Verify super admin token"""
+    session = await db.gastrobot_super_sessions.find_one({
+        "token": token,
+        "expires_at": {"$gt": datetime.now(timezone.utc)}
+    })
+    
+    if session:
+        return {"valid": True, "type": "super_admin"}
+    return {"valid": False}
+
+@api_router.get("/gastrobot/super/stats")
+async def gastrobot_super_stats():
+    """Get super admin stats"""
+    return await gb.get_super_admin_stats()
+
+# Tenant CRUD
+@api_router.post("/gastrobot/tenants")
+async def gastrobot_create_tenant(data: dict):
+    """Create a new tenant"""
+    tenant = await gb.create_tenant(data)
+    return {"success": True, "tenant": tenant}
+
+@api_router.get("/gastrobot/tenants")
+async def gastrobot_list_tenants():
+    """List all tenants"""
+    tenants = await gb.get_all_tenants()
+    return {"tenants": tenants}
+
+@api_router.get("/gastrobot/tenants/{tenant_id}")
+async def gastrobot_get_tenant(tenant_id: str):
+    """Get a tenant by ID"""
+    tenant = await gb.get_tenant(tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant no encontrado")
+    return tenant
+
+@api_router.put("/gastrobot/tenants/{tenant_id}")
+async def gastrobot_update_tenant(tenant_id: str, data: dict):
+    """Update a tenant"""
+    tenant = await gb.update_tenant(tenant_id, data)
+    return {"success": True, "tenant": tenant}
+
+@api_router.delete("/gastrobot/tenants/{tenant_id}")
+async def gastrobot_delete_tenant(tenant_id: str):
+    """Delete a tenant"""
+    success = await gb.delete_tenant(tenant_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Tenant no encontrado")
+    return {"success": True}
+
+# Tenant authentication (for client panel)
+@api_router.post("/gastrobot/tenant/login")
+async def gastrobot_tenant_login(data: dict):
+    """Tenant admin login"""
+    username = data.get("username")
+    password = data.get("password")
+    
+    tenant = await gb.authenticate_tenant(username, password)
+    
+    if tenant:
+        import secrets
+        token = secrets.token_urlsafe(32)
+        
+        await db.gastrobot_tenant_sessions.insert_one({
+            "token": token,
+            "tenant_id": tenant["id"],
+            "type": "tenant_admin",
+            "created_at": datetime.now(timezone.utc),
+            "expires_at": datetime.now(timezone.utc) + timedelta(hours=24)
+        })
+        
+        return {"success": True, "token": token, "tenant": tenant, "type": "tenant_admin"}
+    
+    raise HTTPException(status_code=401, detail="Credenciales inválidas")
+
+@api_router.get("/gastrobot/tenant/verify")
+async def gastrobot_verify_tenant(token: str):
+    """Verify tenant token"""
+    session = await db.gastrobot_tenant_sessions.find_one({
+        "token": token,
+        "expires_at": {"$gt": datetime.now(timezone.utc)}
+    })
+    
+    if session:
+        tenant = await gb.get_tenant(session["tenant_id"])
+        return {"valid": True, "type": "tenant_admin", "tenant": tenant}
+    return {"valid": False}
+
+# Tenant menu
+@api_router.get("/gastrobot/tenant/{tenant_id}/menu")
+async def gastrobot_get_menu(tenant_id: str):
+    """Get menu for a tenant"""
+    menu = await gb.get_menu(tenant_id)
+    return {"menu": menu}
+
+@api_router.put("/gastrobot/tenant/{tenant_id}/menu")
+async def gastrobot_update_menu(tenant_id: str, data: dict):
+    """Update menu for a tenant"""
+    menu = await gb.update_menu(tenant_id, data.get("menu", []))
+    return {"success": True, "menu": menu}
+
+@api_router.post("/gastrobot/tenant/{tenant_id}/menu/product")
+async def gastrobot_add_product(tenant_id: str, data: dict):
+    """Add product to menu"""
+    success = await gb.add_product(tenant_id, data.get("categoria"), data.get("producto"))
+    return {"success": success}
+
+# Tenant orders
+@api_router.get("/gastrobot/tenant/{tenant_id}/pedidos")
+async def gastrobot_get_orders(tenant_id: str, estado: str = None, limit: int = 50):
+    """Get orders for a tenant"""
+    orders = await gb.get_orders(tenant_id, estado, limit)
+    return {"pedidos": orders}
+
+@api_router.put("/gastrobot/tenant/{tenant_id}/pedidos/{numero_pedido}/estado")
+async def gastrobot_update_order_status(tenant_id: str, numero_pedido: str, data: dict):
+    """Update order status"""
+    order = await gb.update_order_status(tenant_id, numero_pedido, data.get("estado"))
+    if not order:
+        raise HTTPException(status_code=404, detail="Pedido no encontrado")
+    return {"success": True, "pedido": order}
+
+# Tenant stats
+@api_router.get("/gastrobot/tenant/{tenant_id}/stats")
+async def gastrobot_tenant_stats(tenant_id: str):
+    """Get stats for a tenant"""
+    return await gb.get_tenant_stats(tenant_id)
+
+# Bot config
+@api_router.get("/gastrobot/tenant/{tenant_id}/config")
+async def gastrobot_get_config(tenant_id: str):
+    """Get bot config for a tenant"""
+    config = await gb.get_bot_config(tenant_id)
+    return config
+
+@api_router.put("/gastrobot/tenant/{tenant_id}/config")
+async def gastrobot_update_config(tenant_id: str, data: dict):
+    """Update bot config for a tenant"""
+    config = await gb.update_bot_config(tenant_id, data)
+    return {"success": True, "config": config}
+
+# Conversations
+@api_router.get("/gastrobot/tenant/{tenant_id}/conversations")
+async def gastrobot_get_conversations(tenant_id: str):
+    """Get all conversations for a tenant"""
+    conversations = await gb.get_all_conversations(tenant_id)
+    return {"conversations": conversations}
+
+@api_router.get("/gastrobot/tenant/{tenant_id}/chat/{phone_number}")
+async def gastrobot_get_chat(tenant_id: str, phone_number: str):
+    """Get chat history with a customer"""
+    messages = await gb.get_conversation_history(tenant_id, phone_number, limit=50)
+    return {"messages": messages}
+
+# Message processing (called by WhatsApp service)
+@api_router.post("/gastrobot/message")
+async def gastrobot_process_message(data: dict):
+    """Process incoming WhatsApp message"""
+    tenant_id = data.get("tenant_id")
+    phone_number = data.get("phone_number")
+    message = data.get("message")
+    push_name = data.get("push_name", "")
+    
+    if not all([tenant_id, phone_number, message]):
+        raise HTTPException(status_code=400, detail="tenant_id, phone_number and message required")
+    
+    reply = await gb.process_message(tenant_id, phone_number, message, push_name)
+    return {"reply": reply}
+
 # Include router
 app.include_router(api_router)
 
