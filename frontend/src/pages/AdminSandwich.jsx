@@ -113,6 +113,44 @@ export default function AdminSandwich() {
     }
   };
 
+  // State for chat feature
+  const [conversations, setConversations] = useState([]);
+  const [selectedChat, setSelectedChat] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [loadingChat, setLoadingChat] = useState(false);
+
+  const loadConversations = async () => {
+    try {
+      const res = await api.get('/sandwich/whatsapp/conversations');
+      setConversations(res.data.conversations || []);
+    } catch (error) {
+      console.error('Error loading conversations:', error);
+    }
+  };
+
+  const loadChatMessages = async (phoneNumber) => {
+    setLoadingChat(true);
+    try {
+      const res = await api.get(`/sandwich/whatsapp/chat/${phoneNumber}`);
+      setChatMessages(res.data || []);
+      setSelectedChat(phoneNumber);
+    } catch (error) {
+      console.error('Error loading chat:', error);
+    } finally {
+      setLoadingChat(false);
+    }
+  };
+
+  const setAsAdminLID = async (lid) => {
+    try {
+      await api.post('/sandwich/whatsapp/config', { admin_lid: lid });
+      setConfig({ ...config, admin_lid: lid });
+      toast.success(`LID ${lid} configurado como Admin`);
+    } catch (error) {
+      toast.error('Error al configurar LID');
+    }
+  };
+
   const getEstadoBadge = (estado) => {
     const colors = {
       pendiente: 'bg-yellow-100 text-yellow-800',
