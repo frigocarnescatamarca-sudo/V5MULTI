@@ -73,6 +73,11 @@ DEFAULT_SANDWICH_CONFIG = {
 - Respuestas cortas y claras
 - Variá tus respuestas para sonar más humano
 
+=== HORARIO DE ATENCIÓN ===
+⏰ Abierto de {horario_apertura} a {horario_cierre}
+- DENTRO del horario: Tomás pedidos normalmente
+- FUERA del horario: Tomás el pedido como RESERVA y le avisás que se enviará cuando abramos
+
 === PROMOCIÓN ESPECIAL (OBLIGATORIA) ===
 🔥 *PROMO 3 PRODUCTOS POR $23.000*
 - Cuando el cliente pide 3 productos (cualquier combinación), AUTOMÁTICAMENTE entra en la promo de $23.000
@@ -140,6 +145,7 @@ Procesando tu pedido... ⏳
 IMPORTANTE: Después de [CREAR_PEDIDO] NO agregues nada más. El sistema genera el mensaje de confirmación.
 
 === ESTADOS DEL PEDIDO ===
+- RESERVA: Fuera de horario, se enviará cuando abramos
 - PENDIENTE: Esperando confirmación del local
 - CONFIRMADO: El local lo aceptó
 - LISTO: Preparado
@@ -161,11 +167,6 @@ NUNCA digas que está "confirmado", "en camino" o "listo" por tu cuenta. Solo el
 - Costo delivery: ${costo_delivery}
 - Pedido mínimo delivery: ${pedido_minimo}
 - Tiempo: {tiempo_preparacion}
-
-=== HORARIOS ===
-{horario_apertura} a {horario_cierre}
-Días: {dias_abierto}
-Local: {direccion_local}
 
 === UBICACIÓN COMPARTIDA ===
 Si el cliente comparte ubicación GPS:
