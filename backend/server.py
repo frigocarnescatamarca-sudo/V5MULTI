@@ -1983,7 +1983,9 @@ from whatsapp_sandwich_service import (
     reset_daily_order_counter,
     send_order_reminders,
     get_all_bot_users,
-    get_active_sessions_by_role
+    get_active_sessions_by_role,
+    send_pending_reservations,
+    is_within_operating_hours
 )
 
 
