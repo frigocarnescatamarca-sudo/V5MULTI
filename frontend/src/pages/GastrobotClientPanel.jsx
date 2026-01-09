@@ -294,6 +294,7 @@ export default function GastrobotClientPanel() {
             <TabsTrigger value="pedidos" className="data-[state=active]:bg-emerald-600">📋 Pedidos</TabsTrigger>
             <TabsTrigger value="menu" className="data-[state=active]:bg-emerald-600">🍽️ Menú</TabsTrigger>
             <TabsTrigger value="chat" className="data-[state=active]:bg-emerald-600">💬 Chat</TabsTrigger>
+            <TabsTrigger value="whatsapp" className="data-[state=active]:bg-emerald-600">📱 WhatsApp</TabsTrigger>
             <TabsTrigger value="config" className="data-[state=active]:bg-emerald-600">⚙️ Configuración</TabsTrigger>
           </TabsList>
 
