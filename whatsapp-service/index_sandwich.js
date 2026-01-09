@@ -430,19 +430,35 @@ app.listen(PORT, () => {
     
     // Setup order reminder check every 5 minutes
     const REMINDER_INTERVAL = 5 * 60 * 1000; // 5 minutes
+    let wasOpen = false;
+    
     setInterval(async () => {
         try {
             if (sock && sock.user) {
+                // Check for pending order reminders
                 console.log('[Sandwich] Checking for pending orders needing reminders...');
-                const response = await axios.post(`${FASTAPI_URL}/api/sandwich/send-reminders`, {}, { timeout: 30000 });
-                if (response.data.reminders_sent > 0) {
-                    console.log(`[Sandwich] Sent ${response.data.reminders_sent} order reminders`);
+                const reminderResponse = await axios.post(`${FASTAPI_URL}/api/sandwich/send-reminders`, {}, { timeout: 30000 });
+                if (reminderResponse.data.reminders_sent > 0) {
+                    console.log(`[Sandwich] Sent ${reminderResponse.data.reminders_sent} order reminders`);
                 }
+                
+                // Check if store just opened and process reservations
+                const statusResponse = await axios.get(`${FASTAPI_URL}/api/sandwich/is-open`, { timeout: 10000 });
+                const isOpen = statusResponse.data.is_open;
+                
+                if (isOpen && !wasOpen) {
+                    console.log('[Sandwich] Store just opened! Processing pending reservations...');
+                    const reservationsResponse = await axios.post(`${FASTAPI_URL}/api/sandwich/process-reservations`, {}, { timeout: 30000 });
+                    if (reservationsResponse.data.reservations_processed > 0) {
+                        console.log(`[Sandwich] Processed ${reservationsResponse.data.reservations_processed} reservations`);
+                    }
+                }
+                wasOpen = isOpen;
             }
         } catch (error) {
-            console.error('[Sandwich] Error sending reminders:', error.message);
+            console.error('[Sandwich] Error in periodic check:', error.message);
         }
     }, REMINDER_INTERVAL);
     
-    console.log('[Sandwich] Order reminder check enabled (every 5 minutes)');
+    console.log('[Sandwich] Order reminder and reservation check enabled (every 5 minutes)');
 });
