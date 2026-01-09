@@ -561,6 +561,90 @@ export default function GastrobotClientPanel() {
             </div>
           </TabsContent>
 
+          {/* WHATSAPP TAB */}
+          <TabsContent value="whatsapp">
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white flex justify-between items-center">
+                  <span>📱 Conexión WhatsApp</span>
+                  <Badge className={whatsappStatus.connected ? 'bg-green-500' : 'bg-red-500'}>
+                    {whatsappStatus.connected ? 'Conectado' : whatsappStatus.status === 'awaiting_qr' ? 'Esperando QR' : 'Desconectado'}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {whatsappStatus.connected ? (
+                  <div className="text-center py-8">
+                    <div className="text-6xl mb-4">✅</div>
+                    <h3 className="text-xl font-bold text-white mb-2">WhatsApp Conectado</h3>
+                    <p className="text-slate-400 mb-4">
+                      Número: {whatsappStatus.user?.id || 'N/A'}
+                    </p>
+                    <p className="text-slate-500 text-sm mb-6">
+                      Tu bot está activo y listo para recibir pedidos
+                    </p>
+                    <Button 
+                      variant="destructive" 
+                      onClick={disconnectWhatsApp}
+                    >
+                      Desconectar WhatsApp
+                    </Button>
+                  </div>
+                ) : whatsappStatus.status === 'awaiting_qr' && qrData?.qr_data_url ? (
+                  <div className="text-center py-4">
+                    <h3 className="text-xl font-bold text-white mb-4">Escaneá el código QR</h3>
+                    <div className="bg-white p-4 rounded-lg inline-block mb-4">
+                      <img 
+                        src={qrData.qr_data_url} 
+                        alt="WhatsApp QR Code" 
+                        className="w-64 h-64"
+                      />
+                    </div>
+                    <p className="text-slate-400 text-sm">
+                      Abrí WhatsApp en tu celular → Menú → Dispositivos vinculados → Vincular dispositivo
+                    </p>
+                    <p className="text-yellow-400 text-sm mt-2">
+                      ⏳ El código se actualiza cada 30 segundos...
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-6xl mb-4">📱</div>
+                    <h3 className="text-xl font-bold text-white mb-2">Conectá tu WhatsApp</h3>
+                    <p className="text-slate-400 mb-6">
+                      Vinculá el número de WhatsApp de tu negocio para empezar a recibir pedidos
+                    </p>
+                    <Button 
+                      className="bg-emerald-600 hover:bg-emerald-700"
+                      onClick={connectWhatsApp}
+                      disabled={connectingWhatsApp}
+                    >
+                      {connectingWhatsApp ? 'Iniciando...' : 'Conectar WhatsApp'}
+                    </Button>
+                    {whatsappStatus.error && (
+                      <p className="text-red-400 text-sm mt-4">
+                        Error: {whatsappStatus.error}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Instructions */}
+                <div className="mt-8 p-4 bg-slate-700 rounded-lg">
+                  <h4 className="text-white font-bold mb-2">ℹ️ Instrucciones</h4>
+                  <ol className="text-slate-400 text-sm space-y-2">
+                    <li>1. Hacé clic en "Conectar WhatsApp"</li>
+                    <li>2. Esperá a que aparezca el código QR</li>
+                    <li>3. Abrí WhatsApp en tu celular</li>
+                    <li>4. Andá a Configuración → Dispositivos vinculados → Vincular dispositivo</li>
+                    <li>5. Escaneá el código QR con tu celular</li>
+                    <li>6. ¡Listo! Tu bot estará activo</li>
+                  </ol>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* CONFIG TAB */}
           <TabsContent value="config">
             <Card className="bg-slate-800 border-slate-700">
