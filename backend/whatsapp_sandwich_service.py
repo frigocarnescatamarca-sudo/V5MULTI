@@ -1777,10 +1777,7 @@ async def process_sandwich_bot_commands(phone_number: str, ai_response: str):
 📋 *N° de Pedido:* #{order['numero_pedido']}
 
 ⏳ Tu pedido fue enviado al local y está *PENDIENTE DE CONFIRMACIÓN*.
-Te avisamos apenas el local lo confirme.
-
-📱 *IMPORTANTE:* ¿Me pasás tu número de WhatsApp para que el delivery pueda contactarte? 
-(Escribí solo el número, ej: 3834123456)"""
+Te avisamos apenas el local lo confirme. 🙌"""
             else:
                 # Create reservation for when store opens
                 order = await create_reservation(phone_number, data)
@@ -1792,10 +1789,7 @@ Te avisamos apenas el local lo confirme.
 ⏰ Estamos cerrados ahora (abrimos de {hora_apertura} a {hora_cierre}).
 
 Tu pedido quedó guardado como *RESERVA* y lo enviaremos al local apenas abramos. 
-Te avisaremos cuando se confirme. 🙌
-
-📱 *IMPORTANTE:* ¿Me pasás tu número de WhatsApp para que el delivery pueda contactarte? 
-(Escribí solo el número, ej: 3834123456)"""
+Te avisaremos cuando se confirme. 🙌"""
             
             ai_response = re.sub(r'\[CREAR_PEDIDO\].*?\[/CREAR_PEDIDO\]', '', ai_response, flags=re.DOTALL)
             ai_response = ai_response.replace('Procesando tu pedido... ⏳', success_msg)
