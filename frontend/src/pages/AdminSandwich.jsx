@@ -757,6 +757,32 @@ export default function AdminSandwich() {
                       placeholder="20-30 minutos"
                     />
                   </div>
+                  
+                  {/* NUEVA SECCIÓN: Configuración para Retiro en Local */}
+                  <div className="border-t pt-4 mt-4">
+                    <h3 className="font-bold text-amber-700 mb-3">📍 Configuración para Retiro en Local</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Link de Ubicación (Google Maps)</Label>
+                        <Input
+                          value={config.link_ubicacion_local || ''}
+                          onChange={(e) => setConfig({...config, link_ubicacion_local: e.target.value})}
+                          placeholder="https://maps.google.com/..."
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Este link se envía a los clientes que retiran en local</p>
+                      </div>
+                      <div>
+                        <Label>Mensaje Personalizado para Retiros</Label>
+                        <Textarea
+                          value={config.mensaje_retiro_local || ''}
+                          onChange={(e) => setConfig({...config, mensaje_retiro_local: e.target.value})}
+                          placeholder="Ej: Estamos en la esquina de Av. Principal y Calle 123, local 4"
+                          rows={2}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Mensaje adicional con indicaciones para encontrar el local</p>
+                      </div>
+                    </div>
+                  </div>
                   <div>
                     <Label>Número de Admin (para notificaciones)</Label>
                     <Input
