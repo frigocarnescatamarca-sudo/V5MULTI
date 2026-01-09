@@ -12,6 +12,10 @@ import Verificar from '@/pages/Verificar';
 import MisCoberturas from '@/pages/MisCoberturas';
 import Terminos from '@/pages/Terminos';
 import Privacidad from '@/pages/Privacidad';
+// GastroBot SaaS
+import GastrobotLogin from '@/pages/GastrobotLogin';
+import GastrobotSuperAdmin from '@/pages/GastrobotSuperAdmin';
+import GastrobotClientPanel from '@/pages/GastrobotClientPanel';
 import { Toaster } from '@/components/ui/sonner';
 
 function App() {
@@ -31,6 +35,10 @@ function App() {
           <Route path="/mis-coberturas" element={<MisCoberturas />} />
           <Route path="/terminos" element={<Terminos />} />
           <Route path="/privacidad" element={<Privacidad />} />
+          {/* GastroBot SaaS Routes */}
+          <Route path="/gastrobot" element={<GastrobotLogin />} />
+          <Route path="/gastrobot/super" element={<GastrobotSuperAdmin />} />
+          <Route path="/gastrobot/panel" element={<GastrobotClientPanel />} />
         </Routes>
       </BrowserRouter>
       <Toaster />
