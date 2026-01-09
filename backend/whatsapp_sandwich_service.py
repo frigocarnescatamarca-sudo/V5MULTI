@@ -1628,13 +1628,18 @@ async def process_sandwich_bot_commands(phone_number: str, ai_response: str):
 
 📋 *N° de Pedido:* #{order['numero_pedido']}
 
-Tu pedido fue enviado al local.
-Te avisamos cuando esté confirmado. 🙌
+⏳ Tu pedido fue enviado al local y está *PENDIENTE DE CONFIRMACIÓN*.
+Te avisamos apenas el local lo confirme.
 
-_Tiempo estimado de preparación: 20-30 min_{whatsapp_request}"""
+📱 *IMPORTANTE:* ¿Me pasás tu número de WhatsApp para que el delivery pueda contactarte? 
+(Escribí solo el número, ej: 3834123456)"""
             
             ai_response = re.sub(r'\[CREAR_PEDIDO\].*?\[/CREAR_PEDIDO\]', '', ai_response, flags=re.DOTALL)
             ai_response = ai_response.replace('Procesando tu pedido... ⏳', success_msg)
+            
+            # Remove any extra text that GPT might have added
+            if success_msg in ai_response:
+                ai_response = success_msg
             
         except Exception as e:
             print(f"[Sandwich Bot] Error creating order: {e}")
