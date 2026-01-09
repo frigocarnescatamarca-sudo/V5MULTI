@@ -1342,8 +1342,8 @@ Para cerrar sesión: *cerrar sesión*"""
             user, msg = await create_bot_user(username, password, role, phone_number)
             return msg
         
-        # ELIMINAR command
-        eliminar_match = re.match(r'(?:ELIMINAR|eliminar)\s+(\w+)', message.strip())
+        # ELIMINAR command (case insensitive)
+        eliminar_match = re.match(r'eliminar\s+(\w+)', message.strip(), re.IGNORECASE)
         if eliminar_match:
             username = eliminar_match.group(1)
             success, msg = await delete_bot_user(username)
@@ -1371,8 +1371,8 @@ Para cerrar sesión: *cerrar sesión*"""
             msg += "\nPara eliminar: *ELIMINAR usuario*\nPara cerrar sesión: *KICKEAR usuario*"
             return msg
         
-        # KICKEAR command (close someone's session)
-        kickear_match = re.match(r'(?:KICKEAR|kickear|KICK|kick)\s+(\w+)', message.strip())
+        # KICKEAR command (case insensitive)
+        kickear_match = re.match(r'kickear?\s+(\w+)', message.strip(), re.IGNORECASE)
         if kickear_match:
             username = kickear_match.group(1)
             count = await close_session_by_username(username)
