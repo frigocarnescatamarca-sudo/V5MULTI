@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,11 @@ export default function GastrobotClientPanel() {
   const [selectedChat, setSelectedChat] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
 
+  // WhatsApp connection
+  const [whatsappStatus, setWhatsappStatus] = useState({ status: 'disconnected' });
+  const [qrData, setQrData] = useState(null);
+  const [connectingWhatsApp, setConnectingWhatsApp] = useState(false);
+
   // New product dialog
   const [showNewProduct, setShowNewProduct] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -40,6 +45,35 @@ export default function GastrobotClientPanel() {
     }
     verifyAndLoad();
   }, []);
+
+  // Poll WhatsApp status when on config tab
+  useEffect(() => {
+    let interval;
+    if (activeTab === 'whatsapp') {
+      checkWhatsAppStatus();
+      interval = setInterval(checkWhatsAppStatus, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [activeTab, tenantId]);
+
+  const checkWhatsAppStatus = useCallback(async () => {
+    if (!tenantId) return;
+    try {
+      const [statusRes, qrRes] = await Promise.all([
+        api.get(`/gastrobot/tenant/${tenantId}/whatsapp/status`),
+        api.get(`/gastrobot/tenant/${tenantId}/whatsapp/qr`)
+      ]);
+      setWhatsappStatus(statusRes.data);
+      setQrData(qrRes.data);
+      
+      // Update tenant connection status
+      if (statusRes.data.connected && tenant && !tenant.whatsapp_connected) {
+        setTenant({ ...tenant, whatsapp_connected: true });
+      }
+    } catch (error) {
+      console.error('Error checking WhatsApp status:', error);
+    }
+  }, [tenantId, tenant]);
 
   const verifyAndLoad = async () => {
     try {
