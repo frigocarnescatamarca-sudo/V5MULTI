@@ -858,6 +858,22 @@ async def save_sandwich_message(phone_number: str, message: str, role: str, push
     return doc
 
 
+def parse_price(value) -> int:
+    """Parse a price string like '$23,000' or '23000' to integer"""
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if not value:
+        return 0
+    # Remove $, dots, commas, spaces
+    cleaned = str(value).replace('$', '').replace('.', '').replace(',', '').replace(' ', '').strip()
+    try:
+        return int(cleaned)
+    except ValueError:
+        return 0
+
+
 async def create_sandwich_order(phone_number: str, data: dict):
     """Create a new order from WhatsApp with sequential number"""
     # Get sequential order number
