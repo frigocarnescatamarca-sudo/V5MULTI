@@ -227,11 +227,15 @@ export default function AdminSandwich() {
           </Card>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={(val) => {
+          setActiveTab(val);
+          if (val === 'chat') loadConversations();
+        }}>
           <TabsList className="bg-white mb-4">
             <TabsTrigger value="pedidos">📋 Pedidos</TabsTrigger>
             <TabsTrigger value="menu">🍽️ Menú</TabsTrigger>
-            <TabsTrigger value="whatsapp">💬 WhatsApp Bot</TabsTrigger>
+            <TabsTrigger value="chat">💬 Chat</TabsTrigger>
+            <TabsTrigger value="whatsapp">🤖 Bot Config</TabsTrigger>
             <TabsTrigger value="config">⚙️ Configuración</TabsTrigger>
           </TabsList>
 
