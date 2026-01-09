@@ -1725,22 +1725,41 @@ async def process_sandwich_bot_commands(phone_number: str, ai_response: str):
                 items_formatted += f"• {cant}x {item.strip()}\n"
             data['items_formatted'] = items_formatted
             
-            order = await create_sandwich_order(phone_number, data)
+            # Check if within operating hours
+            config = await get_sandwich_config()
+            hora_apertura = config.get('horario_apertura', '20:00')
+            hora_cierre = config.get('horario_cierre', '01:00')
             
-            # Notify admin
-            await notify_sandwich_admin(order)
+            is_open = is_within_operating_hours(hora_apertura, hora_cierre)
             
-            # Ask for WhatsApp number after order creation
-            whatsapp_request = ""
-            if order.get('pending_whatsapp_request'):
-                whatsapp_request = "\n\n📱 Por último, ¿me pasás tu número de WhatsApp para que el delivery pueda contactarte si es necesario? (Ej: 3834123456)"
-            
-            success_msg = f"""✅ *¡PEDIDO REGISTRADO!*
+            if is_open:
+                # Normal order during operating hours
+                order = await create_sandwich_order(phone_number, data)
+                
+                # Notify admin
+                await notify_sandwich_admin(order)
+                
+                success_msg = f"""✅ *¡PEDIDO REGISTRADO!*
 
 📋 *N° de Pedido:* #{order['numero_pedido']}
 
 ⏳ Tu pedido fue enviado al local y está *PENDIENTE DE CONFIRMACIÓN*.
 Te avisamos apenas el local lo confirme.
+
+📱 *IMPORTANTE:* ¿Me pasás tu número de WhatsApp para que el delivery pueda contactarte? 
+(Escribí solo el número, ej: 3834123456)"""
+            else:
+                # Create reservation for when store opens
+                order = await create_reservation(phone_number, data)
+                
+                success_msg = f"""📅 *¡RESERVA REGISTRADA!*
+
+📋 *N° de Reserva:* #{order['numero_pedido']}
+
+⏰ Estamos cerrados ahora (abrimos de {hora_apertura} a {hora_cierre}).
+
+Tu pedido quedó guardado como *RESERVA* y lo enviaremos al local apenas abramos. 
+Te avisaremos cuando se confirme. 🙌
 
 📱 *IMPORTANTE:* ¿Me pasás tu número de WhatsApp para que el delivery pueda contactarte? 
 (Escribí solo el número, ej: 3834123456)"""
