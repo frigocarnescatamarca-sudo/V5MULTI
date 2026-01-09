@@ -2507,6 +2507,89 @@ async def gastrobot_process_message(data: dict):
     reply = await gb.process_message(tenant_id, phone_number, message, push_name)
     return {"reply": reply}
 
+# WhatsApp connection management (proxy to Node.js service)
+GASTROBOT_WS_URL = os.environ.get("GASTROBOT_WS_URL", "http://localhost:3004")
+
+@api_router.get("/gastrobot/tenant/{tenant_id}/whatsapp/status")
+async def gastrobot_whatsapp_status(tenant_id: str):
+    """Get WhatsApp connection status for a tenant"""
+    try:
+        import httpx
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{GASTROBOT_WS_URL}/tenant/{tenant_id}/status", timeout=10.0)
+            return response.json()
+    except Exception as e:
+        return {"status": "service_unavailable", "error": str(e)}
+
+@api_router.get("/gastrobot/tenant/{tenant_id}/whatsapp/qr")
+async def gastrobot_whatsapp_qr(tenant_id: str):
+    """Get QR code for WhatsApp connection"""
+    try:
+        import httpx
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{GASTROBOT_WS_URL}/tenant/{tenant_id}/qr", timeout=10.0)
+            return response.json()
+    except Exception as e:
+        return {"qr": None, "status": "service_unavailable", "error": str(e)}
+
+@api_router.post("/gastrobot/tenant/{tenant_id}/whatsapp/connect")
+async def gastrobot_whatsapp_connect(tenant_id: str):
+    """Initialize WhatsApp connection for a tenant"""
+    try:
+        tenant = await gb.get_tenant(tenant_id)
+        if not tenant:
+            raise HTTPException(status_code=404, detail="Tenant not found")
+        
+        import httpx
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{GASTROBOT_WS_URL}/tenant/{tenant_id}/connect",
+                json={"tenant_name": tenant.get("nombre_negocio", tenant_id)},
+                timeout=30.0
+            )
+            return response.json()
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@api_router.post("/gastrobot/tenant/{tenant_id}/whatsapp/disconnect")
+async def gastrobot_whatsapp_disconnect(tenant_id: str):
+    """Disconnect WhatsApp for a tenant"""
+    try:
+        import httpx
+        async with httpx.AsyncClient() as client:
+            response = await client.post(f"{GASTROBOT_WS_URL}/tenant/{tenant_id}/disconnect", timeout=10.0)
+            return response.json()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@api_router.post("/gastrobot/tenant/{tenant_id}/whatsapp/send")
+async def gastrobot_whatsapp_send(tenant_id: str, data: dict):
+    """Send a WhatsApp message for a tenant"""
+    try:
+        import httpx
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{GASTROBOT_WS_URL}/tenant/{tenant_id}/send",
+                json=data,
+                timeout=30.0
+            )
+            return response.json()
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@api_router.get("/gastrobot/whatsapp/health")
+async def gastrobot_whatsapp_health():
+    """Check GastroBot WhatsApp service health"""
+    try:
+        import httpx
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{GASTROBOT_WS_URL}/health", timeout=5.0)
+            return response.json()
+    except Exception as e:
+        return {"status": "unavailable", "error": str(e)}
+
 # Include router
 app.include_router(api_router)
 
