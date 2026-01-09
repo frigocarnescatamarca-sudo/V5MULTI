@@ -405,20 +405,24 @@ async def notify_all_admins(message: str, exclude_phone: str = None):
     admin_lid = config.get('admin_lid', '')
     
     notified = []
+    master_notified = False
     
-    # Notify master admin
+    # Try to notify master admin via LID first, then fallback to phone
     if admin_lid and admin_lid != exclude_phone:
         try:
             await send_sandwich_message_to_jid(f"{admin_lid}@lid", message)
-            notified.append(f"master:{admin_lid}")
+            notified.append(f"master_lid:{admin_lid}")
+            master_notified = True
         except Exception as e:
-            print(f"[Sandwich Bot] Error notifying master admin: {e}")
-    elif admin_phone and admin_phone != exclude_phone:
+            print(f"[Sandwich Bot] Error notifying master admin via LID: {e}")
+    
+    # Also try phone if LID failed or if phone is different
+    if admin_phone and admin_phone != exclude_phone and not master_notified:
         try:
             await send_sandwich_message(admin_phone, message)
-            notified.append(f"master:{admin_phone}")
+            notified.append(f"master_phone:{admin_phone}")
         except Exception as e:
-            print(f"[Sandwich Bot] Error notifying master admin: {e}")
+            print(f"[Sandwich Bot] Error notifying master admin via phone: {e}")
     
     # Notify logged-in admins
     admin_sessions = await get_active_sessions_by_role("admin")
